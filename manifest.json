@@ -1,0 +1,17 @@
+{
+  "name": "Steelmember — Kuzay Engineering",
+  "short_name": "Steelmember",
+  "description": "Structural steel shape property lookup — W, HP, channels, angles, sheet piles, HSS, and pipe.",
+  "id": "/",
+  "start_url": "/index.html",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#F2F0EA",
+  "theme_color": "#3D5266",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
