@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "com.kuzayeng.steelmember.twa",
+        "sha256_cert_fingerprints": ["A4:6A:18:7B:66:06:83:33:60:D7:E0:08:2B:D1:48:6C:76:48:D5:4C:06:43:5B:64:95:82:7B:EC:BF:61:18:DE"]
+      }
+    }]
