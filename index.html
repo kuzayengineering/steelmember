@@ -85,7 +85,8 @@ header.top{position:sticky;top:0;background:var(--paper);z-index:10;border-botto
 .btn.ghost{border-color:var(--line);color:var(--ink-soft);}
 .btn.ghost:hover{border-color:var(--rivet);color:var(--rivet);background:var(--white);}
 
-.filters{background:var(--white);border:1.5px solid var(--line);padding:14px 16px;margin-bottom:16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px;}
+.filters{background:var(--white);border:1.5px solid var(--line);padding:14px 16px;margin-bottom:16px;display:none;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px;}
+.filters.open{display:grid;}
 .filter-f label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--mill);margin-bottom:4px;}
 .filter-f .mm{display:flex;gap:6px;}
 .filter-f input{width:100%;border:1px solid var(--line);padding:6px 8px;font-size:12px;font-family:'IBM Plex Mono';outline:none;}
@@ -96,6 +97,9 @@ header.top{position:sticky;top:0;background:var(--paper);z-index:10;border-botto
 .tablewrap{overflow-x:auto;border:1.5px solid var(--line);}
 table{border-collapse:collapse;width:100%;background:var(--white);}
 th{position:sticky;top:0;background:var(--steel);color:var(--white);text-align:left;padding:9px 12px;font-size:11px;text-transform:uppercase;letter-spacing:.04em;font-weight:500;white-space:nowrap;}
+th.sortable{cursor:pointer;user-select:none;}
+th.sortable:hover{background:var(--steel-dark);}
+th.sortable.active{background:var(--steel-dark);}
 td{padding:9px 12px;font-family:'IBM Plex Mono';font-size:12.5px;border-top:1px solid var(--line);white-space:nowrap;}
 tbody tr{cursor:pointer;}
 tbody tr:hover{background:var(--paper-2);}
@@ -236,7 +240,7 @@ const ICONS = {
   "i-hssc":'<svg viewBox="0 0 48 48" fill="none" stroke-width="3"><circle cx="24" cy="24" r="16"/></svg>',
 };
 
-let state = {view:"home", cat:null, sub:null, member:null, filters:{}, search:""};
+let state = {view:"home", cat:null, sub:null, member:null, filters:{}, search:"", filtersOpen:false, sortCol:null, sortDir:null};
 const app = document.getElementById("app");
 
 function allRowsFlat(){
@@ -301,6 +305,7 @@ function openCategory(key){
   const c = CATEGORIES.find(x=>x.key===key);
   const firstActive = c.subs.find(s=>!s.soon);
   state.view="cat"; state.cat=c; state.sub=firstActive?firstActive.key:null; state.filters={};
+  state.sortCol=null; state.sortDir=null;
   render();
 }
 
@@ -320,18 +325,37 @@ function renderCat(){
   if(sub) wireFilterInputs();
 }
 
-function switchSub(s){ state.sub=s; state.filters={}; render(); }
+function switchSub(s){ state.sub=s; state.filters={}; state.sortCol=null; state.sortDir=null; render(); }
+
+function activeFilterCount(){
+  return Object.values(state.filters).filter(f=>f&&(f.min!=null||f.max!=null)).length;
+}
+
+function updateFilterToggleLabel(){
+  const btn = document.getElementById("filterToggle");
+  if(!btn) return;
+  const n = activeFilterCount();
+  btn.textContent = (state.filtersOpen?"Hide filters":"Filters")+(n?` (${n})`:"");
+}
+
+function toggleFilters(){
+  state.filtersOpen = !state.filtersOpen;
+  document.querySelector(".filters").classList.toggle("open", state.filtersOpen);
+  updateFilterToggleLabel();
+}
 
 function filterPanel(sub){
   const numCols = sub.cols.filter(c=>c!=="name");
+  const n = activeFilterCount();
   return `<div class="toolbar">
     <span class="count" id="rowcount"></span>
     <div class="btnrow">
+      <button class="btn ghost" id="filterToggle" onclick="toggleFilters()">${state.filtersOpen?"Hide filters":"Filters"}${n?` (${n})`:""}</button>
       <button class="btn ghost" onclick="clearAllFilters()">Clear all filters</button>
       <button class="btn" onclick="copyCurrentTable()">Copy table</button>
     </div>
   </div>
-  <div class="filters">
+  <div class="filters${state.filtersOpen?" open":""}">
     ${numCols.map(c=>`
       <div class="filter-f" data-col="${c}">
         <label>${COL_LABELS_HTML[c]||c}</label>
@@ -370,21 +394,49 @@ function applyFilters(rows, sub){
   });
 }
 
+function tableHeadRow(sub){
+  return sub.cols.map(c=>{
+    const active = state.sortCol===c;
+    const arrow = active ? (state.sortDir==="asc"?" ▲":" ▼") : "";
+    return `<th class="sortable${active?" active":""}" onclick="sortByColumn('${c}')">${COL_LABELS_HTML[c]||c}${arrow}</th>`;
+  }).join("");
+}
+
 function tableFor(sub){
   return `<div class="tablewrap"><table id="datatable">
-    <thead><tr>${sub.cols.map(c=>`<th>${COL_LABELS_HTML[c]||c}</th>`).join("")}</tr></thead>
+    <thead><tr id="headrow">${tableHeadRow(sub)}</tr></thead>
     <tbody id="tbody"></tbody>
   </table></div>`;
 }
 
+function sortByColumn(col){
+  if(state.sortCol===col){
+    state.sortDir = state.sortDir==="asc" ? "desc" : "asc";
+  } else {
+    state.sortCol = col;
+    state.sortDir = "asc";
+  }
+  document.getElementById("headrow").innerHTML = tableHeadRow(DATA[state.sub]);
+  refreshTable();
+}
+
 function refreshTable(){
   const sub = DATA[state.sub];
-  const filtered = applyFilters(sub.rows, sub);
+  let filtered = applyFilters(sub.rows, sub);
+  if(state.sortCol){
+    const col = state.sortCol, dir = state.sortDir;
+    filtered = filtered.slice().sort((a,b)=>{
+      const av=a[col], bv=b[col];
+      if(typeof av==="number" && typeof bv==="number") return dir==="asc" ? av-bv : bv-av;
+      return dir==="asc" ? String(av).localeCompare(bv) : String(bv).localeCompare(av);
+    });
+  }
   document.getElementById("rowcount").textContent = filtered.length+" of "+sub.rows.length+" members";
   document.querySelectorAll(".filter-f").forEach(el=>{
     const col = el.dataset.col; const f = state.filters[col];
     el.querySelector(".filter-clear").classList.toggle("show", !!(f&&(f.min!=null||f.max!=null)));
   });
+  updateFilterToggleLabel();
   const tbody = document.getElementById("tbody");
   if(filtered.length===0){
     tbody.innerHTML = `<tr><td colspan="${sub.cols.length}"><div class="empty">No members match these filters.</div></td></tr>`;
