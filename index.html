@@ -94,9 +94,10 @@ header.top{position:sticky;top:0;background:var(--paper);z-index:10;border-botto
 .filter-clear{font-size:11px;color:var(--rivet);cursor:pointer;margin-top:4px;display:none;}
 .filter-clear.show{display:inline-block;}
 
-.tablewrap{overflow-x:auto;border:1.5px solid var(--line);}
+.tablewrap{border:1.5px solid var(--line);}
+.tablewrap.scrollable{overflow-x:auto;}
 table{border-collapse:collapse;width:100%;background:var(--white);}
-th{position:sticky;top:0;background:var(--steel);color:var(--white);text-align:left;padding:9px 12px;font-size:11px;text-transform:uppercase;letter-spacing:.04em;font-weight:500;white-space:nowrap;}
+th{position:sticky;top:73px;z-index:5;background:var(--steel);color:var(--white);text-align:left;padding:9px 12px;font-size:11px;text-transform:uppercase;letter-spacing:.04em;font-weight:500;white-space:nowrap;}
 th.sortable{cursor:pointer;user-select:none;}
 th.sortable:hover{background:var(--steel-dark);}
 th.sortable.active{background:var(--steel-dark);}
@@ -143,7 +144,7 @@ footer.app-footer{margin-top:40px;padding-top:14px;border-top:1px solid var(--li
   .sheet-ico svg{width:40px;height:40px;}
   .sheet-name{font-size:20px;}
   .page-title{font-size:21px;}
-  .tablewrap{-webkit-overflow-scrolling:touch;}
+  .tablewrap.scrollable{-webkit-overflow-scrolling:touch;}
 }
 @media(max-width:480px){
   .brand-title-img{height:24px;}
@@ -1068,12 +1069,24 @@ function refreshTable(){
   const tbody = document.getElementById("tbody");
   if(filtered.length===0){
     tbody.innerHTML = `<tr><td colspan="${sub.cols.length}"><div class="empty">No members match these filters.</div></td></tr>`;
+    checkTableOverflow();
     return;
   }
   tbody.innerHTML = filtered.map(r=>`
     <tr onclick="openMember('${r._key||state.sub}','${r.name}')">
       ${sub.cols.map(c=>{ const v=r[c]; return `<td class="${c==='name'?'nm':''}">${v==null||v===""?'—':v}</td>`; }).join("")}
     </tr>`).join("");
+  checkTableOverflow();
+}
+
+/* Sticky th only works while .tablewrap has no scroll container of its own,
+   so horizontal scroll is only enabled when the table genuinely doesn't fit
+   (columns bleeding past the wrapper) rather than unconditionally. */
+function checkTableOverflow(){
+  const wrap = document.querySelector(".tablewrap");
+  const table = document.getElementById("datatable");
+  if(!wrap || !table) return;
+  wrap.classList.toggle("scrollable", table.scrollWidth > wrap.clientWidth);
 }
 
 function clearFilter(col){
