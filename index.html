@@ -760,13 +760,65 @@ const DATA = {
   MT: {label:"MT-shapes", parent:"Tee", cols:["name","depth","bf","tf","tw","area","Sx","Sy"], rows:__MT__},
 };
 
+/* Per-category "All" view: unified column set plus a map of per-sub row
+   transforms for shapes whose native fields need aliasing or deriving to
+   line up with that union (e.g. equal-leg angles have no separate "width"
+   column since it's identical to depth). Fields with no equivalent in a
+   given sub are simply left undefined and render as blank. */
+const CATEGORY_ALL = {
+  beams:      { cols:["area","depth","tw","bf","tf","Ix","Sx","Iy","Sy"], map:{} },
+  channels:   { cols:["depth","bf","tw","area","weight","Ix","Iy","Sx","Sy"], map:{} },
+  angles:     { cols:["depth","width","thickness","area","weight","Ix","Iy","Sx","Sy"],
+    map:{ L: r=>({...r, width:r.depth, Iy:r.Ix}) } },
+  sheetpiles: { cols:["width","height","tf","tw","area","pileWeight","wallWeight","elasticS","plasticS","I"],
+    map:{
+      PZC:   r=>({...r, pileWeight:r.weight, wallWeight:Math.round((r.weight/(r.width/12))*100)/100}),
+      SCZKZ: r=>({...r, tf:r.thickness, tw:r.thickness}),
+      SKLKS: r=>({...r, tf:r.thickness, tw:r.thickness}),
+    } },
+  pipe:       { cols:["od","wall","weight","id","area","I","S","r"], map:{} },
+  tee:        { cols:["depth","bf","tf","tw","area","Sx","Sy"], map:{} },
+  hssr:       { cols:["depth","width","thickness","weight","area","Ix","Sx","Iy","Sy"],
+    map:{ HSSQ: r=>{
+      const m = r.name.match(/^HSS([\d.]+)X([\d.]+)X/);
+      return {...r, depth:m?parseFloat(m[1]):undefined, width:m?parseFloat(m[2]):undefined, Ix:r.I, Sx:r.S, Iy:r.I, Sy:r.S};
+    } } },
+  hssc:       { cols:["od","weight","wall","area","I"], map:{} },
+};
+
+function buildAllRows(catKey){
+  const cfg = CATEGORY_ALL[catKey];
+  const c = CATEGORIES.find(x=>x.key===catKey);
+  if(!cfg || !c) return [];
+  let rows = [];
+  c.subs.forEach(s=>{
+    if(s.soon) return;
+    const subData = DATA[s.key];
+    if(!subData) return;
+    const mapFn = cfg.map[s.key] || (r=>r);
+    subData.rows.forEach(r=>{
+      rows.push({...mapFn(r), _key:s.key, _type:subData.label});
+    });
+  });
+  return rows;
+}
+
+function getSubData(){
+  if(state.sub==="ALL"){
+    const cfg = CATEGORY_ALL[state.cat.key];
+    return { label:"All "+state.cat.nm, cols:["name","_type",...cfg.cols], rows:buildAllRows(state.cat.key) };
+  }
+  return DATA[state.sub];
+}
+
 const COL_LABELS = {
   name:"Designation", area:"Area (in²)", depth:"Depth (in)", tw:"Web tk (in)", bf:"Flange w (in)",
   tf:"Flange tk (in)", Ix:"Ix (in⁴)", Sx:"Sx (in³)", Iy:"Iy (in⁴)", Sy:"Sy (in³)", weight:"Weight (lb/ft)",
   surfaceArea:"Surface area (ft²/ft)",
   width:"Width (in)", height:"Height (in)", thickness:"Thickness (in)", pileWeight:"Pile wt (lb/ft)",
   wallWeight:"Wall wt (lb/ft²)", elasticS:"Elastic S (in³)", plasticS:"Plastic S (in³)", I:"Moment of inertia (in⁴)",
-  od:"OD (in)", wall:"Wall (in)", id:"ID (in)", S:"Section modulus (in³)", r:"Radius of gyration (in)", Z:"Plastic Z (in³)"
+  od:"OD (in)", wall:"Wall (in)", id:"ID (in)", S:"Section modulus (in³)", r:"Radius of gyration (in)", Z:"Plastic Z (in³)",
+  _type:"Type"
 };
 
 /* Display-only labels with subscripted axis letters; COL_LABELS above stays plain text for clipboard copy. */
@@ -875,19 +927,19 @@ function renderHome(){
 
 function openCategory(key){
   const c = CATEGORIES.find(x=>x.key===key);
-  const firstActive = c.subs.find(s=>!s.soon);
-  state.view="cat"; state.cat=c; state.sub=firstActive?firstActive.key:null; state.filters={};
+  state.view="cat"; state.cat=c; state.sub="ALL"; state.filters={};
   state.sortCol=null; state.sortDir=null;
   render();
 }
 
 function renderCat(){
   const c = state.cat;
-  const sub = state.sub ? DATA[state.sub] : null;
+  const sub = state.sub ? getSubData() : null;
   app.innerHTML = header() + `
     <div class="eyebrow">${c.nm}</div>
     <h1 class="page-title">${sub?sub.label:c.nm}</h1>
     <div class="pillrow">
+      <div class="pill ${state.sub==='ALL'?'active':''}" onclick="switchSub('ALL')">All</div>
       ${c.subs.map(s=>`<div class="pill ${s.soon?'pill-soon':''} ${s.key===state.sub?'active':''}" onclick="${s.soon?'':`switchSub('${s.key}')`}">${s.label}${s.soon?' — soon':''}</div>`).join("")}
     </div>
     ${sub ? filterPanel(sub) + tableFor(sub) : `<div class="empty">No data yet for this category.</div>`}
@@ -917,7 +969,7 @@ function toggleFilters(){
 }
 
 function filterPanel(sub){
-  const numCols = sub.cols.filter(c=>c!=="name");
+  const numCols = sub.cols.filter(c=>c!=="name"&&c!=="_type");
   const n = activeFilterCount();
   return `<div class="toolbar">
     <span class="count" id="rowcount"></span>
@@ -988,17 +1040,21 @@ function sortByColumn(col){
     state.sortCol = col;
     state.sortDir = "asc";
   }
-  document.getElementById("headrow").innerHTML = tableHeadRow(DATA[state.sub]);
+  document.getElementById("headrow").innerHTML = tableHeadRow(getSubData());
   refreshTable();
 }
 
 function refreshTable(){
-  const sub = DATA[state.sub];
+  const sub = getSubData();
   let filtered = applyFilters(sub.rows, sub);
   if(state.sortCol){
     const col = state.sortCol, dir = state.sortDir;
     filtered = filtered.slice().sort((a,b)=>{
       const av=a[col], bv=b[col];
+      const aNull = av==null, bNull = bv==null;
+      if(aNull && bNull) return 0;
+      if(aNull) return 1;
+      if(bNull) return -1;
       if(typeof av==="number" && typeof bv==="number") return dir==="asc" ? av-bv : bv-av;
       return dir==="asc" ? String(av).localeCompare(bv) : String(bv).localeCompare(av);
     });
@@ -1015,8 +1071,8 @@ function refreshTable(){
     return;
   }
   tbody.innerHTML = filtered.map(r=>`
-    <tr onclick="openMember('${state.sub}','${r.name}')">
-      ${sub.cols.map(c=>`<td class="${c==='name'?'nm':''}">${r[c]}</td>`).join("")}
+    <tr onclick="openMember('${r._key||state.sub}','${r.name}')">
+      ${sub.cols.map(c=>{ const v=r[c]; return `<td class="${c==='name'?'nm':''}">${v==null||v===""?'—':v}</td>`; }).join("")}
     </tr>`).join("");
 }
 
@@ -1032,7 +1088,7 @@ function clearAllFilters(){
 }
 
 function copyCurrentTable(){
-  const sub = DATA[state.sub];
+  const sub = getSubData();
   const filtered = applyFilters(sub.rows, sub);
   let text = sub.cols.map(c=>COL_LABELS[c]||c).join("\t")+"\n";
   filtered.forEach(r=>{ text += sub.cols.map(c=>r[c]).join("\t")+"\n"; });
@@ -1053,7 +1109,7 @@ function findCatForSub(subKey){
 function openMember(subKey, name){
   const sub = DATA[subKey];
   const row = sub.rows.find(r=>r.name===name);
-  state.view="member"; state.member={row, sub, subKey};
+  state.view="member"; state.member={row, sub, subKey, cameFromSub: state.sub};
   render();
 }
 
@@ -1094,7 +1150,7 @@ function copyMember(){
 function backFromMember(){
   const subKey = state.member.subKey;
   const c = findCatForSub(subKey);
-  state.view="cat"; state.cat=c; state.sub=subKey;
+  state.view="cat"; state.cat=c; state.sub=state.member.cameFromSub||subKey;
   render();
 }
 
