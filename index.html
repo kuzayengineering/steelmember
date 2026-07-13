@@ -934,6 +934,7 @@ function allRowsFlat(){
 }
 
 function render(){
+  window.scrollTo(0,0);
   if(state.view==="home") return renderHome();
   if(state.view==="cat") return renderCat();
   if(state.view==="member") return renderMember();
