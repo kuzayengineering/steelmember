@@ -738,6 +738,48 @@ const __HSSR__=[
   {name:"HSS2X1-1/2X3/16",depth:2,width:1.5,thickness:0.188,weight:3.68,area:1.08,Ix:0.515,Sx:0.515,Iy:0.325,Sy:0.433,surfaceArea:0.530},
   {name:"HSS2X1X3/16",depth:2,width:1,thickness:0.188,weight:3.04,area:0.896,Ix:0.360,Sx:0.360,Iy:0.115,Sy:0.230,surfaceArea:0.446},
 ];
+const __MC__=[
+  {name:"MC18X58",depth:18,bf:4.2,tw:0.7,area:17.1,weight:58.2,Ix:675,Iy:17.6,Sx:75.0,Sy:5.28},
+  {name:"MC18X51.9",depth:18,bf:4.1,tw:0.6,area:15.3,weight:52.1,Ix:627,Iy:16.3,Sx:69.6,Sy:5.02},
+  {name:"MC18X45.8",depth:18,bf:4.0,tw:0.5,area:13.5,weight:45.9,Ix:578,Iy:14.9,Sx:64.2,Sy:4.77},
+  {name:"MC18X42.7",depth:18,bf:3.95,tw:0.45,area:12.6,weight:42.9,Ix:554,Iy:14.3,Sx:61.5,Sy:4.64},
+  {name:"MC13X50",depth:13,bf:4.41,tw:0.787,area:14.7,weight:50.0,Ix:314,Iy:16.4,Sx:48.3,Sy:4.77},
+  {name:"MC13X40",depth:13,bf:4.19,tw:0.56,area:11.7,weight:39.8,Ix:273,Iy:13.7,Sx:41.9,Sy:4.24},
+  {name:"MC13X35",depth:13,bf:4.07,tw:0.447,area:10.3,weight:35.1,Ix:252,Iy:12.3,Sx:38.8,Sy:3.97},
+  {name:"MC13X31.8",depth:13,bf:4.0,tw:0.375,area:9.35,weight:31.8,Ix:239,Iy:11.4,Sx:36.7,Sy:3.79},
+  {name:"MC12X50",depth:12,bf:4.14,tw:0.835,area:14.7,weight:50.0,Ix:269,Iy:17.4,Sx:44.9,Sy:5.64},
+  {name:"MC12X45",depth:12,bf:4.01,tw:0.71,area:13.2,weight:44.9,Ix:251,Iy:15.8,Sx:41.9,Sy:5.3},
+  {name:"MC12X40",depth:12,bf:3.89,tw:0.59,area:11.8,weight:40.2,Ix:234,Iy:14.2,Sx:39.0,Sy:4.98},
+  {name:"MC12X35",depth:12,bf:3.77,tw:0.465,area:10.3,weight:35.1,Ix:216,Iy:12.6,Sx:36.0,Sy:4.64},
+  {name:"MC12X31",depth:12,bf:3.67,tw:0.37,area:9.12,weight:31.0,Ix:202,Iy:11.3,Sx:33.7,Sy:4.37},
+  {name:"MC12X14.3",depth:12,bf:2.12,tw:0.25,area:4.18,weight:14.2,Ix:76.1,Iy:1.0,Sx:12.7,Sy:0.574},
+  {name:"MC12X10.6",depth:12,bf:1.5,tw:0.19,area:3.1,weight:10.5,Ix:55.3,Iy:0.378,Sx:9.22,Sy:0.307},
+  {name:"MC10X41.1",depth:10,bf:4.32,tw:0.796,area:12.1,weight:41.2,Ix:157,Iy:15.7,Sx:31.5,Sy:4.85},
+  {name:"MC10X33.6",depth:10,bf:4.1,tw:0.575,area:9.87,weight:33.6,Ix:139,Iy:13.1,Sx:27.8,Sy:4.35},
+  {name:"MC10X28.5",depth:10,bf:3.95,tw:0.425,area:8.37,weight:28.5,Ix:126,Iy:11.3,Sx:25.3,Sy:3.99},
+  {name:"MC10X25",depth:10,bf:3.41,tw:0.38,area:7.34,weight:25.0,Ix:110,Iy:7.25,Sx:22.0,Sy:2.96},
+  {name:"MC10X22",depth:10,bf:3.32,tw:0.29,area:6.45,weight:22.0,Ix:102,Iy:6.4,Sx:20.5,Sy:2.75},
+  {name:"MC10X8.4",depth:10,bf:1.5,tw:0.17,area:2.46,weight:8.4,Ix:31.9,Iy:0.326,Sx:6.39,Sy:0.268},
+  {name:"MC10X6.5",depth:10,bf:1.17,tw:0.152,area:1.95,weight:6.6,Ix:22.9,Iy:0.133,Sx:4.59,Sy:0.137},
+  {name:"MC9X25.4",depth:9,bf:3.5,tw:0.45,area:7.47,weight:25.4,Ix:87.9,Iy:7.57,Sx:19.5,Sy:2.99},
+  {name:"MC9X23.9",depth:9,bf:3.45,tw:0.4,area:7.02,weight:23.9,Ix:84.9,Iy:7.14,Sx:18.9,Sy:2.89},
+  {name:"MC8X22.8",depth:8,bf:3.5,tw:0.427,area:6.7,weight:22.8,Ix:63.8,Iy:7.01,Sx:15.9,Sy:2.81},
+  {name:"MC8X21.4",depth:8,bf:3.45,tw:0.375,area:6.28,weight:21.4,Ix:61.5,Iy:6.58,Sx:15.4,Sy:2.71},
+  {name:"MC8X20",depth:8,bf:3.03,tw:0.4,area:5.87,weight:20.0,Ix:54.4,Iy:4.42,Sx:13.6,Sy:2.02},
+  {name:"MC8X18.7",depth:8,bf:2.98,tw:0.353,area:5.5,weight:18.7,Ix:52.4,Iy:4.15,Sx:13.1,Sy:1.95},
+  {name:"MC8X8.5",depth:8,bf:1.87,tw:0.179,area:2.5,weight:8.5,Ix:23.3,Iy:0.624,Sx:5.82,Sy:0.431},
+  {name:"MC7X22.7",depth:7,bf:3.6,tw:0.503,area:6.67,weight:22.7,Ix:47.4,Iy:7.24,Sx:13.5,Sy:2.83},
+  {name:"MC7X19.1",depth:7,bf:3.45,tw:0.352,area:5.61,weight:19.1,Ix:43.1,Iy:6.06,Sx:12.3,Sy:2.55},
+  {name:"MC6X18",depth:6,bf:3.5,tw:0.379,area:5.29,weight:18.0,Ix:29.7,Iy:5.88,Sx:9.89,Sy:2.47},
+  {name:"MC6X15.3",depth:6,bf:3.5,tw:0.34,area:4.49,weight:15.3,Ix:25.3,Iy:4.91,Sx:8.44,Sy:2.01},
+  {name:"MC6X16.3",depth:6,bf:3.0,tw:0.375,area:4.79,weight:16.3,Ix:26.0,Iy:3.77,Sx:8.66,Sy:1.82},
+  {name:"MC6X15.1",depth:6,bf:2.94,tw:0.316,area:4.44,weight:15.1,Ix:24.9,Iy:3.46,Sx:8.3,Sy:1.73},
+  {name:"MC6X12",depth:6,bf:2.5,tw:0.31,area:3.53,weight:12.0,Ix:18.7,Iy:1.85,Sx:6.24,Sy:1.03},
+  {name:"MC6X7",depth:6,bf:1.88,tw:0.179,area:2.09,weight:7.1,Ix:11.4,Iy:0.603,Sx:3.81,Sy:0.439},
+  {name:"MC6X6.5",depth:6,bf:1.85,tw:0.155,area:1.95,weight:6.6,Ix:11.0,Iy:0.565,Sx:3.66,Sy:0.422},
+  {name:"MC4X13.8",depth:4,bf:2.5,tw:0.5,area:4.03,weight:13.7,Ix:8.85,Iy:2.13,Sx:4.43,Sy:1.29},
+  {name:"MC3X7.1",depth:3,bf:1.94,tw:0.312,area:2.11,weight:7.2,Ix:2.72,Iy:0.666,Sx:1.81,Sy:0.518},
+];
 
 /* ---------- build DATA registry from extracted blocks above ---------- */
 const DATA = {
@@ -745,6 +787,7 @@ const DATA = {
   HP: {label:"HP-shapes", parent:"Beams",   cols:["name","area","depth","tw","bf","tf","Ix","Sx","Iy","Sy"], rows:__HP__},
   S:  {label:"S-shapes",  parent:"Beams",   cols:["name","area","depth","tw","bf","Ix","Sx","Iy","Sy"], rows:__S__},
   C:  {label:"C-shapes",  parent:"Channels",cols:["name","depth","bf","tw","area","weight","Ix","Iy","Sx","Sy"], rows:__C__},
+  MC: {label:"MC-shapes", parent:"Channels",cols:["name","depth","bf","tw","area","weight","Ix","Iy","Sx","Sy"], rows:__MC__},
   L:  {label:"Angles (equal leg)",    parent:"Angles",  cols:["name","depth","thickness","area","weight","Ix"], rows:__L__},
   LU: {label:"Angles (unequal leg)",  parent:"Angles",  cols:["name","depth","width","thickness","area","weight","Ix","Iy","Sx","Sy"], rows:__LU__},
   PZ:    {label:"PZ (hot rolled)",     parent:"Sheet Piles", cols:["name","width","height","tf","tw","area","pileWeight","wallWeight","elasticS","plasticS","I"], rows:__PZ__},
@@ -835,7 +878,7 @@ const CATEGORIES = [
       {key:"S", label:"S-shapes"}, {key:"HP", label:"HP-shapes"}
     ], icon:"i-w"},
   {key:"channels", nm:"Channels", sub:"C / MC", subs:[
-      {key:"C", label:"C-shapes"}, {key:"MC", label:"MC-shapes", soon:true}
+      {key:"C", label:"C-shapes"}, {key:"MC", label:"MC-shapes"}
     ], icon:"i-c"},
   {key:"angles", nm:"Angles", sub:"L (equal leg) / LU (unequal leg)", subs:[
       {key:"L", label:"Angles (equal leg)"}, {key:"LU", label:"Angles (unequal leg)"}
