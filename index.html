@@ -795,12 +795,12 @@ const DATA = {
   MC: {label:"MC-shapes", parent:"Channels",cols:["name","depth","bf","tw","area","weight","Ix","Iy","Sx","Sy"], rows:__MC__},
   L:  {label:"Angles (equal leg)",    parent:"Angles",  cols:["name","depth","thickness","area","weight","Ix"], rows:__L__},
   LU: {label:"Angles (unequal leg)",  parent:"Angles",  cols:["name","depth","width","thickness","area","weight","Ix","Iy","Sx","Sy"], rows:__LU__},
-  PZ:    {label:"PZ (hot rolled)",     parent:"Sheet Piles", cols:["name","width","height","tf","tw","area","pileWeight","wallWeight","elasticS","plasticS","I"], rows:__PZ__},
-  PZC:   {label:"PZC (hot rolled)",    parent:"Sheet Piles", cols:["name","width","height","tw","tf","area","weight","I","elasticS","plasticS"], rows:__PZC__},
-  AZ:    {label:"AZ (hot rolled)",     parent:"Sheet Piles", cols:["name","width","height","tf","tw","area","pileWeight","wallWeight","elasticS","plasticS","I"], rows:__AZ__},
-  NZ:    {label:"NZ (hot rolled)",     parent:"Sheet Piles", cols:["name","width","height","tf","tw","area","pileWeight","wallWeight","elasticS","plasticS","I"], rows:__NZ__},
-  SCZKZ: {label:"SCZ / SKZ (cold formed)", parent:"Sheet Piles", cols:["name","width","height","thickness","area","pileWeight","wallWeight","elasticS","plasticS","I"], rows:__SCZKZ__},
-  SKLKS: {label:"SKL / SKS (cold formed)", parent:"Sheet Piles", cols:["name","width","height","thickness","area","pileWeight","wallWeight","elasticS","plasticS","I"], rows:__SKLKS__},
+  PZ:    {label:"PZ (hot rolled)",     parent:"Sheet Piles", cols:["name","width","height","tf","tw","area","pileWeight","wallWeight","elasticS","I"], rows:__PZ__},
+  PZC:   {label:"PZC (hot rolled)",    parent:"Sheet Piles", cols:["name","width","height","tw","tf","area","weight","I","elasticS"], rows:__PZC__},
+  AZ:    {label:"AZ (hot rolled)",     parent:"Sheet Piles", cols:["name","width","height","tf","tw","area","pileWeight","wallWeight","elasticS","I"], rows:__AZ__},
+  NZ:    {label:"NZ (hot rolled)",     parent:"Sheet Piles", cols:["name","width","height","tf","tw","area","pileWeight","wallWeight","elasticS","I"], rows:__NZ__},
+  SCZKZ: {label:"SCZ / SKZ (cold formed)", parent:"Sheet Piles", cols:["name","width","height","thickness","area","pileWeight","wallWeight","elasticS","I"], rows:__SCZKZ__},
+  SKLKS: {label:"SKL / SKS (cold formed)", parent:"Sheet Piles", cols:["name","width","height","thickness","area","pileWeight","wallWeight","elasticS","I"], rows:__SKLKS__},
   HSSQ:  {label:"Square HSS", parent:"Rectangular HSS", cols:["name","weight","thickness","area","I","S","r","Z"], rows:__HSSQ__},
   HSSR:  {label:"Rectangular HSS", parent:"Rectangular HSS", cols:["name","depth","width","thickness","weight","area","Ix","Sx","Iy","Sy","surfaceArea"], rows:__HSSR__},
   PIPE:  {label:"Pipe", parent:"Pipe", cols:["name","od","wall","weight","id","area","I","S","r"], rows:__PIPE__},
@@ -819,7 +819,7 @@ const CATEGORY_ALL = {
   channels:   { cols:["depth","bf","tw","area","weight","Ix","Iy","Sx","Sy"], map:{} },
   angles:     { cols:["depth","width","thickness","area","weight","Ix","Iy","Sx","Sy"],
     map:{ L: r=>({...r, width:r.depth, Iy:r.Ix}) } },
-  sheetpiles: { cols:["width","height","tf","tw","area","pileWeight","wallWeight","elasticS","plasticS","I"],
+  sheetpiles: { cols:["width","height","tf","tw","area","pileWeight","wallWeight","elasticS","I"],
     map:{
       PZC:   r=>({...r, pileWeight:r.weight, wallWeight:Math.round((r.weight/(r.width/12))*100)/100}),
       SCZKZ: r=>({...r, tf:r.thickness, tw:r.thickness}),
@@ -855,7 +855,7 @@ function buildAllRows(catKey){
 function getSubData(){
   if(state.sub==="ALL"){
     const cfg = CATEGORY_ALL[state.cat.key];
-    return { label:"All "+state.cat.nm, cols:["name","_type",...cfg.cols], rows:buildAllRows(state.cat.key) };
+    return { label:"All "+state.cat.nm, cols:["name",...cfg.cols], rows:buildAllRows(state.cat.key) };
   }
   return DATA[state.sub];
 }
@@ -865,9 +865,8 @@ const COL_LABELS = {
   tf:"Flange tk (in)", Ix:"Ix (in⁴)", Sx:"Sx (in³)", Iy:"Iy (in⁴)", Sy:"Sy (in³)", weight:"Weight (lb/ft)",
   surfaceArea:"Surface area (ft²/ft)",
   width:"Width (in)", height:"Height (in)", thickness:"Thickness (in)", pileWeight:"Pile wt (lb/ft)",
-  wallWeight:"Wall wt (lb/ft²)", elasticS:"Elastic S (in³)", plasticS:"Plastic S (in³)", I:"Moment of inertia (in⁴)",
-  od:"OD (in)", wall:"Wall (in)", id:"ID (in)", S:"Section modulus (in³)", r:"Radius of gyration (in)", Z:"Plastic Z (in³)",
-  _type:"Type"
+  wallWeight:"Wall wt (lb/ft²)", elasticS:"S (in³)", plasticS:"Plastic S (in³)", I:"I (in⁴)",
+  od:"OD (in)", wall:"Wall (in)", id:"ID (in)", S:"Section modulus (in³)", r:"Radius of gyration (in)", Z:"Plastic Z (in³)"
 };
 
 /* Display-only labels with subscripted axis letters; COL_LABELS above stays plain text for clipboard copy. */
@@ -1018,7 +1017,7 @@ function toggleFilters(){
 }
 
 function filterPanel(sub){
-  const numCols = sub.cols.filter(c=>c!=="name"&&c!=="_type");
+  const numCols = sub.cols.filter(c=>c!=="name");
   const n = activeFilterCount();
   return `<div class="toolbar">
     <span class="count" id="rowcount"></span>
