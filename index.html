@@ -98,6 +98,11 @@ header.top{position:sticky;top:0;background:var(--paper);z-index:10;border-botto
 .tablewrap.scrollable{overflow-x:auto;}
 table{border-collapse:collapse;width:100%;background:var(--white);}
 th{position:sticky;top:73px;z-index:5;background:var(--steel);color:var(--white);text-align:left;padding:9px 12px;font-size:11px;text-transform:uppercase;letter-spacing:.04em;font-weight:500;white-space:nowrap;}
+/* Once .tablewrap is a scroll container (see checkTableOverflow), sticky's
+   containing block becomes .tablewrap itself instead of the viewport, which
+   just shoves th top:73px down INTO the table rather than failing safely.
+   Cancel sticky entirely in that case so the header renders in normal flow. */
+.tablewrap.scrollable th{position:static;top:auto;}
 th.sortable{cursor:pointer;user-select:none;}
 th.sortable:hover{background:var(--steel-dark);}
 th.sortable.active{background:var(--steel-dark);}
