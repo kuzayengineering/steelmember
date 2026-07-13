@@ -61,6 +61,8 @@ header.top{position:sticky;top:0;background:var(--paper);z-index:10;border-botto
 .eyebrow{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--mill);margin:32px 0 6px;}
 .page-title{font-family:'Space Grotesk';font-weight:600;font-size:26px;margin:0 0 24px;}
 .cat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
+.home-blurb{max-width:640px;font-size:14px;line-height:1.65;color:var(--ink-soft);margin:0 0 14px;}
+.home-blurb:last-of-type{margin-bottom:0;}
 .cat-tile{background:var(--white);border:1.5px solid var(--line);padding:22px 12px 16px;text-align:center;cursor:pointer;transition:border-color .15s;position:relative;}
 .cat-tile:hover{border-color:var(--steel);}
 .cat-tile svg{width:56px;height:56px;stroke:var(--steel);}
@@ -1116,6 +1118,9 @@ function renderHome(){
           <span class="sub">${c.sub}</span>
         </div>`).join("")}
     </div>
+    <p class="home-blurb">Steelmember is a fast reference tool for structural steel section properties — AISC beams (W, M, S, HP), channels (C, MC) L angles, Tee shapes (WT, MT, and ST) , square and rectangular HSS, round HSS and pipe, and Z-type sheet piling in both hot-rolled and cold-formed — all in one searchable table.</p>
+    <p class="home-blurb">Search by designation, filter any column by a min/max range, sort by any property, and copy a full table or a single member's properties straight to your clipboard. It's built to work as well on a phone in the field as it does on a desktop, so you don't need the PDF or the manual open just to check a section modulus.</p>
+    <p class="home-blurb">Available only in imperial freedom units!</p>
   ` + footer();
   wireHeader();
 }
