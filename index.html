@@ -201,28 +201,22 @@ const __LZ__=[
   {name:"LZ-5",width:24,height:4.5,thickness:0.209,pileWeight:21.2,wallWeight:10.6,elasticS:4.6,I:10.4},
   {name:"LZ-250",width:24,height:4.5,thickness:0.25,pileWeight:25.6,wallWeight:12.8,elasticS:5.4,I:12.4},
 ];
-const __SZIL__=[
+const __SZ__=[
   {name:"SZ-10",width:22,height:7.5,thickness:0.164,pileWeight:16.6,wallWeight:9.4,elasticS:7.3,I:27.4},
   {name:"SZ-11",width:22,height:7.5,thickness:0.179,pileWeight:18.2,wallWeight:10.3,elasticS:7.9,I:29.8},
   {name:"SZ-12",width:22,height:7.5,thickness:0.209,pileWeight:21.2,wallWeight:12,elasticS:9.2,I:34.8},
   {name:"SZ-15",width:22,height:7.5,thickness:0.25,pileWeight:25.5,wallWeight:14,elasticS:10.9,I:41.7},
-];
-const __SZIH__=[
   {name:"SZ-14.5",width:26.75,height:9.4,thickness:0.25,pileWeight:32.4,wallWeight:14.5,elasticS:13,I:61.49},
   {name:"SZ-14.5RU",width:26.75,height:9.4,thickness:0.27,pileWeight:35.1,wallWeight:15.7,elasticS:14,I:66.4},
   {name:"SZ-18",width:26.75,height:9.4,thickness:0.312,pileWeight:40.4,wallWeight:18.1,elasticS:16.2,I:76.83},
   {name:"SZ-20",width:26.75,height:9.4,thickness:0.34,pileWeight:44.1,wallWeight:19.8,elasticS:17.5,I:83.37},
   {name:"SZ-21",width:26.75,height:9.4,thickness:0.35,pileWeight:45.3,wallWeight:20.3,elasticS:18.1,I:86},
   {name:"SZ-22",width:26.75,height:9.4,thickness:0.375,pileWeight:48.6,wallWeight:21.8,elasticS:19.3,I:91.92},
-];
-const __SZMH__=[
   {name:"SZ-250",width:24.5,height:10.75,thickness:0.25,pileWeight:32.4,wallWeight:15.9,elasticS:16.6,I:89.42},
   {name:"SZ-313",width:24.5,height:10.75,thickness:0.312,pileWeight:40.4,wallWeight:19.9,elasticS:20.6,I:111.53},
   {name:"SZ-340",width:24.5,height:10.75,thickness:0.34,pileWeight:44.1,wallWeight:21.5,elasticS:22.4,I:121.45},
   {name:"SZ-350",width:24.5,height:10.75,thickness:0.35,pileWeight:45.3,wallWeight:22.1,elasticS:22.9,I:124.62},
   {name:"SZ-375",width:24.5,height:10.75,thickness:0.375,pileWeight:48.6,wallWeight:23.5,elasticS:24.5,I:133.55},
-];
-const __SZHW__=[
   {name:"SZ-222",width:22,height:12.25,thickness:0.312,pileWeight:40.4,wallWeight:22.1,elasticS:26.7,I:163.09},
   {name:"SZ-24",width:22,height:12.25,thickness:0.34,pileWeight:44.1,wallWeight:24.1,elasticS:29,I:177.52},
   {name:"SZ-25",width:22,height:12.25,thickness:0.35,pileWeight:45.3,wallWeight:24.8,elasticS:29.7,I:181.91},
@@ -942,10 +936,7 @@ const DATA = {
   SCZKZ: {label:"SCZ / SKZ (cold formed)", parent:"Sheet Piles", cols:["name","width","height","thickness","area","pileWeight","wallWeight","elasticS","I"], rows:__SCZKZ__, labels:SHEETPILE_LABELS},
   SKLKS: {label:"SKL / SKS (cold formed)", parent:"Sheet Piles", cols:["name","width","height","thickness","area","pileWeight","wallWeight","elasticS","I"], rows:__SKLKS__, labels:SHEETPILE_LABELS},
   LZ:    {label:"LZ Zee Lightweight (cold formed)", parent:"Sheet Piles", cols:["name","width","height","thickness","pileWeight","wallWeight","elasticS","I"], rows:__LZ__, labels:SHEETPILE_LABELS},
-  SZIL:  {label:"SZ Intermediate Lightweight (cold formed)", parent:"Sheet Piles", cols:["name","width","height","thickness","pileWeight","wallWeight","elasticS","I"], rows:__SZIL__, labels:SHEETPILE_LABELS},
-  SZIH:  {label:"SZ Intermediate Heavyweight (cold formed)", parent:"Sheet Piles", cols:["name","width","height","thickness","pileWeight","wallWeight","elasticS","I"], rows:__SZIH__, labels:SHEETPILE_LABELS},
-  SZMH:  {label:"SZ Mid-Heavy (cold formed)", parent:"Sheet Piles", cols:["name","width","height","thickness","pileWeight","wallWeight","elasticS","I"], rows:__SZMH__, labels:SHEETPILE_LABELS},
-  SZHW:  {label:"SZ Heavyweight (cold formed)", parent:"Sheet Piles", cols:["name","width","height","thickness","pileWeight","wallWeight","elasticS","I"], rows:__SZHW__, labels:SHEETPILE_LABELS},
+  SZ:    {label:"SZ, all weight classes (cold formed)", parent:"Sheet Piles", cols:["name","width","height","thickness","pileWeight","wallWeight","elasticS","I"], rows:__SZ__, labels:SHEETPILE_LABELS},
   MSZ:   {label:"MSZ Mega Zee, all tiers (cold formed)", parent:"Sheet Piles", cols:["name","width","height","thickness","pileWeight","wallWeight","elasticS","I"], rows:__MSZ__, labels:SHEETPILE_LABELS},
   HSSQ:  {label:"Square HSS", parent:"Rectangular HSS", cols:["name","weight","thickness","area","I","S","r","Z"], rows:__HSSQ__},
   HSSR:  {label:"Rectangular HSS", parent:"Rectangular HSS", cols:["name","depth","width","thickness","weight","area","Ix","Sx","Iy","Sy","surfaceArea"], rows:__HSSR__},
@@ -1044,8 +1035,7 @@ const CATEGORIES = [
   {key:"sheetpiles", nm:"Sheet Piles", sub:"Hot rolled + cold formed", subs:[
       {key:"PZ", label:"PZ"}, {key:"PZC", label:"PZC"}, {key:"AZ", label:"AZ"}, {key:"NZ", label:"NZ"},
       {key:"SCZKZ", label:"SCZ/SKZ"}, {key:"SKLKS", label:"SKL/SKS"},
-      {key:"LZ", label:"LZ"}, {key:"SZIL", label:"SZ Int. Light"}, {key:"SZIH", label:"SZ Int. Heavy"},
-      {key:"SZMH", label:"SZ Mid-Heavy"}, {key:"SZHW", label:"SZ Heavy"}, {key:"MSZ", label:"MSZ"}
+      {key:"LZ", label:"LZ"}, {key:"SZ", label:"SZ"}, {key:"MSZ", label:"MSZ"}
     ], icon:"i-sp"},
   {key:"pipe", nm:"Pipe", sub:"Round pipe", subs:[{key:"PIPE", label:"Pipe"}], icon:"i-pipe"},
   {key:"tee", nm:"Tee", sub:"WT / MT / ST", subs:[
