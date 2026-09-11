@@ -34,6 +34,8 @@
   --danger:#B2402E;
 }
 *{box-sizing:border-box;}
+input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
+input[type=number]{-moz-appearance:textfield;appearance:textfield;}
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%;}
 body{margin:0;background:var(--paper);color:var(--ink);font-family:'IBM Plex Sans',sans-serif;-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain;}
 .app{max-width:1100px;margin:0 auto;padding:0 20px 60px;}
@@ -183,6 +185,26 @@ td.nm{font-weight:500;color:var(--steel-dark);}
 .load-total{font-size:12.5px;color:var(--ink-soft);margin:2px 0 6px;}
 .load-total.line2{margin-bottom:20px;}
 
+.support-fields{display:flex;flex-wrap:wrap;gap:16px;margin-top:4px;}
+.support-fields .field{flex:1;min-width:140px;margin-bottom:0;}
+.custom-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:28px;margin-bottom:8px;}
+.load-row-item{display:grid;grid-template-columns:repeat(auto-fit,minmax(88px,1fr));gap:6px;align-items:center;margin-bottom:8px;background:var(--paper-2);border:1px solid var(--line);padding:8px;}
+.load-row-item select,.load-row-item input{width:100%;border:1.5px solid var(--line);background:var(--white);padding:7px 8px;font-size:12.5px;font-family:'IBM Plex Mono';color:var(--ink);outline:none;}
+.load-row-item select:focus,.load-row-item input:focus{border-color:var(--steel);}
+.lr-remove{background:var(--white);border:1.5px solid var(--line);color:var(--rivet);width:100%;height:34px;cursor:pointer;font-size:16px;line-height:1;}
+.lr-remove:hover{border-color:var(--rivet);background:var(--rivet-soft);}
+.load-factors-row{display:flex;gap:10px;}
+.load-factors-row .field{flex:1;margin-bottom:0;}
+.chart-toggles{margin:10px 0 16px;}
+.chart-card{margin-bottom:14px;}
+.chart-card svg{width:100%;height:auto;display:block;}
+.chart-line{stroke:var(--steel);}
+.chart-peak-dot{fill:var(--rivet);}
+.chart-peak-label{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:500;fill:var(--steel-dark);}
+.cat-dead{fill:var(--steel-dark);stroke:var(--steel-dark);}
+.cat-snow{fill:var(--cold-formed);stroke:var(--cold-formed);}
+.cat-live{fill:var(--hot-rolled);stroke:var(--hot-rolled);}
+
 footer.app-footer{margin-top:40px;padding-top:14px;border-top:1px solid var(--line);font-size:11.5px;line-height:1.5;color:var(--mill);}
 .powered-by{margin-top:16px;display:flex;flex-direction:column;align-items:center;gap:6px;}
 .powered-by span{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--mill);}
@@ -224,7 +246,7 @@ footer.app-footer{margin-top:40px;padding-top:14px;border-top:1px solid var(--li
   footer.app-footer a[href="privacy.html"]{display:none !important;}
   body{background:#fff;font-size:11px;}
   .app{max-width:none;padding:0;margin:0;}
-  .beam-diagram-card, .result-tile, .beam-card, .propgrid, .sheet{
+  .beam-diagram-card, .result-tile, .beam-card, .propgrid, .sheet, .chart-card{
     -webkit-print-color-adjust:exact;print-color-adjust:exact;
     break-inside:avoid;page-break-inside:avoid;
   }
@@ -1097,6 +1119,30 @@ const DATA = {
   ST: {label:"ST-shapes", parent:"Tee", cols:["name","depth","bf","tf","tw","area","Sx","Sy"], rows:__ST__},
 };
 
+/* Doubly-symmetric shapes (square HSS, round HSS/pipe, equal-leg angles) only ever
+   stored one moment of inertia (I) since Ix=Iy by symmetry — but the beam calculator's
+   orientation picker looks for Ix/Iy/Sx/Sy specifically, so these shapes never showed
+   up in its search. Backfill those fields here rather than touching every call site.
+   Round HSS has no S at all; S = I/c = 2I/od is exact for a circular tube (no fillets,
+   no approximation) — verified it reproduces __PIPE__'s already-tabulated S values
+   exactly. Equal-leg angles have neither Sx nor a centroid location on file; both are
+   derived from the standard two-rectangle decomposition of an angle and cross-checked
+   against published AISC values (L4X4X1/2, L6X6X1/2) to within 0.3%. */
+__HSSQ__.forEach(r=>{ r.Ix=r.I; r.Iy=r.I; r.Sx=r.S; r.Sy=r.S; });
+__PIPE__.forEach(r=>{ r.Ix=r.I; r.Iy=r.I; r.Sx=r.S; r.Sy=r.S; });
+__HSSC__.forEach(r=>{
+  r.Ix=r.I; r.Iy=r.I;
+  r.S = Math.round((2*r.I/r.od)*1000)/1000;
+  r.Sx=r.S; r.Sy=r.S;
+});
+__L__.forEach(r=>{
+  const b=r.depth, t=r.thickness;
+  const ybar = (b*b + b*t - t*t) / (2*(2*b - t));
+  r.Iy = r.Ix;
+  r.Sx = Math.round((r.Ix/(b-ybar))*1000)/1000;
+  r.Sy = r.Sx;
+});
+
 /* Per-category "All" view: unified column set plus a map of per-sub row
    transforms for shapes whose native fields need aliasing or deriving to
    line up with that union (e.g. equal-leg angles have no separate "width"
@@ -1205,6 +1251,7 @@ const BEAM_TOOLS = [
   {key:"simple-pt",  nm:"Simple Beam", sub:"Point Load", icon:"i-beam-pt"},
   {key:"cant-udl",   nm:"Cantilever",  sub:"Uniformly Distributed Load", icon:"i-cantilever-udl"},
   {key:"cant-pt",    nm:"Cantilever",  sub:"Point Load", icon:"i-cantilever-pt"},
+  {key:"custom",     nm:"Custom",      sub:"Define Your Own Load Case", icon:"i-beam-custom"},
 ];
 
 const ICONS = {
@@ -1220,6 +1267,7 @@ const ICONS = {
   "i-beam-pt":'<svg viewBox="0 0 48 48" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="24" y1="8" x2="24" y2="22"/><line x1="21" y1="19" x2="24" y2="22"/><line x1="27" y1="19" x2="24" y2="22"/><line x1="8" y1="24" x2="40" y2="24" stroke-width="3.5"/><path d="M8 24l-5 9h10z"/><path d="M40 24l-5 9h10z"/><line x1="1" y1="35" x2="13" y2="35"/><line x1="33" y1="35" x2="45" y2="35"/></svg>',
   "i-cantilever-udl":'<svg viewBox="0 0 48 48" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="10" y1="10" x2="10" y2="22"/><line x1="7" y1="19" x2="10" y2="22"/><line x1="13" y1="19" x2="10" y2="22"/><line x1="20" y1="10" x2="20" y2="22"/><line x1="17" y1="19" x2="20" y2="22"/><line x1="23" y1="19" x2="20" y2="22"/><line x1="30" y1="10" x2="30" y2="22"/><line x1="27" y1="19" x2="30" y2="22"/><line x1="33" y1="19" x2="30" y2="22"/><line x1="8" y1="24" x2="40" y2="24" stroke-width="3.5"/><line x1="8" y1="12" x2="8" y2="36" stroke-width="3"/><line x1="4" y1="16" x2="8" y2="20"/><line x1="4" y1="22" x2="8" y2="26"/><line x1="4" y1="28" x2="8" y2="32"/></svg>',
   "i-cantilever-pt":'<svg viewBox="0 0 48 48" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="38" y1="9" x2="38" y2="22"/><line x1="35" y1="19" x2="38" y2="22"/><line x1="41" y1="19" x2="38" y2="22"/><line x1="8" y1="24" x2="40" y2="24" stroke-width="3.5"/><line x1="8" y1="12" x2="8" y2="36" stroke-width="3"/><line x1="4" y1="16" x2="8" y2="20"/><line x1="4" y1="22" x2="8" y2="26"/><line x1="4" y1="28" x2="8" y2="32"/></svg>',
+  "i-beam-custom":'<svg viewBox="0 0 48 48" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="14" y1="9" x2="14" y2="22"/><line x1="11" y1="19" x2="14" y2="22"/><line x1="17" y1="19" x2="14" y2="22"/><line x1="8" y1="24" x2="40" y2="24" stroke-width="3.5"/><path d="M8 24l-5 9h10z"/><circle cx="34" cy="30" r="4"/><line x1="30" y1="34" x2="38" y2="34"/><line x1="30" y1="9" x2="30" y2="20" stroke-dasharray="2.5,2.5"/></svg>',
 };
 
 let state = {view:"home", cat:null, sub:null, member:null, filters:{}, search:"", filtersOpen:false, sortCol:null, sortDir:null, beamTool:null, beamCalc:null};
@@ -1585,15 +1633,29 @@ const STEEL_E_KSI = 29000;
 function openBeamCalc(key){
   state.view = "beamcalc";
   state.beamTool = key;
-  state.beamCalc = {
-    dl:"", sl:"", ll:"", span:"", loc:"", beam:null, axis:"x",
-    dlFactor:1.0, slFactor:1.0, llFactor:1.0,
-    fy:50, allowFactor:0.66
-  };
+  const common = {beam:null, axis:"x", dlFactor:1.0, slFactor:1.0, llFactor:1.0, fy:50, allowFactor:0.66};
+  if(key==="custom"){
+    state.beamCalc = {...common,
+      length:"", supportType:"simple", posA:"", posB:"",
+      loads:[{id:1, category:"dead", type:"point", mag:"", x:"", x1:"", x2:""}],
+      nextLoadId:2,
+      charts:{load:true, shear:true, moment:true, deflection:true}
+    };
+  } else {
+    state.beamCalc = {...common, dl:"", sl:"", ll:"", span:"", loc:""};
+  }
   render();
 }
 
+/* refreshResults() dispatches to whichever tool's results routine is active; every
+   input handler calls this rather than updateBeamResults()/updateCustomResults() directly
+   so the same wiring works for both the fixed-formula tools and the custom tool. */
+function refreshResults(){
+  if(state.beamTool==="custom") updateCustomResults(); else updateBeamResults();
+}
+
 function renderBeamCalc(){
+  if(state.beamTool==="custom") return renderCustomBeamCalc();
   const def = BEAM_TOOL_DEFS[state.beamTool];
   const isPoint = def.loadKind==="point";
   const unit = isPoint ? "lb" : "plf";
@@ -1657,21 +1719,29 @@ function renderBeamCalc(){
 
 function wireBeamCalc(){
   const dl=document.getElementById("bcDL"), sl=document.getElementById("bcSL"),
-        ll=document.getElementById("bcLL"), span=document.getElementById("bcSpan"),
-        dlf=document.getElementById("bcDLf"), slf=document.getElementById("bcSLf"), llf=document.getElementById("bcLLf"),
-        fy=document.getElementById("bcFy"), allowFactor=document.getElementById("bcAllowFactor");
+        ll=document.getElementById("bcLL"), span=document.getElementById("bcSpan");
   dl.oninput = ()=>{ state.beamCalc.dl = dl.value; updateBeamResults(); };
   sl.oninput = ()=>{ state.beamCalc.sl = sl.value; updateBeamResults(); };
   ll.oninput = ()=>{ state.beamCalc.ll = ll.value; updateBeamResults(); };
   span.oninput = ()=>{ state.beamCalc.span = span.value; redrawDiagram(); updateBeamResults(); };
-  dlf.oninput = ()=>{ state.beamCalc.dlFactor = dlf.value; updateBeamResults(); };
-  slf.oninput = ()=>{ state.beamCalc.slFactor = slf.value; updateBeamResults(); };
-  llf.oninput = ()=>{ state.beamCalc.llFactor = llf.value; updateBeamResults(); };
-  fy.oninput = ()=>{ state.beamCalc.fy = fy.value; updateBeamResults(); };
-  allowFactor.oninput = ()=>{ state.beamCalc.allowFactor = allowFactor.value; updateBeamResults(); };
 
   const loc = document.getElementById("bcLoc");
   if(loc) loc.oninput = ()=>{ state.beamCalc.loc = loc.value; redrawDiagram(); updateBeamResults(); };
+
+  wireCommonCalcFields(updateBeamResults);
+}
+
+/* Shared wiring for the load-factor / yield-strength / allowable-stress inputs and the
+   beam type-ahead search — identical across every tool (fixed-formula or custom), so
+   each render() just calls this with whichever refresh callback applies. */
+function wireCommonCalcFields(onChange){
+  const dlf=document.getElementById("bcDLf"), slf=document.getElementById("bcSLf"), llf=document.getElementById("bcLLf"),
+        fy=document.getElementById("bcFy"), allowFactor=document.getElementById("bcAllowFactor");
+  dlf.oninput = ()=>{ state.beamCalc.dlFactor = dlf.value; onChange(); };
+  slf.oninput = ()=>{ state.beamCalc.slFactor = slf.value; onChange(); };
+  llf.oninput = ()=>{ state.beamCalc.llFactor = llf.value; onChange(); };
+  fy.oninput = ()=>{ state.beamCalc.fy = fy.value; onChange(); };
+  allowFactor.oninput = ()=>{ state.beamCalc.allowFactor = allowFactor.value; onChange(); };
 
   const box = document.getElementById("beamSearchBox");
   const sugg = document.getElementById("beamSuggest");
@@ -1702,6 +1772,16 @@ function beamSelfWeight(row){
   return m ? parseFloat(m[1]) : 0;
 }
 
+/* Most shapes store an overall depth; round sections (pipe/round HSS) store an outer
+   diameter (od) instead, and square HSS stores neither — its size is only in the name
+   (e.g. "HSS6X6X1/2"), so that's the last-resort fallback. */
+function beamHeight(row){
+  if(row.depth!=null) return row.depth;
+  if(row.od!=null) return row.od;
+  const m = row.name.match(/^[A-Z]+([\d.]+)X/);
+  return m ? parseFloat(m[1]) : "—";
+}
+
 function selectBeamForCalc(subKey, name){
   const sub = DATA[subKey];
   const row = sub.rows.find(r=>r.name===name);
@@ -1709,13 +1789,13 @@ function selectBeamForCalc(subKey, name){
   document.getElementById("beamSearchBox").value = name;
   document.getElementById("beamSuggest").classList.remove("open");
   renderBeamCard();
-  updateBeamResults();
+  refreshResults();
 }
 
 function setBeamAxis(axis){
   state.beamCalc.axis = axis;
   renderBeamCard();
-  updateBeamResults();
+  refreshResults();
 }
 
 function renderBeamCard(){
@@ -1727,7 +1807,7 @@ function renderBeamCard(){
   card.innerHTML = `
     <div class="bc-name">${b.name} <span style="color:var(--mill);font-weight:400;">— ${b._cat}</span></div>
     <div class="bc-props">
-      <div><span class="k">Height</span><span class="v">${b.depth} in</span></div>
+      <div><span class="k">Height</span><span class="v">${beamHeight(b)} in</span></div>
       <div><span class="k">Weight</span><span class="v">${beamSelfWeight(b)} plf</span></div>
       <div><span class="k">Moment of inertia</span><span class="v">${I} in⁴</span></div>
     </div>
@@ -1739,7 +1819,8 @@ function renderBeamCard(){
 
 function redrawDiagram(){
   const card = document.querySelector(".beam-diagram-card");
-  if(card) card.innerHTML = BEAM_TOOL_DEFS[state.beamTool].diagram();
+  if(!card) return;
+  card.innerHTML = state.beamTool==="custom" ? customBeamSVG() : BEAM_TOOL_DEFS[state.beamTool].diagram();
 }
 
 /* Resolves a point-load location (ft from the reference end) against the span: a typed
@@ -1843,8 +1924,22 @@ function pointLoadSVG(x, yTop, yBottom){
     <text x="${x}" y="${yTop-8}" text-anchor="middle" class="load-label">P (lb)</text>`;
 }
 
-function beamDimensionSVG(xL, xR){
-  const span = state.beamCalc && state.beamCalc.span ? state.beamCalc.span : "—";
+/* A linearly increasing (triangular) distributed load: zero-height arrow at xL growing
+   to full height at xR, with a sloped line across the tops standing in for q(x). */
+function triLoadSVG(xL, xR, yTopFull, yBottom, n=9){
+  const arrows = Array.from({length:n},(_,i)=>{
+    const t = i/(n-1);
+    const x = xL + t*(xR-xL);
+    const yTop = yBottom - t*(yBottom-yTopFull);
+    return `<line class="steel-stroke" x1="${x}" y1="${yTop}" x2="${x}" y2="${yBottom}" stroke-width="2" marker-end="url(#udlArrow)"/>`;
+  }).join("");
+  return `<line class="steel-stroke" x1="${xL}" y1="${yBottom}" x2="${xR}" y2="${yTopFull}" stroke-width="2"/>
+    ${arrows}
+    <text x="${xR}" y="${yTopFull-10}" text-anchor="end" class="load-label">w (plf)</text>`;
+}
+
+function beamDimensionSVG(xL, xR, spanOverride){
+  const span = spanOverride!=null ? spanOverride : (state.beamCalc && state.beamCalc.span ? state.beamCalc.span : "—");
   return `
     <line class="dim-stroke" x1="${xL}" y1="130" x2="${xL}" y2="145" stroke-width="1"/>
     <line class="dim-stroke" x1="${xR}" y1="130" x2="${xR}" y2="145" stroke-width="1"/>
@@ -1935,27 +2030,26 @@ const BEAM_TOOL_DEFS = {
     diagram: simpleBeamPointSVG,
     compute(ctx){
       const {dl,sl,ll,span,loc,dlFactor,slFactor,llFactor,selfWt,I} = ctx;
-      const Lin = span*12;
-      const wFactored = dlFactor*selfWt;
-      const Mudl = wFactored*span*span*0.0015;
-      const Dudl = (5*(selfWt/12000)*Math.pow(Lin,4))/(384*STEEL_E_KSI*I);
-
       const a = resolvePointLocation(span, loc, 0.5);
-      const bSeg = span - a;
-      const aIn = a*12, bIn = bSeg*12;
-      const bMin = Math.min(aIn, bIn);
-
       const Pservice = dl+sl+ll;
       const Pfactored = dlFactor*dl + slFactor*sl + llFactor*ll;
-      // General off-center point load: M = Pab/L at the load; max deflection uses the
-      // standard simple-beam point-load formula with b = the shorter segment.
-      const Mpt = Pfactored*a*bSeg/span*0.012;
-      const Dpt = ((Pservice/1000)*bMin*Math.pow(Lin*Lin - bMin*bMin, 1.5)) / (9*Math.sqrt(3)*Lin*STEEL_E_KSI*I);
+      const wFactoredSelf = dlFactor*selfWt;
+      // The self-weight UDL peaks at midspan but the point load peaks at x=a — for an
+      // off-center load those aren't the same station, so the true combined maximum
+      // (and its location) has to come from the actual M(x)/y(x) curves, not from
+      // adding each load's own separately-located maximum. Reuse the custom-load-case
+      // engine (built for exactly this kind of superposition) as a 2-load beam.
+      const bc = {length:span, supportType:"simple", posA:0, posB:span, selfWt, dlFactor, slFactor, llFactor,
+        loads:[{category:"dead",type:"point",mag:dl,x:a},{category:"snow",type:"point",mag:sl,x:a},{category:"live",type:"point",mag:ll,x:a}]};
+      const passF = computeCustomBeamPass(bc, I, true);
+      const passS = computeCustomBeamPass(bc, I, false);
+      let Mmax=0; (passF?passF.M:[]).forEach(m=>{ if(Math.abs(m)>Math.abs(Mmax)) Mmax=m; });
+      let defl=0; (passS?passS.y:[]).forEach(d=>{ if(Math.abs(d)>Math.abs(defl)) defl=d; });
 
-      return { Mmax: Mudl+Mpt, defl: Dudl+Dpt,
+      return { Mmax: Math.abs(Mmax), defl: Math.abs(defl),
         serviceLine: `Service loads (deflection) — self-weight w = ${selfWt} plf; point load P = ${Pservice.toFixed(1)} lb at ${a.toFixed(2)} ft from the left support (D + S + L).`,
-        factoredLine: `Factored loads (moment &amp; stress) — self-weight w = ${wFactored.toFixed(1)} plf; point load P = ${Pfactored.toFixed(1)} lb — ${dlFactor}×D + ${slFactor}×S + ${llFactor}×L.`,
-        formulaLine: `Formulas — Max moment: M = wL²/8 + Pab/L (a, b = distances from the load to each support). Max deflection: Δ = 5wL⁴/(384EI) + off-center point-load formula, E = ${STEEL_E_KSI.toLocaleString()} ksi.`
+        factoredLine: `Factored loads (moment &amp; stress) — self-weight w = ${wFactoredSelf.toFixed(1)} plf; point load P = ${Pfactored.toFixed(1)} lb — ${dlFactor}×D + ${slFactor}×S + ${llFactor}×L.`,
+        formulaLine: `Computed numerically (station sampling) rather than by simple superposition of each load's own maximum, since the self-weight UDL peaks at midspan while the point load peaks at a — deflection by double-integrating M/EI, E = ${STEEL_E_KSI.toLocaleString()} ksi.`
       };
     }
   },
@@ -1985,29 +2079,553 @@ const BEAM_TOOL_DEFS = {
     diagram: cantileverPointSVG,
     compute(ctx){
       const {dl,sl,ll,span,loc,dlFactor,slFactor,llFactor,selfWt,I} = ctx;
-      const Lin = span*12;
-      const wFactored = dlFactor*selfWt;
-      const Mudl = wFactored*span*span*0.006;
-      const Dudl = ((selfWt/12000)*Math.pow(Lin,4))/(8*STEEL_E_KSI*I);
-
       const a = resolvePointLocation(span, loc, 1);
-      const aIn = a*12;
-
       const Pservice = dl+sl+ll;
       const Pfactored = dlFactor*dl + slFactor*sl + llFactor*ll;
-      // Moment at the fixed end is P times the load's arm from the wall; deflection at
-      // the (still-governing) free end uses the standard cantilever point-load formula.
-      const Mpt = Pfactored*a*0.012;
-      const Dpt = ((Pservice/1000)*aIn*aIn*(3*Lin - aIn)) / (6*STEEL_E_KSI*I);
+      const wFactoredSelf = dlFactor*selfWt;
+      // For a cantilever, both the self-weight UDL and any point load are maximized at
+      // the same place (moment at the fixed end, deflection at the free end), so simple
+      // superposition of the two individual maxima IS exact here — unlike the simple-
+      // beam case. Still route through the shared numerical engine for consistency and
+      // so the moment/shear/deflection charts stay in sync with this result.
+      const bc = {length:span, supportType:"cantilever", selfWt, dlFactor, slFactor, llFactor,
+        loads:[{category:"dead",type:"point",mag:dl,x:a},{category:"snow",type:"point",mag:sl,x:a},{category:"live",type:"point",mag:ll,x:a}]};
+      const passF = computeCustomBeamPass(bc, I, true);
+      const passS = computeCustomBeamPass(bc, I, false);
+      let Mmax=0; (passF?passF.M:[]).forEach(m=>{ if(Math.abs(m)>Math.abs(Mmax)) Mmax=m; });
+      let defl=0; (passS?passS.y:[]).forEach(d=>{ if(Math.abs(d)>Math.abs(defl)) defl=d; });
 
-      return { Mmax: Mudl+Mpt, defl: Dudl+Dpt,
+      return { Mmax: Math.abs(Mmax), defl: Math.abs(defl),
         serviceLine: `Service loads (deflection) — self-weight w = ${selfWt} plf; point load P = ${Pservice.toFixed(1)} lb at ${a.toFixed(2)} ft from the fixed end (D + S + L).`,
-        factoredLine: `Factored loads (moment &amp; stress) — self-weight w = ${wFactored.toFixed(1)} plf; point load P = ${Pfactored.toFixed(1)} lb — ${dlFactor}×D + ${slFactor}×S + ${llFactor}×L.`,
+        factoredLine: `Factored loads (moment &amp; stress) — self-weight w = ${wFactoredSelf.toFixed(1)} plf; point load P = ${Pfactored.toFixed(1)} lb — ${dlFactor}×D + ${slFactor}×S + ${llFactor}×L.`,
         formulaLine: `Formulas — Max moment (at fixed end): M = wL²/2 + Pa (a = distance from fixed end). Max deflection (at free end): Δ = wL⁴/(8EI) + Pa²(3L−a)/(6EI), E = ${STEEL_E_KSI.toLocaleString()} ksi.`
       };
     }
   }
 };
+
+/* ==========================================================================
+   Custom Load Case: arbitrary supports + an open-ended list of loads.
+   Unlike the four fixed-formula tools above, this one runs a small numerical
+   beam-analysis engine (reactions via statics, shear/moment by direct
+   summation over every load, deflection by double-integrating M/EI and
+   solving for the two integration constants from the support boundary
+   conditions) so it isn't limited to a single hardcoded load case.
+   ========================================================================== */
+
+function renderCustomBeamCalc(){
+  const bc = state.beamCalc;
+  const isSimple = bc.supportType==="simple";
+  app.innerHTML = header() + `
+    <div class="eyebrow">Beam Diagrams</div>
+    <div class="page-title-row">
+      <h1 class="page-title">Custom Load Case</h1>
+      <button class="btn no-print" onclick="window.print()">Print results</button>
+    </div>
+
+    <div class="beam-diagram-card">${customBeamSVG()}</div>
+
+    <div class="subhead" style="margin-top:0;">Supports</div>
+    <div class="axis-toggle" style="margin-bottom:10px;">
+      <div class="pill ${isSimple?'active':''}" onclick="setSupportType('simple')">Simply Supported</div>
+      <div class="pill ${!isSimple?'active':''}" onclick="setSupportType('cantilever')">Cantilever (fixed at left)</div>
+    </div>
+    <div class="support-fields">
+      <div class="field"><label>Beam length, L (ft)</label><input id="ccLength" type="number" step="any" min="0" placeholder="0" value="${bc.length}"></div>
+      ${isSimple ? `
+        <div class="field"><label>Support A location (ft)</label><input id="ccPosA" type="number" step="any" min="0" placeholder="0" value="${bc.posA}"></div>
+        <div class="field"><label>Support B location (ft)</label><input id="ccPosB" type="number" step="any" min="0" placeholder="L" value="${bc.posB}"></div>
+      ` : ""}
+    </div>
+
+    <div class="custom-grid" style="margin-top:22px;">
+      <div class="calc-col">
+        <div class="subhead">Loads</div>
+        <div id="loadRows">${renderLoadRows()}</div>
+        <button class="btn ghost" onclick="addLoadRow()">+ Add load</button>
+      </div>
+      <div class="calc-col">
+        <div class="subhead">Beam</div>
+        <div class="beam-pick-wrap search-wrap">
+          <input id="beamSearchBox" class="search-input mono" placeholder="Type a designation, e.g. W12X26" autocomplete="off">
+          <div id="beamSuggest" class="suggest"></div>
+        </div>
+        <div class="beam-card" id="beamCard"><div class="beam-empty">No beam selected yet.</div></div>
+
+        <div class="subhead" style="margin-top:18px;">Load Factors</div>
+        <div class="load-factors-row">
+          <div class="field"><label>Dead</label><input id="bcDLf" type="number" step="any" min="0" value="${bc.dlFactor}"></div>
+          <div class="field"><label>Snow</label><input id="bcSLf" type="number" step="any" min="0" value="${bc.slFactor}"></div>
+          <div class="field"><label>Live</label><input id="bcLLf" type="number" step="any" min="0" value="${bc.llFactor}"></div>
+        </div>
+
+        <div class="subhead" style="margin-top:18px;">Design Criteria</div>
+        <div class="field"><label>Yield strength, Fy (ksi)</label><input id="bcFy" type="number" step="any" min="0" value="${bc.fy}"></div>
+        <div class="field"><label>Allowable stress factor (× Fy)</label><input id="bcAllowFactor" type="number" step="any" min="0" max="1" value="${bc.allowFactor}"></div>
+      </div>
+    </div>
+
+    <div class="eyebrow">Results</div>
+    <div id="beamResults"></div>
+
+    <div class="eyebrow">Diagrams</div>
+    <div class="axis-toggle chart-toggles">
+      <div class="pill ${bc.charts.load?'active':''}" data-chart="load" onclick="toggleChart('load')">Load</div>
+      <div class="pill ${bc.charts.shear?'active':''}" data-chart="shear" onclick="toggleChart('shear')">Shear</div>
+      <div class="pill ${bc.charts.moment?'active':''}" data-chart="moment" onclick="toggleChart('moment')">Moment</div>
+      <div class="pill ${bc.charts.deflection?'active':''}" data-chart="deflection" onclick="toggleChart('deflection')">Deflection</div>
+    </div>
+    <div id="beamCharts"></div>
+
+    <button class="backlink" onclick="goHome()">&larr; Home</button>
+  ` + footer();
+  wireHeader();
+  wireCustomBeamCalc();
+  updateCustomResults();
+}
+
+function wireCustomBeamCalc(){
+  const length = document.getElementById("ccLength");
+  length.oninput = ()=>{ state.beamCalc.length = length.value; redrawDiagram(); refreshResults(); };
+  if(state.beamCalc.supportType==="simple"){
+    const posA=document.getElementById("ccPosA"), posB=document.getElementById("ccPosB");
+    posA.oninput = ()=>{ state.beamCalc.posA = posA.value; redrawDiagram(); refreshResults(); };
+    posB.oninput = ()=>{ state.beamCalc.posB = posB.value; redrawDiagram(); refreshResults(); };
+  }
+  wireCommonCalcFields(refreshResults);
+}
+
+function setSupportType(type){
+  state.beamCalc.supportType = type;
+  renderBeamCalc();
+}
+
+function renderLoadRows(){
+  return state.beamCalc.loads.map((row,i)=>loadRowHTML(row,i)).join("");
+}
+
+function loadRowHTML(row, i){
+  const isUdl = row.type==="udl";
+  const isTri = row.type==="tri";
+  const isDist = isUdl || isTri;
+  const magPlaceholder = isTri ? "peak w (plf)" : isUdl ? "w (plf)" : "P (lb)";
+  return `<div class="load-row-item">
+    <select data-i="${i}" data-f="category" onchange="updateLoadField(this)">
+      <option value="dead" ${row.category==='dead'?'selected':''}>Dead</option>
+      <option value="snow" ${row.category==='snow'?'selected':''}>Snow</option>
+      <option value="live" ${row.category==='live'?'selected':''}>Live</option>
+    </select>
+    <select data-i="${i}" data-f="type" onchange="changeLoadType(this)">
+      <option value="point" ${row.type==='point'?'selected':''}>Point Load</option>
+      <option value="udl" ${row.type==='udl'?'selected':''}>Distributed Load</option>
+      <option value="tri" ${row.type==='tri'?'selected':''}>Increasing Distributed Load</option>
+    </select>
+    <input data-i="${i}" data-f="mag" type="number" step="any" placeholder="${magPlaceholder}" value="${row.mag}" oninput="updateLoadField(this)">
+    ${isDist
+      ? `<input data-i="${i}" data-f="x1" type="number" step="any" placeholder="${isTri?'start, min (ft)':'start (ft)'}" value="${row.x1}" oninput="updateLoadField(this)">
+         <input data-i="${i}" data-f="x2" type="number" step="any" placeholder="${isTri?'stop, max (ft)':'end (ft)'}" value="${row.x2}" oninput="updateLoadField(this)">`
+      : `<input data-i="${i}" data-f="x" type="number" step="any" placeholder="location (ft)" value="${row.x}" oninput="updateLoadField(this)">`
+    }
+    <button class="lr-remove" onclick="removeLoadRow(${i})" title="Remove load">&times;</button>
+  </div>`;
+}
+
+function updateLoadField(el){
+  const i = +el.dataset.i, f = el.dataset.f;
+  state.beamCalc.loads[i][f] = el.value;
+  redrawDiagram();
+  refreshResults();
+}
+
+function changeLoadType(el){
+  const i = +el.dataset.i;
+  state.beamCalc.loads[i].type = el.value;
+  document.getElementById("loadRows").innerHTML = renderLoadRows();
+  redrawDiagram();
+  refreshResults();
+}
+
+function addLoadRow(){
+  const bc = state.beamCalc;
+  bc.loads.push({id: bc.nextLoadId++, category:"dead", type:"point", mag:"", x:"", x1:"", x2:""});
+  document.getElementById("loadRows").innerHTML = renderLoadRows();
+  redrawDiagram();
+  refreshResults();
+}
+
+function removeLoadRow(i){
+  state.beamCalc.loads.splice(i,1);
+  document.getElementById("loadRows").innerHTML = renderLoadRows();
+  redrawDiagram();
+  refreshResults();
+}
+
+function customBeamSVG(){
+  const xL=70, xR=570, yBeam=70;
+  const bc = state.beamCalc;
+  const Lft = parseFloat(bc.length)||0;
+  const toX = ft => Lft>0 ? xL + ft*(xR-xL)/Lft : xL;
+
+  let loadShapes = "";
+  (bc.loads||[]).forEach(row=>{
+    const mag = parseFloat(row.mag);
+    if(!(mag>0) || !(Lft>0)) return;
+    if(row.type==="udl"){
+      const x1=parseFloat(row.x1), x2=parseFloat(row.x2);
+      if(!(x2>x1)) return;
+      loadShapes += udlLoadSVG(toX(x1), toX(x2), 30, 62);
+    } else if(row.type==="tri"){
+      const x1=parseFloat(row.x1), x2=parseFloat(row.x2);
+      if(!(x2>x1)) return;
+      loadShapes += triLoadSVG(toX(x1), toX(x2), 30, 62);
+    } else {
+      const x=parseFloat(row.x);
+      if(!(x>=0)) return;
+      loadShapes += pointLoadSVG(toX(x), 18, 62);
+    }
+  });
+
+  let supportShapes;
+  if(bc.supportType==="cantilever"){
+    supportShapes = fixedSupportSVG(xL, yBeam);
+  } else {
+    const posA = parseFloat(bc.posA), posB = parseFloat(bc.posB);
+    const aFt = Number.isFinite(posA) ? posA : 0;
+    const bFt = Number.isFinite(posB) ? posB : Lft;
+    supportShapes = pinRollerSupportsSVG(toX(aFt), toX(bFt), yBeam);
+  }
+
+  return `<svg viewBox="0 0 640 170" xmlns="http://www.w3.org/2000/svg">
+    ${beamSvgDefs()}
+    ${loadShapes}
+    <line class="beam-line" x1="${xL}" y1="${yBeam}" x2="${xR}" y2="${yBeam}" stroke-width="6" stroke-linecap="square"/>
+    ${supportShapes}
+    ${beamDimensionSVG(xL, xR, Lft>0?Lft:"—")}
+  </svg>`;
+}
+
+/* Linear interpolation of a sampled function (xs strictly increasing) at an arbitrary x. */
+function interpAt(xs, ys, x){
+  if(x<=xs[0]) return ys[0];
+  const last = xs.length-1;
+  if(x>=xs[last]) return ys[last];
+  for(let i=1;i<xs.length;i++){
+    if(xs[i]>=x){
+      const t = (x-xs[i-1])/(xs[i]-xs[i-1]);
+      return ys[i-1] + t*(ys[i]-ys[i-1]);
+    }
+  }
+  return ys[last];
+}
+
+/* Runs the beam analysis once, either with factored load magnitudes (for moment/stress,
+   a strength check) or service magnitudes (for deflection, a serviceability check) —
+   the same factored-vs-service split the fixed-formula tools use, just generalized to
+   an arbitrary list of loads. Sign convention: downward loads are positive; reactions
+   are stored with negative magnitude since they act upward. Returns station arrays for
+   shear V(x), moment M(x), and (service pass only) deflection y(x). */
+function computeCustomBeamPass(bc, I, factored){
+  const Lin = (parseFloat(bc.length)||0)*12;
+  if(!(Lin>0)) return null;
+  const n = 161;
+
+  const factorFor = cat=>{
+    if(!factored) return 1;
+    if(cat==="dead") return parseFloat(bc.dlFactor)||0;
+    if(cat==="snow") return parseFloat(bc.slFactor)||0;
+    return parseFloat(bc.llFactor)||0;
+  };
+
+  const items = [];
+  (bc.loads||[]).forEach(row=>{
+    const mag = parseFloat(row.mag);
+    if(!(mag>0)) return;
+    const factor = factorFor(row.category);
+    if(row.type==="point"){
+      const xFt = parseFloat(row.x);
+      if(!(xFt>=0) || xFt>Lin/12) return;
+      items.push({type:"point", x:xFt*12, mag:(mag/1000)*factor});
+    } else {
+      let x1=parseFloat(row.x1), x2=parseFloat(row.x2);
+      if(!(x1>=0) || !(x2>x1)) return;
+      x1=Math.max(0,x1); x2=Math.min(Lin/12,x2);
+      if(x2<=x1) return;
+      if(row.type==="tri") items.push({type:"tri", x1:x1*12, x2:x2*12, wPeak:(mag/12000)*factor});
+      else items.push({type:"udl", x1:x1*12, x2:x2*12, w:(mag/12000)*factor});
+    }
+  });
+  if(bc.selfWt>0){
+    items.push({type:"udl", x1:0, x2:Lin, w:(bc.selfWt/12000)*factorFor("dead")});
+  }
+  if(items.length===0) return null;
+
+  // Resultant force + centroid of a distributed item (udl: rectangle; tri: triangle,
+  // peak at x2, so its centroid sits 2/3 of the way from x1 to x2). Point loads are
+  // simple enough that callers handle them inline instead of through this helper.
+  function itemResultant(it){
+    if(it.type==="udl") return {f: it.w*(it.x2-it.x1), centroid: (it.x1+it.x2)/2};
+    const len = it.x2-it.x1;
+    return {f: it.wPeak*len/2, centroid: it.x1 + (2/3)*len};
+  }
+  // Shear/moment contribution of one item to a station at x, derived by direct
+  // integration of each load's intensity (point loads: a step in V, a kink in M; UDL:
+  // linear V / quadratic M within its span; the triangular ramp: quadratic V / cubic M
+  // within its span, from integrating q(x) = wPeak*(x-x1)/len twice).
+  function itemShear(it, x){
+    if(it.type==="point") return it.x<=x+1e-6 ? -it.mag : 0;
+    if(x<=it.x1) return 0;
+    const len = it.x2-it.x1;
+    if(it.type==="udl") return -it.w*(Math.min(x,it.x2)-it.x1);
+    if(x<it.x2){ const xi=x-it.x1; return -it.wPeak*xi*xi/(2*len); }
+    return -it.wPeak*len/2;
+  }
+  function itemMoment(it, x){
+    if(it.type==="point") return it.x<=x+1e-6 ? -it.mag*(x-it.x) : 0;
+    if(x<=it.x1) return 0;
+    const len = it.x2-it.x1;
+    if(it.type==="udl"){
+      if(x<it.x2) return -it.w*(x-it.x1)*(x-it.x1)/2;
+      return -it.w*len*(x-(it.x1+it.x2)/2);
+    }
+    if(x<it.x2){ const xi=x-it.x1; return -it.wPeak*xi*xi*xi/(6*len); }
+    const {f, centroid} = itemResultant(it);
+    return -f*(x-centroid);
+  }
+
+  let totalF=0, momentAboutZero=0;
+  items.forEach(it=>{
+    if(it.type==="point"){ totalF+=it.mag; momentAboutZero+=it.mag*it.x; }
+    else { const {f,centroid}=itemResultant(it); totalF+=f; momentAboutZero+=f*centroid; }
+  });
+
+  const reactions = [];
+  const concMoments = [];
+  let posA=0, posB=Lin;
+  if(bc.supportType==="cantilever"){
+    reactions.push({x:0, mag:-totalF});
+    concMoments.push({x:0, mag:-momentAboutZero});
+  } else {
+    posA = (parseFloat(bc.posA)||0)*12;
+    posB = (Number.isFinite(parseFloat(bc.posB)) ? parseFloat(bc.posB) : Lin/12)*12;
+    if(!(posB>posA)) return null;
+    let momentAboutA=0;
+    items.forEach(it=>{
+      if(it.type==="point"){ momentAboutA += it.mag*(it.x-posA); }
+      else { const {f,centroid}=itemResultant(it); momentAboutA += f*(centroid-posA); }
+    });
+    const RB = momentAboutA/(posB-posA);
+    const RA = totalF - RB;
+    reactions.push({x:posA, mag:-RA});
+    reactions.push({x:posB, mag:-RB});
+  }
+
+  const xs = []; for(let i=0;i<n;i++) xs.push(Lin*i/(n-1));
+
+  function shearAt(x){
+    let V=0;
+    reactions.forEach(r=>{ if(r.x<=x+1e-6) V += -r.mag; });
+    items.forEach(it=>{ V += itemShear(it,x); });
+    return V;
+  }
+  function momentAt(x){
+    let M=0;
+    reactions.forEach(r=>{ if(r.x<=x+1e-6) M += -r.mag*(x-r.x); });
+    items.forEach(it=>{ M += itemMoment(it,x); });
+    concMoments.forEach(cm=>{ if(cm.x<=x+1e-6) M += cm.mag; });
+    return M;
+  }
+
+  const V = xs.map(shearAt);
+  const M = xs.map(momentAt);
+
+  let y = null;
+  if(!factored && I>0){
+    const th0=[0], y0=[0];
+    for(let i=1;i<n;i++){
+      const dx = xs[i]-xs[i-1];
+      th0.push(th0[i-1] + (M[i-1]+M[i])/2*dx/(STEEL_E_KSI*I));
+      y0.push(y0[i-1] + (th0[i-1]+th0[i])/2*dx);
+    }
+    let C1, C2;
+    if(bc.supportType==="cantilever"){
+      C1 = -th0[0]; C2 = -y0[0];
+    } else {
+      const yA = interpAt(xs,y0,posA), yB = interpAt(xs,y0,posB);
+      C1 = -(yB-yA)/(posB-posA);
+      C2 = -yA - C1*posA;
+    }
+    y = xs.map((x,i)=> y0[i] + C1*x + C2);
+  }
+
+  return {xs, V, M, y};
+}
+
+function updateCustomResults(){
+  const box = document.getElementById("beamResults");
+  const bc = state.beamCalc;
+  const b = bc.beam;
+  const Lft = parseFloat(bc.length)||0;
+  const placeholder = msg => {
+    box.innerHTML = `<div class="results-grid">
+      <div class="result-tile"><div class="lbl">Max moment</div><div class="val">—<span class="unit">kip-in</span></div></div>
+      <div class="result-tile"><div class="lbl">Max deflection</div><div class="val">—<span class="unit">in</span></div></div>
+      <div class="result-tile"><div class="lbl">Max stress</div><div class="val">—<span class="unit">ksi</span></div></div>
+    </div>
+    <div class="load-total">${msg}</div>`;
+    lastCustomPasses = null;
+    renderCustomCharts(null);
+  };
+  if(!b || !Lft) return placeholder("Pick a beam, set the beam length, and define at least one load to calculate.");
+
+  const I = bc.axis==="x" ? b.Ix : b.Iy;
+  const S = bc.axis==="x" ? b.Sx : b.Sy;
+  bc.selfWt = beamSelfWeight(b);
+
+  const passFactored = computeCustomBeamPass(bc, I, true);
+  const passService = computeCustomBeamPass(bc, I, false);
+  if(!passFactored || !passService) return placeholder("Check the support locations (A must be less than B, both within the beam length) and that at least one load has a magnitude and a valid location.");
+
+  let Mmax=0, MmaxLoc=0;
+  passFactored.M.forEach((m,i)=>{ if(Math.abs(m)>Math.abs(Mmax)){ Mmax=m; MmaxLoc=passFactored.xs[i]; } });
+  const stress = S!=null ? Math.abs(Mmax)/S : null;
+
+  let defl=0, deflLoc=0;
+  passService.y.forEach((d,i)=>{ if(Math.abs(d)>Math.abs(defl)){ defl=d; deflLoc=passService.xs[i]; } });
+
+  const fy=parseFloat(bc.fy)||0, allowFactor=parseFloat(bc.allowFactor)||0;
+  const allowStress = fy*allowFactor;
+  const stressClass = stress==null || allowStress<=0 ? "" : (stress>allowStress ? "over" : "ok");
+  const deflLimit = (Lft*12)/240;
+  const deflClass = Math.abs(defl)>deflLimit ? "over" : "ok";
+  const axisLabel = bc.axis==='x' ? 'X-X' : 'Y-Y';
+
+  box.innerHTML = `<div class="results-grid">
+      <div class="result-tile"><div class="lbl">Max moment</div><div class="val">${Math.abs(Mmax).toFixed(2)}<span class="unit">kip-in</span></div></div>
+      <div class="result-tile ${deflClass}"><div class="lbl">Max deflection${statusMark(deflClass)}</div><div class="val">${Math.abs(defl).toFixed(3)}<span class="unit">in</span></div></div>
+      <div class="result-tile ${stressClass}"><div class="lbl">Max stress${statusMark(stressClass)}</div><div class="val">${stress!=null?stress.toFixed(2):'—'}<span class="unit">ksi</span></div></div>
+    </div>
+    <div class="load-total">Max moment occurs at x = ${(MmaxLoc/12).toFixed(2)} ft from the left end. Max deflection occurs at x = ${(deflLoc/12).toFixed(2)} ft. Bending about ${axisLabel}.</div>
+    <div class="load-total">Deflection limit = L/240 = ${deflLimit.toFixed(3)} in. Allowable stress = ${allowFactor}×Fy = ${allowStress.toFixed(1)} ksi.</div>
+    <div class="load-total line2">Computed numerically by superposing every load above (incl. self-weight): reactions from statics, shear/moment by direct summation, deflection by double-integrating M/EI and solving for the two integration constants from the support conditions.</div>`;
+
+  lastCustomPasses = {factored:passFactored, service:passService};
+  renderCustomCharts(lastCustomPasses);
+}
+
+let lastCustomPasses = null;
+
+function toggleChart(key){
+  state.beamCalc.charts[key] = !state.beamCalc.charts[key];
+  document.querySelectorAll(".chart-toggles .pill").forEach(p=>{
+    if(p.dataset.chart===key) p.classList.toggle("active", state.beamCalc.charts[key]);
+  });
+  renderCustomCharts(lastCustomPasses);
+}
+
+function chartCard(title, unit, svg){
+  return `<div class="beam-diagram-card chart-card"><div class="subhead" style="margin:0 0 4px;">${title}<span style="color:var(--mill);font-weight:400;text-transform:none;letter-spacing:0;"> (${unit})</span></div>${svg}</div>`;
+}
+
+/* Finds the global extremes plus interior local max/min (slope sign changes) in a
+   sampled curve, so charts can label the maximum and any other local peaks — not just
+   the single largest value. Candidates within minGap stations of a larger one are
+   dropped (collapses numerical near-duplicates from the sampling grid), and anything
+   under 5% of the curve's peak magnitude is skipped so near-zero endpoints (e.g. a
+   simply-supported moment diagram's ends) don't clutter the chart. */
+function findPeaks(xs, ys){
+  const n = ys.length;
+  const maxAbs = Math.max(1e-9, ...ys.map(v=>Math.abs(v)));
+  const candidates = [0, n-1];
+  for(let i=1;i<n-1;i++){
+    if((ys[i]-ys[i-1])*(ys[i+1]-ys[i]) < 0) candidates.push(i);
+  }
+  candidates.sort((a,b)=>a-b);
+  const minGap = Math.max(2, Math.round(n*0.05));
+  const merged = [];
+  candidates.forEach(i=>{
+    const last = merged[merged.length-1];
+    if(last!=null && (i-last)<minGap){
+      if(Math.abs(ys[i])>Math.abs(ys[last])) merged[merged.length-1]=i;
+    } else merged.push(i);
+  });
+  return merged.filter(i=>Math.abs(ys[i]) >= 0.05*maxAbs).map(i=>({x:xs[i], y:ys[i]}));
+}
+
+function chartLineSVG(xsIn, ys){
+  const w=640, h=140, padL=10, padR=10, padT=16, padB=18;
+  const Lft = xsIn[xsIn.length-1]/12 || 1;
+  const maxAbs = Math.max(1e-9, ...ys.map(v=>Math.abs(v)));
+  const midY = padT + (h-padT-padB)/2;
+  const yScale = ((h-padT-padB)/2)/maxAbs;
+  const xScale = (w-padL-padR)/(xsIn[xsIn.length-1]||1);
+  const pts = xsIn.map((x,i)=> `${(padL+x*xScale).toFixed(1)},${(midY-ys[i]*yScale).toFixed(1)}`).join(" ");
+
+  const peakMarks = findPeaks(xsIn, ys).map(p=>{
+    const px = padL+p.x*xScale, py = midY-p.y*yScale;
+    const anchor = px<40 ? "start" : (px>w-40 ? "end" : "middle");
+    const labelY = p.y>=0 ? Math.max(py-6, padT+8) : Math.min(py+14, h-padB-2);
+    return `<circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="2.5" class="chart-peak-dot"/>
+      <text x="${px.toFixed(1)}" y="${labelY.toFixed(1)}" text-anchor="${anchor}" class="chart-peak-label">${p.y.toFixed(2)}</text>`;
+  }).join("");
+
+  return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">
+    <line class="dim-stroke" x1="${padL}" y1="${midY}" x2="${w-padR}" y2="${midY}" stroke-width="1"/>
+    <polyline points="${pts}" fill="none" class="chart-line" stroke-width="2"/>
+    ${peakMarks}
+    <text x="${padL}" y="${h-4}" class="dim-label">0 ft</text>
+    <text x="${w-padR}" y="${h-4}" text-anchor="end" class="dim-label">${Lft.toFixed(1)} ft</text>
+  </svg>`;
+}
+
+function chartLoadSVG(bc){
+  const w=640, h=140, padL=10, padR=10, yBeam=90;
+  const Lft = parseFloat(bc.length)||1;
+  const xScale = (w-padL-padR)/Lft;
+  const catClass = {dead:"cat-dead", snow:"cat-snow", live:"cat-live"};
+  const maxW = Math.max(1e-9, ...bc.loads.filter(r=>r.type==="udl"||r.type==="tri").map(r=>Math.abs(parseFloat(r.mag))||0));
+  let shapes = "";
+  bc.loads.forEach(row=>{
+    const mag = parseFloat(row.mag);
+    if(!(mag>0)) return;
+    const cls = catClass[row.category]||"cat-dead";
+    if(row.type==="udl"){
+      const x1=parseFloat(row.x1), x2=parseFloat(row.x2);
+      if(!(x2>x1)) return;
+      const hgt = 10+40*(mag/maxW);
+      shapes += `<rect class="${cls}" x="${padL+x1*xScale}" y="${yBeam-hgt}" width="${(x2-x1)*xScale}" height="${hgt}" opacity="0.35" stroke-width="1"/>`;
+    } else if(row.type==="tri"){
+      const x1=parseFloat(row.x1), x2=parseFloat(row.x2);
+      if(!(x2>x1)) return;
+      const hgt = 10+40*(mag/maxW);
+      const X1=padL+x1*xScale, X2=padL+x2*xScale;
+      shapes += `<polygon class="${cls}" points="${X1},${yBeam} ${X2},${yBeam} ${X2},${yBeam-hgt}" opacity="0.35" stroke-width="1"/>`;
+    } else {
+      const x=parseFloat(row.x);
+      if(!(x>=0)) return;
+      shapes += `<line class="${cls}" x1="${padL+x*xScale}" y1="${yBeam-40}" x2="${padL+x*xScale}" y2="${yBeam}" stroke-width="2.5" marker-end="url(#udlArrow)"/>`;
+    }
+  });
+  return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">
+    ${beamSvgDefs()}
+    ${shapes}
+    <line class="beam-line" x1="${padL}" y1="${yBeam}" x2="${w-padR}" y2="${yBeam}" stroke-width="4" stroke-linecap="square"/>
+    <text x="${padL}" y="${h-4}" class="dim-label">0 ft</text>
+    <text x="${w-padR}" y="${h-4}" text-anchor="end" class="dim-label">${Lft.toFixed(1)} ft</text>
+  </svg>`;
+}
+
+function renderCustomCharts(passes){
+  const box = document.getElementById("beamCharts");
+  if(!box) return;
+  const bc = state.beamCalc;
+  if(!passes){ box.innerHTML = `<div class="load-total">Diagrams appear once results calculate above.</div>`; return; }
+  let html = "";
+  if(bc.charts.load) html += chartCard("Load", "as entered", chartLoadSVG(bc));
+  if(bc.charts.shear) html += chartCard("Shear — factored", "kip", chartLineSVG(passes.factored.xs, passes.factored.V));
+  if(bc.charts.moment) html += chartCard("Moment — factored", "kip-in", chartLineSVG(passes.factored.xs, passes.factored.M));
+  if(bc.charts.deflection) html += chartCard("Deflection — service", "in", chartLineSVG(passes.service.xs, passes.service.y));
+  box.innerHTML = html || `<div class="load-total">All diagrams hidden — use the buttons above to show one.</div>`;
+}
 
 render();
 
