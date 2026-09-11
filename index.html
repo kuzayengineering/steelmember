@@ -1636,7 +1636,7 @@ function openBeamCalc(key){
   const common = {beam:null, axis:"x", dlFactor:1.0, slFactor:1.0, llFactor:1.0, fy:50, allowFactor:0.66};
   if(key==="custom"){
     state.beamCalc = {...common,
-      length:"", supportType:"simple", posA:"", posB:"",
+      length:"", leftSupport:"simple", rightSupport:"simple",
       loads:[{id:1, category:"dead", type:"point", mag:"", x:"", x1:"", x2:""}],
       nextLoadId:2,
       charts:{load:true, shear:true, moment:true, deflection:true}
@@ -1900,13 +1900,24 @@ function pinRollerSupportsSVG(xL, xR, yBeam){
 }
 
 /* A wall-style fixed support: a vertical spine at x with hatch marks, for a cantilever's fixed end. */
-function fixedSupportSVG(x, yBeam){
+function fixedSupportSVG(x, yBeam, dir=-1){
   const yTop=yBeam-24, yBot=yBeam+24;
   let hatches = "";
   for(let y=yTop; y<yBot; y+=10){
-    hatches += `<line class="steel-stroke" x1="${x}" y1="${y+10}" x2="${x-10}" y2="${y}" stroke-width="1.5"/>`;
+    hatches += `<line class="steel-stroke" x1="${x}" y1="${y+10}" x2="${x+10*dir}" y2="${y}" stroke-width="1.5"/>`;
   }
   return `<line class="steel-stroke" x1="${x}" y1="${yTop}" x2="${x}" y2="${yBot}" stroke-width="3"/>${hatches}`;
+}
+
+/* A single pin support (no roller) — used for a "Simple" end in the custom load case,
+   where either end may independently be the one providing just a vertical reaction. */
+function pinSupportSVG(x, yBeam){
+  const tickPts = [-14,-7,0,7,14];
+  const ticks = tickPts.map(dx=>`<line class="steel-stroke" x1="${x+dx}" y1="${yBeam+26}" x2="${x+dx-6}" y2="${yBeam+36}" stroke-width="1.5"/>`).join("");
+  return `
+    <path class="steel-stroke" d="M${x},${yBeam} L${x-14},${yBeam+26} L${x+14},${yBeam+26} Z" stroke-width="2.5" stroke-linejoin="round"/>
+    <line class="steel-stroke" x1="${x-20}" y1="${yBeam+26}" x2="${x+20}" y2="${yBeam+26}" stroke-width="2"/>
+    ${ticks}`;
 }
 
 function udlLoadSVG(xL, xR, yTop, yBottom, n=9){
@@ -2039,7 +2050,7 @@ const BEAM_TOOL_DEFS = {
       // (and its location) has to come from the actual M(x)/y(x) curves, not from
       // adding each load's own separately-located maximum. Reuse the custom-load-case
       // engine (built for exactly this kind of superposition) as a 2-load beam.
-      const bc = {length:span, supportType:"simple", posA:0, posB:span, selfWt, dlFactor, slFactor, llFactor,
+      const bc = {length:span, leftSupport:"simple", rightSupport:"simple", selfWt, dlFactor, slFactor, llFactor,
         loads:[{category:"dead",type:"point",mag:dl,x:a},{category:"snow",type:"point",mag:sl,x:a},{category:"live",type:"point",mag:ll,x:a}]};
       const passF = computeCustomBeamPass(bc, I, true);
       const passS = computeCustomBeamPass(bc, I, false);
@@ -2088,7 +2099,7 @@ const BEAM_TOOL_DEFS = {
       // superposition of the two individual maxima IS exact here — unlike the simple-
       // beam case. Still route through the shared numerical engine for consistency and
       // so the moment/shear/deflection charts stay in sync with this result.
-      const bc = {length:span, supportType:"cantilever", selfWt, dlFactor, slFactor, llFactor,
+      const bc = {length:span, leftSupport:"fixed", rightSupport:"free", selfWt, dlFactor, slFactor, llFactor,
         loads:[{category:"dead",type:"point",mag:dl,x:a},{category:"snow",type:"point",mag:sl,x:a},{category:"live",type:"point",mag:ll,x:a}]};
       const passF = computeCustomBeamPass(bc, I, true);
       const passS = computeCustomBeamPass(bc, I, false);
@@ -2113,9 +2124,15 @@ const BEAM_TOOL_DEFS = {
    conditions) so it isn't limited to a single hardcoded load case.
    ========================================================================== */
 
+function supportToggleHTML(side, current){
+  const opts = [["fixed","Fixed"],["simple","Simple"],["free","Free"]];
+  return `<div class="axis-toggle support-${side}-toggle">
+    ${opts.map(([val,label])=>`<div class="pill ${current===val?'active':''}" data-val="${val}" onclick="setSupportEnd('${side}','${val}')">${label}</div>`).join("")}
+  </div>`;
+}
+
 function renderCustomBeamCalc(){
   const bc = state.beamCalc;
-  const isSimple = bc.supportType==="simple";
   app.innerHTML = header() + `
     <div class="eyebrow">Beam Diagrams</div>
     <div class="page-title-row">
@@ -2126,16 +2143,10 @@ function renderCustomBeamCalc(){
     <div class="beam-diagram-card">${customBeamSVG()}</div>
 
     <div class="subhead" style="margin-top:0;">Supports</div>
-    <div class="axis-toggle" style="margin-bottom:10px;">
-      <div class="pill ${isSimple?'active':''}" onclick="setSupportType('simple')">Simply Supported</div>
-      <div class="pill ${!isSimple?'active':''}" onclick="setSupportType('cantilever')">Cantilever (fixed at left)</div>
-    </div>
     <div class="support-fields">
+      <div class="field"><label>Left support</label>${supportToggleHTML("left", bc.leftSupport)}</div>
+      <div class="field"><label>Right support</label>${supportToggleHTML("right", bc.rightSupport)}</div>
       <div class="field"><label>Beam length, L (ft)</label><input id="ccLength" type="number" step="any" min="0" placeholder="0" value="${bc.length}"></div>
-      ${isSimple ? `
-        <div class="field"><label>Support A location (ft)</label><input id="ccPosA" type="number" step="any" min="0" placeholder="0" value="${bc.posA}"></div>
-        <div class="field"><label>Support B location (ft)</label><input id="ccPosB" type="number" step="any" min="0" placeholder="L" value="${bc.posB}"></div>
-      ` : ""}
     </div>
 
     <div class="custom-grid" style="margin-top:22px;">
@@ -2187,17 +2198,16 @@ function renderCustomBeamCalc(){
 function wireCustomBeamCalc(){
   const length = document.getElementById("ccLength");
   length.oninput = ()=>{ state.beamCalc.length = length.value; redrawDiagram(); refreshResults(); };
-  if(state.beamCalc.supportType==="simple"){
-    const posA=document.getElementById("ccPosA"), posB=document.getElementById("ccPosB");
-    posA.oninput = ()=>{ state.beamCalc.posA = posA.value; redrawDiagram(); refreshResults(); };
-    posB.oninput = ()=>{ state.beamCalc.posB = posB.value; redrawDiagram(); refreshResults(); };
-  }
   wireCommonCalcFields(refreshResults);
 }
 
-function setSupportType(type){
-  state.beamCalc.supportType = type;
-  renderBeamCalc();
+function setSupportEnd(side, type){
+  state.beamCalc[side+"Support"] = type;
+  document.querySelectorAll(`.support-${side}-toggle .pill`).forEach(p=>{
+    p.classList.toggle("active", p.dataset.val===type);
+  });
+  redrawDiagram();
+  refreshResults();
 }
 
 function renderLoadRows(){
@@ -2285,15 +2295,8 @@ function customBeamSVG(){
     }
   });
 
-  let supportShapes;
-  if(bc.supportType==="cantilever"){
-    supportShapes = fixedSupportSVG(xL, yBeam);
-  } else {
-    const posA = parseFloat(bc.posA), posB = parseFloat(bc.posB);
-    const aFt = Number.isFinite(posA) ? posA : 0;
-    const bFt = Number.isFinite(posB) ? posB : Lft;
-    supportShapes = pinRollerSupportsSVG(toX(aFt), toX(bFt), yBeam);
-  }
+  const endSupportSVG = (type, x, dir) => type==="fixed" ? fixedSupportSVG(x, yBeam, dir) : type==="simple" ? pinSupportSVG(x, yBeam) : "";
+  const supportShapes = endSupportSVG(bc.leftSupport, xL, -1) + endSupportSVG(bc.rightSupport, xR, 1);
 
   return `<svg viewBox="0 0 640 170" xmlns="http://www.w3.org/2000/svg">
     ${beamSvgDefs()}
@@ -2318,16 +2321,205 @@ function interpAt(xs, ys, x){
   return ys[last];
 }
 
+/* ---------- General beam-analysis engine ----------
+   Supports independent Fixed/Simple/Free end conditions. Reaction count per end:
+   fixed=2 (force+moment), simple=1 (force), free=0. Two total reactions is solvable
+   by statics alone (the three cases below); three is a propped cantilever (1 degree
+   indeterminate); four is fixed-fixed (2 degrees). Both indeterminate cases are solved
+   by the classical force method: release the redundant(s) to get a determinate
+   "primary" structure, find its response to the actual loads and to a unit version of
+   each redundant, then solve the small compatibility system (deflection or slope must
+   vanish at the released support) and superpose. This reuses the exact same station-
+   sampling + double-integration machinery as the determinate cases, just run 2-3 times
+   per pass with different load lists. */
+const SUPPORT_REACTIONS = {fixed:2, simple:1, free:0};
+
+/* Resultant force + centroid of a distributed item — a general trapezoid from w1 at x1
+   to w2 at x2, so a UDL (w1=w2) and an increasing ramp (w1=0) share one formula. Point
+   loads and applied moments are simple enough that callers handle them inline. */
+function itemResultant(it){
+  const len = it.x2-it.x1;
+  const wsum = it.w1+it.w2;
+  const f = wsum*len/2;
+  const centroid = wsum>1e-12 ? it.x1 + len*(it.w1+2*it.w2)/(3*wsum) : it.x1+len/2;
+  return {f, centroid};
+}
+/* Shear/moment contribution of one item at station x, from integrating its own
+   intensity q(xi) = w1 + (w2-w1)*xi/len once (shear) and twice (moment) over [x1,x]. */
+function itemShear(it, x){
+  if(it.type==="point") return it.x<=x+1e-6 ? -it.mag : 0;
+  if(it.type==="mmt") return 0;
+  if(x<=it.x1) return 0;
+  const len = it.x2-it.x1;
+  if(x<it.x2){ const xi=x-it.x1; return -(it.w1*xi + (it.w2-it.w1)*xi*xi/(2*len)); }
+  return -((it.w1+it.w2)*len/2);
+}
+function itemMoment(it, x){
+  if(it.type==="point") return it.x<=x+1e-6 ? -it.mag*(x-it.x) : 0;
+  if(it.type==="mmt") return it.x<=x+1e-6 ? it.mag : 0;
+  if(x<=it.x1) return 0;
+  const len = it.x2-it.x1;
+  if(x<it.x2){ const xi=x-it.x1; return -(it.w1*xi*xi/2 + (it.w2-it.w1)*xi*xi*xi/(6*len)); }
+  const {f, centroid} = itemResultant(it);
+  return -f*(x-centroid);
+}
+/* Reflects one item about the beam's midpoint (x -> Lin-x), used to reuse the
+   fixed-at-left cantilever solver for a fixed-at-right cantilever. Shear sign flips
+   under the reflection (handled by the caller); moment and deflection don't. */
+function mirrorItem(it, Lin){
+  if(it.type==="point" || it.type==="mmt") return {...it, x: Lin-it.x};
+  return {type:"dist", x1: Lin-it.x2, x2: Lin-it.x1, w1: it.w2, w2: it.w1};
+}
+
+function stationArrays(items, reactions, concMoments, Lin, n){
+  const xs = []; for(let i=0;i<n;i++) xs.push(Lin*i/(n-1));
+  const V = xs.map(x=>{
+    let v=0;
+    reactions.forEach(r=>{ if(r.x<=x+1e-6) v += -r.mag; });
+    items.forEach(it=>{ v += itemShear(it,x); });
+    return v;
+  });
+  const M = xs.map(x=>{
+    let m=0;
+    reactions.forEach(r=>{ if(r.x<=x+1e-6) m += -r.mag*(x-r.x); });
+    items.forEach(it=>{ m += itemMoment(it,x); });
+    concMoments.forEach(cm=>{ if(cm.x<=x+1e-6) m += cm.mag; });
+    return m;
+  });
+  return {xs, V, M};
+}
+function integrateY(xs, M, I){
+  const n=xs.length;
+  const th0=[0], y0=[0];
+  for(let i=1;i<n;i++){
+    const dx = xs[i]-xs[i-1];
+    th0.push(th0[i-1] + (M[i-1]+M[i])/2*dx/(STEEL_E_KSI*I));
+    y0.push(y0[i-1] + (th0[i-1]+th0[i])/2*dx);
+  }
+  return {th0, y0};
+}
+
+/* Determinate cantilever, fixed at one end (statics: reaction force + reaction moment
+   both at the fixed point). "right" is solved by mirroring to "left", solving, then
+   mirroring the result back — see mirrorItem's note on the shear sign flip. */
+function solveCantilever(items, Lin, I, fixedSide){
+  const n = 161;
+  const useItems = fixedSide==="left" ? items : items.map(it=>mirrorItem(it,Lin));
+  let totalF=0, momentAboutZero=0;
+  useItems.forEach(it=>{
+    if(it.type==="point"){ totalF+=it.mag; momentAboutZero+=it.mag*it.x; }
+    else if(it.type==="mmt"){ momentAboutZero += it.mag; }
+    else { const {f,centroid}=itemResultant(it); totalF+=f; momentAboutZero+=f*centroid; }
+  });
+  const reactions = [{x:0, mag:-totalF}];
+  const concMoments = [{x:0, mag:-momentAboutZero}];
+  const {xs,V,M} = stationArrays(useItems, reactions, concMoments, Lin, n);
+  let y = null;
+  if(I>0){
+    const {y0} = integrateY(xs,M,I);
+    y = y0; // th0[0]=0 and y0[0]=0 already match the fixed end's true boundary condition
+  }
+  if(fixedSide==="left") return {xs, V, M, y};
+  const xsR = xs.map(x=>Lin-x).reverse();
+  const Vr = V.map(v=>-v).reverse();
+  const Mr = M.slice().reverse();
+  const yr = y ? y.slice().reverse() : null;
+  return {xs:xsR, V:Vr, M:Mr, y:yr};
+}
+
+/* Determinate simple beam, pin/roller at both ends (x=0 and x=Lin). Also exposes the
+   boundary-corrected end slopes (thetaAt0/thetaAtL) — not needed for the determinate
+   case itself, but this same solver doubles as the "primary structure" for the
+   fixed-fixed force method below, which needs those slopes to enforce compatibility. */
+function solveSimpleSimple(items, Lin, I){
+  const n = 161;
+  let totalF=0, momentAboutA=0;
+  items.forEach(it=>{
+    if(it.type==="point"){ totalF+=it.mag; momentAboutA+=it.mag*it.x; }
+    else if(it.type==="mmt"){ momentAboutA += it.mag; }
+    else { const {f,centroid}=itemResultant(it); totalF+=f; momentAboutA+=f*centroid; }
+  });
+  const RB = momentAboutA/Lin;
+  const RA = totalF-RB;
+  const reactions = [{x:0,mag:-RA},{x:Lin,mag:-RB}];
+  const {xs,V,M} = stationArrays(items, reactions, [], Lin, n);
+  let y=null, thetaAt0=null, thetaAtL=null;
+  if(I>0){
+    const {th0,y0} = integrateY(xs,M,I);
+    const C1 = -(y0[y0.length-1]-y0[0])/Lin;
+    const C2 = -y0[0];
+    y = xs.map((x,i)=> y0[i]+C1*x+C2);
+    thetaAt0 = C1;
+    thetaAtL = th0[th0.length-1]+C1;
+  }
+  return {xs, V, M, y, thetaAt0, thetaAtL};
+}
+
+/* Propped cantilever (one end fixed, the other simple) — 1 degree indeterminate.
+   Primary structure: the cantilever fixed at fixedSide with the simple support
+   removed. Redundant: that support's reaction R. Force method: R = -(deflection at
+   the released support under the actual loads) / (deflection there under a unit
+   upward load), then superpose. */
+function solvePropped(items, Lin, I, fixedSide){
+  const freeEndX = fixedSide==="left" ? Lin : 0;
+  const pass0 = solveCantilever(items, Lin, I, fixedSide);
+  const pass1 = solveCantilever([{type:"point", x:freeEndX, mag:-1}], Lin, I, fixedSide);
+  const y0free = interpAt(pass0.xs, pass0.y, freeEndX);
+  const y1free = interpAt(pass1.xs, pass1.y, freeEndX);
+  const R = -y0free/y1free;
+  const xs = pass0.xs;
+  return {
+    xs,
+    V: xs.map((x,i)=>pass0.V[i]+R*pass1.V[i]),
+    M: xs.map((x,i)=>pass0.M[i]+R*pass1.M[i]),
+    y: xs.map((x,i)=>pass0.y[i]+R*pass1.y[i])
+  };
+}
+
+/* Fixed-fixed beam — 2 degrees indeterminate. Primary: release both end moments,
+   leaving a simple-simple beam. Redundants: the two end moments MA, MB. Compatibility:
+   the final structure's slope must be zero at both ends, giving a 2x2 linear system
+   (each unit-moment case's own end slopes form the matrix). */
+function solveFixedFixed(items, Lin, I){
+  const passActual = solveSimpleSimple(items, Lin, I);
+  const passA = solveSimpleSimple([{type:"mmt", x:0, mag:1}], Lin, I);
+  const passB = solveSimpleSimple([{type:"mmt", x:Lin, mag:1}], Lin, I);
+  // Closed-form simple-beam end-rotation flexibility coefficients (exact, no numerical
+  // integration involved) rather than passA/passB's own numerically-derived thetaAt0/
+  // thetaAtL: a unit moment applied exactly at a support sits on that support's own
+  // station, where the engine's "flat, non-arm-scaled" moment contribution exactly
+  // cancels the far reaction's own accumulated one — mathematically consistent with how
+  // the rest of the station-sampling model treats concentrated items, but it corrupts
+  // the numerical integral by a small amount right at the point precision matters most.
+  const k = Lin/(STEEL_E_KSI*I);
+  const a11=-k/3, a22=-k/3, a12=k/6, a21=k/6; // Maxwell-Betti reciprocity: a12=a21
+  const b1 = -passActual.thetaAt0, b2 = -passActual.thetaAtL;
+  const det = a11*a22-a12*a21;
+  const MA = (b1*a22-b2*a12)/det;
+  const MB = (a11*b2-a21*b1)/det;
+  const xs = passActual.xs;
+  const V = xs.map((x,i)=>passActual.V[i]+MA*passA.V[i]+MB*passB.V[i]);
+  const M = xs.map((x,i)=>passActual.M[i]+MA*passA.M[i]+MB*passB.M[i]);
+  const y = xs.map((x,i)=>passActual.y[i]+MA*passA.y[i]+MB*passB.y[i]);
+  // Both end moments are exactly known by construction (MA at x=0; -MB at x=Lin, since
+  // passB's own moment approaching its point of application from inside the span is -1
+  // per unit MB, not +1 — the sign is flipped relative to passA's at x=0 because passB's
+  // redundant sits at the far end of the same left-to-right accumulation, not because of
+  // any error in the reciprocity of a12/a21 above). Overwrite the corrupted endpoint
+  // noted earlier rather than let it stand as a spurious near-zero in the result.
+  M[0] = MA;
+  M[M.length-1] = -MB;
+  return {xs, V, M, y};
+}
+
 /* Runs the beam analysis once, either with factored load magnitudes (for moment/stress,
    a strength check) or service magnitudes (for deflection, a serviceability check) —
    the same factored-vs-service split the fixed-formula tools use, just generalized to
-   an arbitrary list of loads. Sign convention: downward loads are positive; reactions
-   are stored with negative magnitude since they act upward. Returns station arrays for
-   shear V(x), moment M(x), and (service pass only) deflection y(x). */
+   an arbitrary list of loads and support conditions. Sign convention: downward loads
+   are positive; reactions are stored with negative magnitude since they act upward. */
 function computeCustomBeamPass(bc, I, factored){
   const Lin = (parseFloat(bc.length)||0)*12;
   if(!(Lin>0)) return null;
-  const n = 161;
 
   const factorFor = cat=>{
     if(!factored) return 1;
@@ -2350,114 +2542,27 @@ function computeCustomBeamPass(bc, I, factored){
       if(!(x1>=0) || !(x2>x1)) return;
       x1=Math.max(0,x1); x2=Math.min(Lin/12,x2);
       if(x2<=x1) return;
-      if(row.type==="tri") items.push({type:"tri", x1:x1*12, x2:x2*12, wPeak:(mag/12000)*factor});
-      else items.push({type:"udl", x1:x1*12, x2:x2*12, w:(mag/12000)*factor});
+      const w = (mag/12000)*factor;
+      if(row.type==="tri") items.push({type:"dist", x1:x1*12, x2:x2*12, w1:0, w2:w});
+      else items.push({type:"dist", x1:x1*12, x2:x2*12, w1:w, w2:w});
     }
   });
   if(bc.selfWt>0){
-    items.push({type:"udl", x1:0, x2:Lin, w:(bc.selfWt/12000)*factorFor("dead")});
+    const wSelf = (bc.selfWt/12000)*factorFor("dead");
+    items.push({type:"dist", x1:0, x2:Lin, w1:wSelf, w2:wSelf});
   }
   if(items.length===0) return null;
 
-  // Resultant force + centroid of a distributed item (udl: rectangle; tri: triangle,
-  // peak at x2, so its centroid sits 2/3 of the way from x1 to x2). Point loads are
-  // simple enough that callers handle them inline instead of through this helper.
-  function itemResultant(it){
-    if(it.type==="udl") return {f: it.w*(it.x2-it.x1), centroid: (it.x1+it.x2)/2};
-    const len = it.x2-it.x1;
-    return {f: it.wPeak*len/2, centroid: it.x1 + (2/3)*len};
-  }
-  // Shear/moment contribution of one item to a station at x, derived by direct
-  // integration of each load's intensity (point loads: a step in V, a kink in M; UDL:
-  // linear V / quadratic M within its span; the triangular ramp: quadratic V / cubic M
-  // within its span, from integrating q(x) = wPeak*(x-x1)/len twice).
-  function itemShear(it, x){
-    if(it.type==="point") return it.x<=x+1e-6 ? -it.mag : 0;
-    if(x<=it.x1) return 0;
-    const len = it.x2-it.x1;
-    if(it.type==="udl") return -it.w*(Math.min(x,it.x2)-it.x1);
-    if(x<it.x2){ const xi=x-it.x1; return -it.wPeak*xi*xi/(2*len); }
-    return -it.wPeak*len/2;
-  }
-  function itemMoment(it, x){
-    if(it.type==="point") return it.x<=x+1e-6 ? -it.mag*(x-it.x) : 0;
-    if(x<=it.x1) return 0;
-    const len = it.x2-it.x1;
-    if(it.type==="udl"){
-      if(x<it.x2) return -it.w*(x-it.x1)*(x-it.x1)/2;
-      return -it.w*len*(x-(it.x1+it.x2)/2);
-    }
-    if(x<it.x2){ const xi=x-it.x1; return -it.wPeak*xi*xi*xi/(6*len); }
-    const {f, centroid} = itemResultant(it);
-    return -f*(x-centroid);
-  }
+  const leftType = bc.leftSupport||"simple", rightType = bc.rightSupport||"simple";
+  const total = (SUPPORT_REACTIONS[leftType]||0) + (SUPPORT_REACTIONS[rightType]||0);
+  if(total<2) return null; // unstable — not enough reactions to hold the beam up
 
-  let totalF=0, momentAboutZero=0;
-  items.forEach(it=>{
-    if(it.type==="point"){ totalF+=it.mag; momentAboutZero+=it.mag*it.x; }
-    else { const {f,centroid}=itemResultant(it); totalF+=f; momentAboutZero+=f*centroid; }
-  });
-
-  const reactions = [];
-  const concMoments = [];
-  let posA=0, posB=Lin;
-  if(bc.supportType==="cantilever"){
-    reactions.push({x:0, mag:-totalF});
-    concMoments.push({x:0, mag:-momentAboutZero});
-  } else {
-    posA = (parseFloat(bc.posA)||0)*12;
-    posB = (Number.isFinite(parseFloat(bc.posB)) ? parseFloat(bc.posB) : Lin/12)*12;
-    if(!(posB>posA)) return null;
-    let momentAboutA=0;
-    items.forEach(it=>{
-      if(it.type==="point"){ momentAboutA += it.mag*(it.x-posA); }
-      else { const {f,centroid}=itemResultant(it); momentAboutA += f*(centroid-posA); }
-    });
-    const RB = momentAboutA/(posB-posA);
-    const RA = totalF - RB;
-    reactions.push({x:posA, mag:-RA});
-    reactions.push({x:posB, mag:-RB});
+  if(total===2){
+    if(leftType==="simple" && rightType==="simple") return solveSimpleSimple(items, Lin, I);
+    return solveCantilever(items, Lin, I, leftType==="fixed" ? "left" : "right");
   }
-
-  const xs = []; for(let i=0;i<n;i++) xs.push(Lin*i/(n-1));
-
-  function shearAt(x){
-    let V=0;
-    reactions.forEach(r=>{ if(r.x<=x+1e-6) V += -r.mag; });
-    items.forEach(it=>{ V += itemShear(it,x); });
-    return V;
-  }
-  function momentAt(x){
-    let M=0;
-    reactions.forEach(r=>{ if(r.x<=x+1e-6) M += -r.mag*(x-r.x); });
-    items.forEach(it=>{ M += itemMoment(it,x); });
-    concMoments.forEach(cm=>{ if(cm.x<=x+1e-6) M += cm.mag; });
-    return M;
-  }
-
-  const V = xs.map(shearAt);
-  const M = xs.map(momentAt);
-
-  let y = null;
-  if(!factored && I>0){
-    const th0=[0], y0=[0];
-    for(let i=1;i<n;i++){
-      const dx = xs[i]-xs[i-1];
-      th0.push(th0[i-1] + (M[i-1]+M[i])/2*dx/(STEEL_E_KSI*I));
-      y0.push(y0[i-1] + (th0[i-1]+th0[i])/2*dx);
-    }
-    let C1, C2;
-    if(bc.supportType==="cantilever"){
-      C1 = -th0[0]; C2 = -y0[0];
-    } else {
-      const yA = interpAt(xs,y0,posA), yB = interpAt(xs,y0,posB);
-      C1 = -(yB-yA)/(posB-posA);
-      C2 = -yA - C1*posA;
-    }
-    y = xs.map((x,i)=> y0[i] + C1*x + C2);
-  }
-
-  return {xs, V, M, y};
+  if(total===3) return solvePropped(items, Lin, I, leftType==="fixed" ? "left" : "right");
+  return solveFixedFixed(items, Lin, I);
 }
 
 function updateCustomResults(){
@@ -2483,7 +2588,7 @@ function updateCustomResults(){
 
   const passFactored = computeCustomBeamPass(bc, I, true);
   const passService = computeCustomBeamPass(bc, I, false);
-  if(!passFactored || !passService) return placeholder("Check the support locations (A must be less than B, both within the beam length) and that at least one load has a magnitude and a valid location.");
+  if(!passFactored || !passService) return placeholder("This support combination can't hold the beam up (needs at least one Fixed support, or a Simple support at each end) — or no load has a valid magnitude and location yet.");
 
   let Mmax=0, MmaxLoc=0;
   passFactored.M.forEach((m,i)=>{ if(Math.abs(m)>Math.abs(Mmax)){ Mmax=m; MmaxLoc=passFactored.xs[i]; } });
