@@ -1162,9 +1162,9 @@ const CATEGORIES = [
 /* Beam-diagram calculators shown in the "Beam Diagrams" section on the home screen. */
 const BEAM_TOOLS = [
   {key:"simple-udl", nm:"Simple Beam", sub:"Uniformly Distributed Load", icon:"i-beam-udl"},
-  {key:"simple-pt",  nm:"Simple Beam", sub:"Point Load", icon:"i-beam-generic", soon:true},
-  {key:"cant-udl",   nm:"Cantilever",  sub:"Uniformly Distributed Load", icon:"i-beam-generic", soon:true},
-  {key:"cant-pt",    nm:"Cantilever",  sub:"Point Load", icon:"i-beam-generic", soon:true},
+  {key:"simple-pt",  nm:"Simple Beam", sub:"Point Load", icon:"i-beam-pt"},
+  {key:"cant-udl",   nm:"Cantilever",  sub:"Uniformly Distributed Load", icon:"i-cantilever-udl"},
+  {key:"cant-pt",    nm:"Cantilever",  sub:"Point Load", icon:"i-cantilever-pt"},
 ];
 
 const ICONS = {
@@ -1177,7 +1177,9 @@ const ICONS = {
   "i-hssr":'<svg viewBox="0 0 48 48" fill="none" stroke-width="3"><rect x="8" y="12" width="32" height="24"/></svg>',
   "i-hssc":'<svg viewBox="0 0 48 48" fill="none" stroke-width="3"><circle cx="24" cy="24" r="16"/></svg>',
   "i-beam-udl":'<svg viewBox="0 0 48 48" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="10" y1="9" x2="10" y2="22"/><line x1="7" y1="19" x2="10" y2="22"/><line x1="13" y1="19" x2="10" y2="22"/><line x1="19" y1="9" x2="19" y2="22"/><line x1="16" y1="19" x2="19" y2="22"/><line x1="22" y1="19" x2="19" y2="22"/><line x1="28" y1="9" x2="28" y2="22"/><line x1="25" y1="19" x2="28" y2="22"/><line x1="31" y1="19" x2="28" y2="22"/><line x1="37" y1="9" x2="37" y2="22"/><line x1="34" y1="19" x2="37" y2="22"/><line x1="40" y1="19" x2="37" y2="22"/><line x1="8" y1="24" x2="40" y2="24" stroke-width="3.5"/><path d="M8 24l-5 9h10z"/><path d="M40 24l-5 9h10z"/><line x1="1" y1="35" x2="13" y2="35"/><line x1="33" y1="35" x2="45" y2="35"/></svg>',
-  "i-beam-generic":'<svg viewBox="0 0 48 48" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="26" x2="40" y2="26" stroke-width="4"/><path d="M8 26l-5 9h10z"/><path d="M40 26l-5 9h10z"/><line x1="1" y1="37" x2="13" y2="37"/><line x1="33" y1="37" x2="45" y2="37"/></svg>',
+  "i-beam-pt":'<svg viewBox="0 0 48 48" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="24" y1="8" x2="24" y2="22"/><line x1="21" y1="19" x2="24" y2="22"/><line x1="27" y1="19" x2="24" y2="22"/><line x1="8" y1="24" x2="40" y2="24" stroke-width="3.5"/><path d="M8 24l-5 9h10z"/><path d="M40 24l-5 9h10z"/><line x1="1" y1="35" x2="13" y2="35"/><line x1="33" y1="35" x2="45" y2="35"/></svg>',
+  "i-cantilever-udl":'<svg viewBox="0 0 48 48" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="10" y1="10" x2="10" y2="22"/><line x1="7" y1="19" x2="10" y2="22"/><line x1="13" y1="19" x2="10" y2="22"/><line x1="20" y1="10" x2="20" y2="22"/><line x1="17" y1="19" x2="20" y2="22"/><line x1="23" y1="19" x2="20" y2="22"/><line x1="30" y1="10" x2="30" y2="22"/><line x1="27" y1="19" x2="30" y2="22"/><line x1="33" y1="19" x2="30" y2="22"/><line x1="8" y1="24" x2="40" y2="24" stroke-width="3.5"/><line x1="8" y1="12" x2="8" y2="36" stroke-width="3"/><line x1="4" y1="16" x2="8" y2="20"/><line x1="4" y1="22" x2="8" y2="26"/><line x1="4" y1="28" x2="8" y2="32"/></svg>',
+  "i-cantilever-pt":'<svg viewBox="0 0 48 48" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="38" y1="9" x2="38" y2="22"/><line x1="35" y1="19" x2="38" y2="22"/><line x1="41" y1="19" x2="38" y2="22"/><line x1="8" y1="24" x2="40" y2="24" stroke-width="3.5"/><line x1="8" y1="12" x2="8" y2="36" stroke-width="3"/><line x1="4" y1="16" x2="8" y2="20"/><line x1="4" y1="22" x2="8" y2="26"/><line x1="4" y1="28" x2="8" y2="32"/></svg>',
 };
 
 let state = {view:"home", cat:null, sub:null, member:null, filters:{}, search:"", filtersOpen:false, sortCol:null, sortDir:null, beamTool:null, beamCalc:null};
@@ -1552,37 +1554,36 @@ function openBeamCalc(key){
 }
 
 function renderBeamCalc(){
-  if(state.beamTool==="simple-udl") return renderSimpleBeamUDL();
-}
-
-function renderSimpleBeamUDL(){
+  const def = BEAM_TOOL_DEFS[state.beamTool];
+  const isPoint = def.loadKind==="point";
+  const unit = isPoint ? "lb" : "plf";
   app.innerHTML = header() + `
     <div class="eyebrow">Beam Diagrams</div>
     <div class="page-title-row">
-      <h1 class="page-title">Simple Beam — Uniformly Distributed Load</h1>
+      <h1 class="page-title">${def.title}</h1>
       <button class="btn no-print" onclick="window.print()">Print results</button>
     </div>
 
-    <div class="beam-diagram-card">${simpleBeamSVG()}</div>
+    <div class="beam-diagram-card">${def.diagram()}</div>
 
     <div class="calc-grid">
       <div class="calc-col">
         <div class="subhead">Loads</div>
         <div class="field">
           <div class="load-row">
-            <div class="load-val"><label>Dead load, D (plf) — excl. beam weight</label><input id="bcDL" type="number" step="any" min="0" placeholder="0"></div>
+            <div class="load-val"><label>Dead ${isPoint?"point ":""}load, D (${unit})${isPoint?"":" — excl. beam weight"}</label><input id="bcDL" type="number" step="any" min="0" placeholder="0"></div>
             <div class="load-factor"><label>Factor</label><input id="bcDLf" type="number" step="any" min="0" value="1.2"></div>
           </div>
         </div>
         <div class="field">
           <div class="load-row">
-            <div class="load-val"><label>Snow load, S (plf)</label><input id="bcSL" type="number" step="any" min="0" placeholder="0"></div>
+            <div class="load-val"><label>Snow ${isPoint?"point ":""}load, S (${unit})</label><input id="bcSL" type="number" step="any" min="0" placeholder="0"></div>
             <div class="load-factor"><label>Factor</label><input id="bcSLf" type="number" step="any" min="0" value="1.6"></div>
           </div>
         </div>
         <div class="field">
           <div class="load-row">
-            <div class="load-val"><label>Live load, L (plf)</label><input id="bcLL" type="number" step="any" min="0" placeholder="0"></div>
+            <div class="load-val"><label>Live ${isPoint?"point ":""}load, L (${unit})</label><input id="bcLL" type="number" step="any" min="0" placeholder="0"></div>
             <div class="load-factor"><label>Factor</label><input id="bcLLf" type="number" step="any" min="0" value="1.6"></div>
           </div>
         </div>
@@ -1714,48 +1715,37 @@ function updateBeamResults(){
     return;
   }
   const selfWt = beamSelfWeight(b);
-  // Deflection is a serviceability check, so it uses unfactored (service) loads.
-  const wService = dl+sl+ll+selfWt;
-  // Moment/stress are strength checks, so they use factored loads (self-weight factored with dead load).
-  const wFactored = dlFactor*(dl+selfWt) + slFactor*sl + llFactor*ll;
   const I = bc.axis==="x" ? b.Ix : b.Iy;
   const S = bc.axis==="x" ? b.Sx : b.Sy;
-  const Lin = span*12;
-  const wServiceKipIn = wService/12000;
-  const Mmax = wFactored*span*span*0.0015;
-  const defl = (5*wServiceKipIn*Math.pow(Lin,4))/(384*STEEL_E_KSI*I);
-  const stress = S!=null ? Mmax/S : null;
+  const ctx = {dl, sl, ll, span, dlFactor, slFactor, llFactor, selfWt, I};
+  const r = BEAM_TOOL_DEFS[state.beamTool].compute(ctx);
+  const stress = S!=null ? r.Mmax/S : null;
   const allowStress = fy*allowFactor;
   const stressClass = stress==null || allowStress<=0 ? "" : (stress>allowStress ? "over" : "ok");
+  const axisLabel = bc.axis==='x' ? 'X-X' : 'Y-Y';
   box.innerHTML = `<div class="results-grid">
-      <div class="result-tile"><div class="lbl">Max moment</div><div class="val">${Mmax.toFixed(2)}<span class="unit">kip-in</span></div></div>
-      <div class="result-tile"><div class="lbl">Max deflection</div><div class="val">${defl.toFixed(3)}<span class="unit">in</span></div></div>
+      <div class="result-tile"><div class="lbl">Max moment</div><div class="val">${r.Mmax.toFixed(2)}<span class="unit">kip-in</span></div></div>
+      <div class="result-tile"><div class="lbl">Max deflection</div><div class="val">${r.defl.toFixed(3)}<span class="unit">in</span></div></div>
       <div class="result-tile ${stressClass}"><div class="lbl">Max stress</div><div class="val">${stress!=null?stress.toFixed(2):'—'}<span class="unit">ksi</span></div></div>
     </div>
-    <div class="load-total">Service load (deflection) w = ${wService.toFixed(1)} plf — D + S + L + self-weight (${selfWt} plf), bending about ${bc.axis==='x'?'X-X':'Y-Y'}.</div>
-    <div class="load-total">Factored load (moment &amp; stress) w = ${wFactored.toFixed(1)} plf — ${dlFactor}×D + ${slFactor}×S + ${llFactor}×L (self-weight factored with D). Allowable stress = ${allowFactor}×Fy = ${allowStress.toFixed(1)} ksi — swap in AISC-specific combinations/limits as needed.</div>
-    <div class="load-total line2">Formulas — Max moment: M = wL²/8. Max deflection: Δ = 5wL⁴/(384·E·I), E = ${STEEL_E_KSI.toLocaleString()} ksi. Max stress: f = M/S (S = ${bc.axis==='x'?'Sx':'Sy'}).</div>`;
+    <div class="load-total">${r.serviceLine} Bending about ${axisLabel}.</div>
+    <div class="load-total">${r.factoredLine} Allowable stress = ${allowFactor}×Fy = ${allowStress.toFixed(1)} ksi — swap in AISC-specific combinations/limits as needed.</div>
+    <div class="load-total line2">${r.formulaLine} Max stress: f = M/S (S = ${bc.axis==='x'?'Sx':'Sy'}).</div>`;
 }
 
-function simpleBeamSVG(){
-  const xL=70, xR=570, yBeam=70, n=9;
-  const arrows = Array.from({length:n},(_,i)=>{
-    const x = xL + i*(xR-xL)/(n-1);
-    return `<line class="steel-stroke" x1="${x}" y1="30" x2="${x}" y2="62" stroke-width="2" marker-end="url(#udlArrow)"/>`;
-  }).join("");
+/* ---------- Shared SVG pieces for the beam diagrams ---------- */
+function beamSvgDefs(){
+  return `<defs>
+    <marker id="udlArrow" markerWidth="8" markerHeight="8" refX="8" refY="4" markerUnits="userSpaceOnUse" orient="auto"><path class="udl-fill" d="M0,0 L0,8 L8,4 Z"/></marker>
+    <marker id="dimArrow" markerWidth="8" markerHeight="8" refX="8" refY="4" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path class="dim-fill" d="M0,0 L0,8 L8,4 Z"/></marker>
+  </defs>`;
+}
+
+function pinRollerSupportsSVG(xL, xR, yBeam){
   const tickPts = [-14,-7,0,7,14];
   const leftTicks = tickPts.map(dx=>`<line class="steel-stroke" x1="${xL+dx}" y1="${yBeam+26}" x2="${xL+dx-6}" y2="${yBeam+36}" stroke-width="1.5"/>`).join("");
   const rightTicks = tickPts.map(dx=>`<line class="steel-stroke" x1="${xR+dx}" y1="${yBeam+34}" x2="${xR+dx-6}" y2="${yBeam+44}" stroke-width="1.5"/>`).join("");
-  const span = state.beamCalc && state.beamCalc.span ? state.beamCalc.span : "—";
-  return `<svg viewBox="0 0 640 170" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-      <marker id="udlArrow" markerWidth="8" markerHeight="8" refX="8" refY="4" markerUnits="userSpaceOnUse" orient="auto"><path class="udl-fill" d="M0,0 L0,8 L8,4 Z"/></marker>
-      <marker id="dimArrow" markerWidth="8" markerHeight="8" refX="8" refY="4" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path class="dim-fill" d="M0,0 L0,8 L8,4 Z"/></marker>
-    </defs>
-    <line class="steel-stroke" x1="${xL}" y1="26" x2="${xR}" y2="26" stroke-width="2"/>
-    ${arrows}
-    <text x="${(xL+xR)/2}" y="16" text-anchor="middle" class="load-label">w (plf)</text>
-    <line class="beam-line" x1="${xL}" y1="${yBeam}" x2="${xR}" y2="${yBeam}" stroke-width="6" stroke-linecap="square"/>
+  return `
     <path class="steel-stroke" d="M${xL},${yBeam} L${xL-14},${yBeam+26} L${xL+14},${yBeam+26} Z" stroke-width="2.5" stroke-linejoin="round"/>
     <line class="steel-stroke" x1="${xL-20}" y1="${yBeam+26}" x2="${xL+20}" y2="${yBeam+26}" stroke-width="2"/>
     ${leftTicks}
@@ -1763,13 +1753,171 @@ function simpleBeamSVG(){
     <circle class="steel-stroke" cx="${xR-8}" cy="${yBeam+30}" r="4" stroke-width="2"/>
     <circle class="steel-stroke" cx="${xR+8}" cy="${yBeam+30}" r="4" stroke-width="2"/>
     <line class="steel-stroke" x1="${xR-20}" y1="${yBeam+34}" x2="${xR+20}" y2="${yBeam+34}" stroke-width="2"/>
-    ${rightTicks}
+    ${rightTicks}`;
+}
+
+/* A wall-style fixed support: a vertical spine at x with hatch marks, for a cantilever's fixed end. */
+function fixedSupportSVG(x, yBeam){
+  const yTop=yBeam-24, yBot=yBeam+24;
+  let hatches = "";
+  for(let y=yTop; y<yBot; y+=10){
+    hatches += `<line class="steel-stroke" x1="${x}" y1="${y+10}" x2="${x-10}" y2="${y}" stroke-width="1.5"/>`;
+  }
+  return `<line class="steel-stroke" x1="${x}" y1="${yTop}" x2="${x}" y2="${yBot}" stroke-width="3"/>${hatches}`;
+}
+
+function udlLoadSVG(xL, xR, yTop, yBottom, n=9){
+  const arrows = Array.from({length:n},(_,i)=>{
+    const x = xL + i*(xR-xL)/(n-1);
+    return `<line class="steel-stroke" x1="${x}" y1="${yTop}" x2="${x}" y2="${yBottom}" stroke-width="2" marker-end="url(#udlArrow)"/>`;
+  }).join("");
+  return `<line class="steel-stroke" x1="${xL}" y1="${yTop-4}" x2="${xR}" y2="${yTop-4}" stroke-width="2"/>
+    ${arrows}
+    <text x="${(xL+xR)/2}" y="${yTop-14}" text-anchor="middle" class="load-label">w (plf)</text>`;
+}
+
+function pointLoadSVG(x, yTop, yBottom){
+  return `<line class="steel-stroke" x1="${x}" y1="${yTop}" x2="${x}" y2="${yBottom}" stroke-width="3" marker-end="url(#udlArrow)"/>
+    <text x="${x}" y="${yTop-8}" text-anchor="middle" class="load-label">P (lb)</text>`;
+}
+
+function beamDimensionSVG(xL, xR){
+  const span = state.beamCalc && state.beamCalc.span ? state.beamCalc.span : "—";
+  return `
     <line class="dim-stroke" x1="${xL}" y1="130" x2="${xL}" y2="145" stroke-width="1"/>
     <line class="dim-stroke" x1="${xR}" y1="130" x2="${xR}" y2="145" stroke-width="1"/>
     <line class="dim-stroke" x1="${xL}" y1="138" x2="${xR}" y2="138" stroke-width="1" marker-start="url(#dimArrow)" marker-end="url(#dimArrow)"/>
-    <text id="spanDimLabel" x="${(xL+xR)/2}" y="156" text-anchor="middle" class="dim-label">L = ${span} ft</text>
+    <text id="spanDimLabel" x="${(xL+xR)/2}" y="156" text-anchor="middle" class="dim-label">L = ${span} ft</text>`;
+}
+
+function simpleBeamSVG(){
+  const xL=70, xR=570, yBeam=70;
+  return `<svg viewBox="0 0 640 170" xmlns="http://www.w3.org/2000/svg">
+    ${beamSvgDefs()}
+    ${udlLoadSVG(xL,xR,30,62)}
+    <line class="beam-line" x1="${xL}" y1="${yBeam}" x2="${xR}" y2="${yBeam}" stroke-width="6" stroke-linecap="square"/>
+    ${pinRollerSupportsSVG(xL,xR,yBeam)}
+    ${beamDimensionSVG(xL,xR)}
   </svg>`;
 }
+
+function simpleBeamPointSVG(){
+  const xL=70, xR=570, yBeam=70, xMid=(xL+xR)/2;
+  return `<svg viewBox="0 0 640 170" xmlns="http://www.w3.org/2000/svg">
+    ${beamSvgDefs()}
+    ${pointLoadSVG(xMid,18,62)}
+    <line class="beam-line" x1="${xL}" y1="${yBeam}" x2="${xR}" y2="${yBeam}" stroke-width="6" stroke-linecap="square"/>
+    ${pinRollerSupportsSVG(xL,xR,yBeam)}
+    ${beamDimensionSVG(xL,xR)}
+  </svg>`;
+}
+
+function cantileverUDLSVG(){
+  const xL=90, xR=570, yBeam=70;
+  return `<svg viewBox="0 0 640 170" xmlns="http://www.w3.org/2000/svg">
+    ${beamSvgDefs()}
+    ${udlLoadSVG(xL,xR,30,62)}
+    <line class="beam-line" x1="${xL}" y1="${yBeam}" x2="${xR}" y2="${yBeam}" stroke-width="6" stroke-linecap="square"/>
+    ${fixedSupportSVG(xL,yBeam)}
+    ${beamDimensionSVG(xL,xR)}
+  </svg>`;
+}
+
+function cantileverPointSVG(){
+  const xL=90, xR=570, yBeam=70;
+  return `<svg viewBox="0 0 640 170" xmlns="http://www.w3.org/2000/svg">
+    ${beamSvgDefs()}
+    ${pointLoadSVG(xR,18,62)}
+    <line class="beam-line" x1="${xL}" y1="${yBeam}" x2="${xR}" y2="${yBeam}" stroke-width="6" stroke-linecap="square"/>
+    ${fixedSupportSVG(xL,yBeam)}
+    ${beamDimensionSVG(xL,xR)}
+  </svg>`;
+}
+
+/* ---------- Per-tool config: title, diagram, and the mechanics-of-materials formulas.
+   dl/sl/ll are PLF for "udl" tools and lb (applied at the labeled point) for "point" tools.
+   Self-weight is always a distributed load, so "point" tools superpose a UDL self-weight
+   term with the point-load term rather than folding self-weight into a single w. ---------- */
+const BEAM_TOOL_DEFS = {
+  "simple-udl": {
+    title: "Simple Beam — Uniformly Distributed Load",
+    loadKind: "udl",
+    diagram: simpleBeamSVG,
+    compute(ctx){
+      const {dl,sl,ll,span,dlFactor,slFactor,llFactor,selfWt,I} = ctx;
+      const Lin = span*12;
+      const wService = dl+sl+ll+selfWt;
+      const wFactored = dlFactor*(dl+selfWt) + slFactor*sl + llFactor*ll;
+      const Mmax = wFactored*span*span*0.0015;
+      const defl = (5*(wService/12000)*Math.pow(Lin,4))/(384*STEEL_E_KSI*I);
+      return { Mmax, defl,
+        serviceLine: `Service load (deflection) w = ${wService.toFixed(1)} plf — D + S + L + self-weight (${selfWt} plf).`,
+        factoredLine: `Factored load (moment &amp; stress) w = ${wFactored.toFixed(1)} plf — ${dlFactor}×D + ${slFactor}×S + ${llFactor}×L (self-weight factored with D).`,
+        formulaLine: `Formulas — Max moment: M = wL²/8. Max deflection: Δ = 5wL⁴/(384·E·I), E = ${STEEL_E_KSI.toLocaleString()} ksi.`
+      };
+    }
+  },
+  "simple-pt": {
+    title: "Simple Beam — Point Load (at midspan)",
+    loadKind: "point",
+    diagram: simpleBeamPointSVG,
+    compute(ctx){
+      const {dl,sl,ll,span,dlFactor,slFactor,llFactor,selfWt,I} = ctx;
+      const Lin = span*12;
+      const wFactored = dlFactor*selfWt;
+      const Mudl = wFactored*span*span*0.0015;
+      const Dudl = (5*(selfWt/12000)*Math.pow(Lin,4))/(384*STEEL_E_KSI*I);
+      const Pservice = dl+sl+ll;
+      const Pfactored = dlFactor*dl + slFactor*sl + llFactor*ll;
+      const Mpt = Pfactored*span*0.003;
+      const Dpt = ((Pservice/1000)*Math.pow(Lin,3))/(48*STEEL_E_KSI*I);
+      return { Mmax: Mudl+Mpt, defl: Dudl+Dpt,
+        serviceLine: `Service loads (deflection) — self-weight w = ${selfWt} plf; point load P = ${Pservice.toFixed(1)} lb at midspan (D + S + L).`,
+        factoredLine: `Factored loads (moment &amp; stress) — self-weight w = ${wFactored.toFixed(1)} plf; point load P = ${Pfactored.toFixed(1)} lb — ${dlFactor}×D + ${slFactor}×S + ${llFactor}×L.`,
+        formulaLine: `Formulas — Max moment: M = wL²/8 + PL/4 (self-weight + point load). Max deflection: Δ = 5wL⁴/(384EI) + PL³/(48EI), E = ${STEEL_E_KSI.toLocaleString()} ksi.`
+      };
+    }
+  },
+  "cant-udl": {
+    title: "Cantilever — Uniformly Distributed Load",
+    loadKind: "udl",
+    diagram: cantileverUDLSVG,
+    compute(ctx){
+      const {dl,sl,ll,span,dlFactor,slFactor,llFactor,selfWt,I} = ctx;
+      const Lin = span*12;
+      const wService = dl+sl+ll+selfWt;
+      const wFactored = dlFactor*(dl+selfWt) + slFactor*sl + llFactor*ll;
+      const Mmax = wFactored*span*span*0.006;
+      const defl = ((wService/12000)*Math.pow(Lin,4))/(8*STEEL_E_KSI*I);
+      return { Mmax, defl,
+        serviceLine: `Service load (deflection) w = ${wService.toFixed(1)} plf — D + S + L + self-weight (${selfWt} plf).`,
+        factoredLine: `Factored load (moment &amp; stress) w = ${wFactored.toFixed(1)} plf — ${dlFactor}×D + ${slFactor}×S + ${llFactor}×L (self-weight factored with D).`,
+        formulaLine: `Formulas — Max moment (at fixed end): M = wL²/2. Max deflection (at free end): Δ = wL⁴/(8·E·I), E = ${STEEL_E_KSI.toLocaleString()} ksi.`
+      };
+    }
+  },
+  "cant-pt": {
+    title: "Cantilever — Point Load (at free end)",
+    loadKind: "point",
+    diagram: cantileverPointSVG,
+    compute(ctx){
+      const {dl,sl,ll,span,dlFactor,slFactor,llFactor,selfWt,I} = ctx;
+      const Lin = span*12;
+      const wFactored = dlFactor*selfWt;
+      const Mudl = wFactored*span*span*0.006;
+      const Dudl = ((selfWt/12000)*Math.pow(Lin,4))/(8*STEEL_E_KSI*I);
+      const Pservice = dl+sl+ll;
+      const Pfactored = dlFactor*dl + slFactor*sl + llFactor*ll;
+      const Mpt = Pfactored*span*0.012;
+      const Dpt = ((Pservice/1000)*Math.pow(Lin,3))/(3*STEEL_E_KSI*I);
+      return { Mmax: Mudl+Mpt, defl: Dudl+Dpt,
+        serviceLine: `Service loads (deflection) — self-weight w = ${selfWt} plf; point load P = ${Pservice.toFixed(1)} lb at free end (D + S + L).`,
+        factoredLine: `Factored loads (moment &amp; stress) — self-weight w = ${wFactored.toFixed(1)} plf; point load P = ${Pfactored.toFixed(1)} lb — ${dlFactor}×D + ${slFactor}×S + ${llFactor}×L.`,
+        formulaLine: `Formulas — Max moment (at fixed end): M = wL²/2 + PL (self-weight + point load). Max deflection (at free end): Δ = wL⁴/(8EI) + PL³/(3EI), E = ${STEEL_E_KSI.toLocaleString()} ksi.`
+      };
+    }
+  }
+};
 
 render();
 
