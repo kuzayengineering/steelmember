@@ -1733,7 +1733,8 @@ function updateBeamResults(){
       <div class="result-tile ${stressClass}"><div class="lbl">Max stress</div><div class="val">${stress!=null?stress.toFixed(2):'—'}<span class="unit">ksi</span></div></div>
     </div>
     <div class="load-total">Service load (deflection) w = ${wService.toFixed(1)} plf — D + S + L + self-weight (${selfWt} plf), bending about ${bc.axis==='x'?'X-X':'Y-Y'}.</div>
-    <div class="load-total line2">Factored load (moment &amp; stress) w = ${wFactored.toFixed(1)} plf — ${dlFactor}×D + ${slFactor}×S + ${llFactor}×L (self-weight factored with D). Allowable stress = ${allowFactor}×Fy = ${allowStress.toFixed(1)} ksi — swap in AISC-specific combinations/limits as needed.</div>`;
+    <div class="load-total">Factored load (moment &amp; stress) w = ${wFactored.toFixed(1)} plf — ${dlFactor}×D + ${slFactor}×S + ${llFactor}×L (self-weight factored with D). Allowable stress = ${allowFactor}×Fy = ${allowStress.toFixed(1)} ksi — swap in AISC-specific combinations/limits as needed.</div>
+    <div class="load-total line2">Formulas — Max moment: M = wL²/8. Max deflection: Δ = 5wL⁴/(384·E·I), E = ${STEEL_E_KSI.toLocaleString()} ksi. Max stress: f = M/S (S = ${bc.axis==='x'?'Sx':'Sy'}).</div>`;
 }
 
 function simpleBeamSVG(){
