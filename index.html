@@ -1577,8 +1577,8 @@ function openBeamCalc(key){
   state.beamTool = key;
   state.beamCalc = {
     dl:"", sl:"", ll:"", span:"", beam:null, axis:"x",
-    dlFactor:1.2, slFactor:1.6, llFactor:1.6,
-    fy:50, allowFactor:0.9
+    dlFactor:1.0, slFactor:1.0, llFactor:1.0,
+    fy:50, allowFactor:0.66
   };
   render();
 }
@@ -1602,19 +1602,19 @@ function renderBeamCalc(){
         <div class="field">
           <div class="load-row">
             <div class="load-val"><label>Dead ${isPoint?"point ":""}load, D (${unit})${isPoint?"":" — excl. beam weight"}</label><input id="bcDL" type="number" step="any" min="0" placeholder="0"></div>
-            <div class="load-factor"><label>Factor</label><input id="bcDLf" type="number" step="any" min="0" value="1.2"></div>
+            <div class="load-factor"><label>Factor</label><input id="bcDLf" type="number" step="any" min="0" value="1.0"></div>
           </div>
         </div>
         <div class="field">
           <div class="load-row">
             <div class="load-val"><label>Snow ${isPoint?"point ":""}load, S (${unit})</label><input id="bcSL" type="number" step="any" min="0" placeholder="0"></div>
-            <div class="load-factor"><label>Factor</label><input id="bcSLf" type="number" step="any" min="0" value="1.6"></div>
+            <div class="load-factor"><label>Factor</label><input id="bcSLf" type="number" step="any" min="0" value="1.0"></div>
           </div>
         </div>
         <div class="field">
           <div class="load-row">
             <div class="load-val"><label>Live ${isPoint?"point ":""}load, L (${unit})</label><input id="bcLL" type="number" step="any" min="0" placeholder="0"></div>
-            <div class="load-factor"><label>Factor</label><input id="bcLLf" type="number" step="any" min="0" value="1.6"></div>
+            <div class="load-factor"><label>Factor</label><input id="bcLLf" type="number" step="any" min="0" value="1.0"></div>
           </div>
         </div>
         <div class="field"><label>Span (ft)</label><input id="bcSpan" type="number" step="any" min="0" placeholder="0"></div>
@@ -1630,7 +1630,7 @@ function renderBeamCalc(){
       <div class="calc-col">
         <div class="subhead">Design Criteria</div>
         <div class="field"><label>Yield strength, Fy (ksi)</label><input id="bcFy" type="number" step="any" min="0" value="50"></div>
-        <div class="field"><label>Allowable stress factor (× Fy)</label><input id="bcAllowFactor" type="number" step="any" min="0" max="1" value="0.9"></div>
+        <div class="field"><label>Allowable stress factor (× Fy)</label><input id="bcAllowFactor" type="number" step="any" min="0" max="1" value="0.66"></div>
       </div>
     </div>
 
