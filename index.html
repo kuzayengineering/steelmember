@@ -1728,8 +1728,8 @@ function simpleBeamSVG(){
   const span = state.beamCalc && state.beamCalc.span ? state.beamCalc.span : "—";
   return `<svg viewBox="0 0 640 170" xmlns="http://www.w3.org/2000/svg">
     <defs>
-      <marker id="udlArrow" markerWidth="8" markerHeight="8" refX="4" refY="7" orient="auto"><path class="udl-fill" d="M0,0 L8,0 L4,8 Z"/></marker>
-      <marker id="dimArrow" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path class="dim-fill" d="M0,0 L8,4 L0,8 Z"/></marker>
+      <marker id="udlArrow" markerWidth="8" markerHeight="8" refX="8" refY="4" markerUnits="userSpaceOnUse" orient="auto"><path class="udl-fill" d="M0,0 L0,8 L8,4 Z"/></marker>
+      <marker id="dimArrow" markerWidth="8" markerHeight="8" refX="8" refY="4" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path class="dim-fill" d="M0,0 L0,8 L8,4 Z"/></marker>
     </defs>
     <line class="steel-stroke" x1="${xL}" y1="26" x2="${xR}" y2="26" stroke-width="2"/>
     ${arrows}
