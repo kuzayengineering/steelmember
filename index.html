@@ -30,6 +30,8 @@
   --white:#FCFBF8;
   --hot-rolled:#B2433A;
   --cold-formed:#3568A0;
+  --ok:#3E7A4A;
+  --danger:#B2402E;
 }
 *{box-sizing:border-box;}
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%;}
@@ -147,6 +149,10 @@ td.nm{font-weight:500;color:var(--steel-dark);}
 .field label{display:block;font-size:11.5px;color:var(--ink-soft);margin-bottom:5px;}
 .field input{width:100%;border:1.5px solid var(--line);background:var(--white);padding:9px 10px;font-size:14px;font-family:'IBM Plex Mono';color:var(--ink);outline:none;}
 .field input:focus{border-color:var(--steel);}
+.load-row{display:flex;gap:8px;align-items:flex-end;}
+.load-row .load-val{flex:1;}
+.load-row .load-factor{width:74px;flex-shrink:0;}
+.load-row .load-factor label{white-space:nowrap;}
 
 .beam-pick-wrap{position:relative;margin-bottom:16px;}
 .beam-pick-wrap .search-input{height:38px;}
@@ -165,7 +171,12 @@ td.nm{font-weight:500;color:var(--steel-dark);}
 .result-tile .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--mill);}
 .result-tile .val{font-family:'IBM Plex Mono';font-weight:500;font-size:24px;margin-top:6px;color:var(--steel-dark);}
 .result-tile .val .unit{font-size:13px;font-weight:400;color:var(--ink-soft);margin-left:4px;}
-.load-total{font-size:12.5px;color:var(--ink-soft);margin:2px 0 20px;}
+.result-tile.ok{border-top-color:var(--ok);}
+.result-tile.ok .val{color:var(--ok);}
+.result-tile.over{border-top-color:var(--danger);}
+.result-tile.over .val{color:var(--danger);}
+.load-total{font-size:12.5px;color:var(--ink-soft);margin:2px 0 6px;}
+.load-total.line2{margin-bottom:20px;}
 
 footer.app-footer{margin-top:40px;padding-top:14px;border-top:1px solid var(--line);font-size:11.5px;line-height:1.5;color:var(--mill);}
 .powered-by{margin-top:16px;display:flex;flex-direction:column;align-items:center;gap:6px;}
@@ -1515,7 +1526,11 @@ const STEEL_E_KSI = 29000;
 function openBeamCalc(key){
   state.view = "beamcalc";
   state.beamTool = key;
-  state.beamCalc = {dl:"", sl:"", ll:"", span:"", beam:null, axis:"x"};
+  state.beamCalc = {
+    dl:"", sl:"", ll:"", span:"", beam:null, axis:"x",
+    dlFactor:1.2, slFactor:1.6, llFactor:1.6,
+    fy:50, allowFactor:0.66
+  };
   render();
 }
 
@@ -1533,9 +1548,24 @@ function renderSimpleBeamUDL(){
     <div class="calc-grid">
       <div class="calc-col">
         <div class="subhead">Loads</div>
-        <div class="field"><label>Dead load, D (plf) — excl. beam weight</label><input id="bcDL" type="number" step="any" min="0" placeholder="0"></div>
-        <div class="field"><label>Snow load, S (plf)</label><input id="bcSL" type="number" step="any" min="0" placeholder="0"></div>
-        <div class="field"><label>Live load, L (plf)</label><input id="bcLL" type="number" step="any" min="0" placeholder="0"></div>
+        <div class="field">
+          <div class="load-row">
+            <div class="load-val"><label>Dead load, D (plf) — excl. beam weight</label><input id="bcDL" type="number" step="any" min="0" placeholder="0"></div>
+            <div class="load-factor"><label>Factor</label><input id="bcDLf" type="number" step="any" min="0" value="1.2"></div>
+          </div>
+        </div>
+        <div class="field">
+          <div class="load-row">
+            <div class="load-val"><label>Snow load, S (plf)</label><input id="bcSL" type="number" step="any" min="0" placeholder="0"></div>
+            <div class="load-factor"><label>Factor</label><input id="bcSLf" type="number" step="any" min="0" value="1.6"></div>
+          </div>
+        </div>
+        <div class="field">
+          <div class="load-row">
+            <div class="load-val"><label>Live load, L (plf)</label><input id="bcLL" type="number" step="any" min="0" placeholder="0"></div>
+            <div class="load-factor"><label>Factor</label><input id="bcLLf" type="number" step="any" min="0" value="1.6"></div>
+          </div>
+        </div>
         <div class="field"><label>Span (ft)</label><input id="bcSpan" type="number" step="any" min="0" placeholder="0"></div>
       </div>
       <div class="calc-col">
@@ -1545,6 +1575,11 @@ function renderSimpleBeamUDL(){
           <div id="beamSuggest" class="suggest"></div>
         </div>
         <div class="beam-card" id="beamCard"><div class="beam-empty">No beam selected yet.</div></div>
+      </div>
+      <div class="calc-col">
+        <div class="subhead">Design Criteria</div>
+        <div class="field"><label>Yield strength, Fy (ksi)</label><input id="bcFy" type="number" step="any" min="0" value="50"></div>
+        <div class="field"><label>Allowable stress factor (× Fy)</label><input id="bcAllowFactor" type="number" step="any" min="0" max="1" value="0.66"></div>
       </div>
     </div>
 
@@ -1560,11 +1595,18 @@ function renderSimpleBeamUDL(){
 
 function wireBeamCalc(){
   const dl=document.getElementById("bcDL"), sl=document.getElementById("bcSL"),
-        ll=document.getElementById("bcLL"), span=document.getElementById("bcSpan");
+        ll=document.getElementById("bcLL"), span=document.getElementById("bcSpan"),
+        dlf=document.getElementById("bcDLf"), slf=document.getElementById("bcSLf"), llf=document.getElementById("bcLLf"),
+        fy=document.getElementById("bcFy"), allowFactor=document.getElementById("bcAllowFactor");
   dl.oninput = ()=>{ state.beamCalc.dl = dl.value; updateBeamResults(); };
   sl.oninput = ()=>{ state.beamCalc.sl = sl.value; updateBeamResults(); };
   ll.oninput = ()=>{ state.beamCalc.ll = ll.value; updateBeamResults(); };
   span.oninput = ()=>{ state.beamCalc.span = span.value; updateSpanLabel(); updateBeamResults(); };
+  dlf.oninput = ()=>{ state.beamCalc.dlFactor = dlf.value; updateBeamResults(); };
+  slf.oninput = ()=>{ state.beamCalc.slFactor = slf.value; updateBeamResults(); };
+  llf.oninput = ()=>{ state.beamCalc.llFactor = llf.value; updateBeamResults(); };
+  fy.oninput = ()=>{ state.beamCalc.fy = fy.value; updateBeamResults(); };
+  allowFactor.oninput = ()=>{ state.beamCalc.allowFactor = allowFactor.value; updateBeamResults(); };
 
   const box = document.getElementById("beamSearchBox");
   const sugg = document.getElementById("beamSuggest");
@@ -1639,6 +1681,8 @@ function updateBeamResults(){
   const box = document.getElementById("beamResults");
   const bc = state.beamCalc;
   const dl=parseFloat(bc.dl)||0, sl=parseFloat(bc.sl)||0, ll=parseFloat(bc.ll)||0, span=parseFloat(bc.span)||0;
+  const dlFactor=parseFloat(bc.dlFactor)||0, slFactor=parseFloat(bc.slFactor)||0, llFactor=parseFloat(bc.llFactor)||0;
+  const fy=parseFloat(bc.fy)||0, allowFactor=parseFloat(bc.allowFactor)||0;
   const b = bc.beam;
   if(!b || !span){
     box.innerHTML = `<div class="results-grid">
@@ -1650,20 +1694,26 @@ function updateBeamResults(){
     return;
   }
   const selfWt = beamSelfWeight(b);
-  const wPlf = dl+sl+ll+selfWt;
+  // Deflection is a serviceability check, so it uses unfactored (service) loads.
+  const wService = dl+sl+ll+selfWt;
+  // Moment/stress are strength checks, so they use factored loads (self-weight factored with dead load).
+  const wFactored = dlFactor*(dl+selfWt) + slFactor*sl + llFactor*ll;
   const I = bc.axis==="x" ? b.Ix : b.Iy;
   const S = bc.axis==="x" ? b.Sx : b.Sy;
   const Lin = span*12;
-  const wKipIn = wPlf/12000;
-  const Mmax = wPlf*span*span*0.0015;
-  const defl = (5*wKipIn*Math.pow(Lin,4))/(384*STEEL_E_KSI*I);
+  const wServiceKipIn = wService/12000;
+  const Mmax = wFactored*span*span*0.0015;
+  const defl = (5*wServiceKipIn*Math.pow(Lin,4))/(384*STEEL_E_KSI*I);
   const stress = S!=null ? Mmax/S : null;
+  const allowStress = fy*allowFactor;
+  const stressClass = stress==null || allowStress<=0 ? "" : (stress>allowStress ? "over" : "ok");
   box.innerHTML = `<div class="results-grid">
       <div class="result-tile"><div class="lbl">Max moment</div><div class="val">${Mmax.toFixed(2)}<span class="unit">kip-in</span></div></div>
       <div class="result-tile"><div class="lbl">Max deflection</div><div class="val">${defl.toFixed(3)}<span class="unit">in</span></div></div>
-      <div class="result-tile"><div class="lbl">Max stress</div><div class="val">${stress!=null?stress.toFixed(2):'—'}<span class="unit">ksi</span></div></div>
+      <div class="result-tile ${stressClass}"><div class="lbl">Max stress</div><div class="val">${stress!=null?stress.toFixed(2):'—'}<span class="unit">ksi</span></div></div>
     </div>
-    <div class="load-total">Total service load w = ${wPlf.toFixed(1)} plf (incl. ${selfWt} plf beam self-weight) over L = ${span} ft, bending about ${bc.axis==='x'?'X-X':'Y-Y'}. Simple beam theory, unfactored loads summed — swap in AISC-specific load combinations as needed.</div>`;
+    <div class="load-total">Service load (deflection) w = ${wService.toFixed(1)} plf — D + S + L + self-weight (${selfWt} plf), bending about ${bc.axis==='x'?'X-X':'Y-Y'}.</div>
+    <div class="load-total line2">Factored load (moment &amp; stress) w = ${wFactored.toFixed(1)} plf — ${dlFactor}×D + ${slFactor}×S + ${llFactor}×L (self-weight factored with D). Allowable stress = ${allowFactor}×Fy = ${allowStress.toFixed(1)} ksi — swap in AISC-specific combinations/limits as needed.</div>`;
 }
 
 function simpleBeamSVG(){
