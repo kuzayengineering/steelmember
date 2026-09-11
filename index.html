@@ -64,6 +64,8 @@ header.top{position:sticky;top:0;background:var(--paper);z-index:10;border-botto
 
 .eyebrow{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--mill);margin:32px 0 6px;}
 .page-title{font-family:'Space Grotesk';font-weight:600;font-size:26px;margin:0 0 24px;}
+.page-title-row{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;}
+.page-title-row .page-title{flex:1;min-width:200px;}
 .cat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
 .cat-tile{background:var(--white);border:1.5px solid var(--line);padding:22px 12px 16px;text-align:center;cursor:pointer;transition:border-color .15s;position:relative;}
 .cat-tile:hover{border-color:var(--steel);}
@@ -211,6 +213,21 @@ footer.app-footer{margin-top:40px;padding-top:14px;border-top:1px solid var(--li
   .brand-icon-img{width:32px;height:32px;}
   .cat-grid{grid-template-columns:repeat(2,1fr);gap:8px;}
   .filters{grid-template-columns:1fr;}
+}
+
+@media print{
+  .no-print, header.top, .backlink, .toolbar, .filters, .beam-pick-wrap,
+  footer.app-footer .powered-by, footer.app-footer a[href="privacy.html"]{display:none !important;}
+  body{background:#fff;}
+  .app{max-width:none;padding:0;margin:0;}
+  .beam-diagram-card, .result-tile, .beam-card, .propgrid, .sheet{
+    -webkit-print-color-adjust:exact;print-color-adjust:exact;
+    break-inside:avoid;page-break-inside:avoid;
+  }
+  .results-grid{break-inside:avoid;page-break-inside:avoid;}
+  table{font-size:11px;}
+  th{position:static !important;}
+  .tablewrap.scrollable{overflow-x:visible;}
 }
 </style>
 </head>
@@ -1529,7 +1546,7 @@ function openBeamCalc(key){
   state.beamCalc = {
     dl:"", sl:"", ll:"", span:"", beam:null, axis:"x",
     dlFactor:1.2, slFactor:1.6, llFactor:1.6,
-    fy:50, allowFactor:0.66
+    fy:50, allowFactor:0.9
   };
   render();
 }
@@ -1541,7 +1558,10 @@ function renderBeamCalc(){
 function renderSimpleBeamUDL(){
   app.innerHTML = header() + `
     <div class="eyebrow">Beam Diagrams</div>
-    <h1 class="page-title">Simple Beam — Uniformly Distributed Load</h1>
+    <div class="page-title-row">
+      <h1 class="page-title">Simple Beam — Uniformly Distributed Load</h1>
+      <button class="btn no-print" onclick="window.print()">Print results</button>
+    </div>
 
     <div class="beam-diagram-card">${simpleBeamSVG()}</div>
 
@@ -1579,7 +1599,7 @@ function renderSimpleBeamUDL(){
       <div class="calc-col">
         <div class="subhead">Design Criteria</div>
         <div class="field"><label>Yield strength, Fy (ksi)</label><input id="bcFy" type="number" step="any" min="0" value="50"></div>
-        <div class="field"><label>Allowable stress factor (× Fy)</label><input id="bcAllowFactor" type="number" step="any" min="0" max="1" value="0.66"></div>
+        <div class="field"><label>Allowable stress factor (× Fy)</label><input id="bcAllowFactor" type="number" step="any" min="0" max="1" value="0.9"></div>
       </div>
     </div>
 
