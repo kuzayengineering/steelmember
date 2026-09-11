@@ -1633,13 +1633,13 @@ const STEEL_E_KSI = 29000;
 function openBeamCalc(key){
   state.view = "beamcalc";
   state.beamTool = key;
-  const common = {beam:null, axis:"x", dlFactor:1.0, slFactor:1.0, llFactor:1.0, fy:50, allowFactor:0.66};
+  const common = {beam:null, axis:"x", dlFactor:1.0, slFactor:1.0, llFactor:1.0, fy:50, allowFactor:0.66,
+    charts:{load:true, shear:true, moment:true, deflection:true}};
   if(key==="custom"){
     state.beamCalc = {...common,
       length:"", leftSupport:"simple", rightSupport:"simple",
       loads:[{id:1, category:"dead", type:"point", mag:"", x:"", x1:"", x2:""}],
-      nextLoadId:2,
-      charts:{load:true, shear:true, moment:true, deflection:true}
+      nextLoadId:2
     };
   } else {
     state.beamCalc = {...common, dl:"", sl:"", ll:"", span:"", loc:""};
@@ -1709,6 +1709,15 @@ function renderBeamCalc(){
 
     <div class="eyebrow">Results</div>
     <div id="beamResults"></div>
+
+    <div class="eyebrow">Diagrams</div>
+    <div class="axis-toggle chart-toggles">
+      <div class="pill ${state.beamCalc.charts.load?'active':''}" data-chart="load" onclick="toggleChart('load')">Load</div>
+      <div class="pill ${state.beamCalc.charts.shear?'active':''}" data-chart="shear" onclick="toggleChart('shear')">Shear</div>
+      <div class="pill ${state.beamCalc.charts.moment?'active':''}" data-chart="moment" onclick="toggleChart('moment')">Moment</div>
+      <div class="pill ${state.beamCalc.charts.deflection?'active':''}" data-chart="deflection" onclick="toggleChart('deflection')">Deflection</div>
+    </div>
+    <div id="beamCharts"></div>
 
     <button class="backlink" onclick="goHome()">&larr; Home</button>
   ` + footer();
@@ -1852,6 +1861,8 @@ function updateBeamResults(){
       <div class="result-tile"><div class="lbl">Max stress</div><div class="val">—<span class="unit">ksi</span></div></div>
     </div>
     <div class="load-total">Pick a beam and enter a span to calculate.</div>`;
+    lastCustomPasses = null; lastChartBc = null;
+    renderCustomCharts(null);
     return;
   }
   const selfWt = beamSelfWeight(b);
@@ -1859,6 +1870,9 @@ function updateBeamResults(){
   const S = bc.axis==="x" ? b.Sx : b.Sy;
   const ctx = {dl, sl, ll, span, loc, dlFactor, slFactor, llFactor, selfWt, I};
   const r = BEAM_TOOL_DEFS[state.beamTool].compute(ctx);
+  lastCustomPasses = r.passF && r.passS ? {factored:r.passF, service:r.passS} : null;
+  lastChartBc = r.chartBc || null;
+  renderCustomCharts(lastCustomPasses);
   const stress = S!=null ? r.Mmax/S : null;
   const allowStress = fy*allowFactor;
   const stressClass = stress==null || allowStress<=0 ? "" : (stress>allowStress ? "over" : "ok");
@@ -2021,12 +2035,15 @@ const BEAM_TOOL_DEFS = {
     diagram: simpleBeamSVG,
     compute(ctx){
       const {dl,sl,ll,span,dlFactor,slFactor,llFactor,selfWt,I} = ctx;
-      const Lin = span*12;
       const wService = dl+sl+ll+selfWt;
       const wFactored = dlFactor*(dl+selfWt) + slFactor*sl + llFactor*ll;
-      const Mmax = wFactored*span*span*0.0015;
-      const defl = (5*(wService/12000)*Math.pow(Lin,4))/(384*STEEL_E_KSI*I);
-      return { Mmax, defl,
+      const bc = {length:span, leftSupport:"simple", rightSupport:"simple", selfWt, dlFactor, slFactor, llFactor,
+        loads:[{category:"dead",type:"udl",mag:dl,x1:0,x2:span},{category:"snow",type:"udl",mag:sl,x1:0,x2:span},{category:"live",type:"udl",mag:ll,x1:0,x2:span}]};
+      const passF = computeCustomBeamPass(bc, I, true);
+      const passS = computeCustomBeamPass(bc, I, false);
+      let Mmax=0; (passF?passF.M:[]).forEach(m=>{ if(Math.abs(m)>Math.abs(Mmax)) Mmax=m; });
+      let defl=0; (passS?passS.y:[]).forEach(d=>{ if(Math.abs(d)>Math.abs(defl)) defl=d; });
+      return { Mmax: Math.abs(Mmax), defl: Math.abs(defl), passF, passS, chartBc:bc,
         serviceLine: `Service load (deflection) w = ${wService.toFixed(1)} plf — D + S + L + self-weight (${selfWt} plf).`,
         factoredLine: `Factored load (moment &amp; stress) w = ${wFactored.toFixed(1)} plf — ${dlFactor}×D + ${slFactor}×S + ${llFactor}×L (self-weight factored with D).`,
         formulaLine: `Formulas — Max moment: M = wL²/8. Max deflection: Δ = 5wL⁴/(384·E·I), E = ${STEEL_E_KSI.toLocaleString()} ksi.`
@@ -2057,7 +2074,7 @@ const BEAM_TOOL_DEFS = {
       let Mmax=0; (passF?passF.M:[]).forEach(m=>{ if(Math.abs(m)>Math.abs(Mmax)) Mmax=m; });
       let defl=0; (passS?passS.y:[]).forEach(d=>{ if(Math.abs(d)>Math.abs(defl)) defl=d; });
 
-      return { Mmax: Math.abs(Mmax), defl: Math.abs(defl),
+      return { Mmax: Math.abs(Mmax), defl: Math.abs(defl), passF, passS, chartBc:bc,
         serviceLine: `Service loads (deflection) — self-weight w = ${selfWt} plf; point load P = ${Pservice.toFixed(1)} lb at ${a.toFixed(2)} ft from the left support (D + S + L).`,
         factoredLine: `Factored loads (moment &amp; stress) — self-weight w = ${wFactoredSelf.toFixed(1)} plf; point load P = ${Pfactored.toFixed(1)} lb — ${dlFactor}×D + ${slFactor}×S + ${llFactor}×L.`,
         formulaLine: `Computed numerically (station sampling) rather than by simple superposition of each load's own maximum, since the self-weight UDL peaks at midspan while the point load peaks at a — deflection by double-integrating M/EI, E = ${STEEL_E_KSI.toLocaleString()} ksi.`
@@ -2070,12 +2087,15 @@ const BEAM_TOOL_DEFS = {
     diagram: cantileverUDLSVG,
     compute(ctx){
       const {dl,sl,ll,span,dlFactor,slFactor,llFactor,selfWt,I} = ctx;
-      const Lin = span*12;
       const wService = dl+sl+ll+selfWt;
       const wFactored = dlFactor*(dl+selfWt) + slFactor*sl + llFactor*ll;
-      const Mmax = wFactored*span*span*0.006;
-      const defl = ((wService/12000)*Math.pow(Lin,4))/(8*STEEL_E_KSI*I);
-      return { Mmax, defl,
+      const bc = {length:span, leftSupport:"fixed", rightSupport:"free", selfWt, dlFactor, slFactor, llFactor,
+        loads:[{category:"dead",type:"udl",mag:dl,x1:0,x2:span},{category:"snow",type:"udl",mag:sl,x1:0,x2:span},{category:"live",type:"udl",mag:ll,x1:0,x2:span}]};
+      const passF = computeCustomBeamPass(bc, I, true);
+      const passS = computeCustomBeamPass(bc, I, false);
+      let Mmax=0; (passF?passF.M:[]).forEach(m=>{ if(Math.abs(m)>Math.abs(Mmax)) Mmax=m; });
+      let defl=0; (passS?passS.y:[]).forEach(d=>{ if(Math.abs(d)>Math.abs(defl)) defl=d; });
+      return { Mmax: Math.abs(Mmax), defl: Math.abs(defl), passF, passS, chartBc:bc,
         serviceLine: `Service load (deflection) w = ${wService.toFixed(1)} plf — D + S + L + self-weight (${selfWt} plf).`,
         factoredLine: `Factored load (moment &amp; stress) w = ${wFactored.toFixed(1)} plf — ${dlFactor}×D + ${slFactor}×S + ${llFactor}×L (self-weight factored with D).`,
         formulaLine: `Formulas — Max moment (at fixed end): M = wL²/2. Max deflection (at free end): Δ = wL⁴/(8·E·I), E = ${STEEL_E_KSI.toLocaleString()} ksi.`
@@ -2106,7 +2126,7 @@ const BEAM_TOOL_DEFS = {
       let Mmax=0; (passF?passF.M:[]).forEach(m=>{ if(Math.abs(m)>Math.abs(Mmax)) Mmax=m; });
       let defl=0; (passS?passS.y:[]).forEach(d=>{ if(Math.abs(d)>Math.abs(defl)) defl=d; });
 
-      return { Mmax: Math.abs(Mmax), defl: Math.abs(defl),
+      return { Mmax: Math.abs(Mmax), defl: Math.abs(defl), passF, passS, chartBc:bc,
         serviceLine: `Service loads (deflection) — self-weight w = ${selfWt} plf; point load P = ${Pservice.toFixed(1)} lb at ${a.toFixed(2)} ft from the fixed end (D + S + L).`,
         factoredLine: `Factored loads (moment &amp; stress) — self-weight w = ${wFactoredSelf.toFixed(1)} plf; point load P = ${Pfactored.toFixed(1)} lb — ${dlFactor}×D + ${slFactor}×S + ${llFactor}×L.`,
         formulaLine: `Formulas — Max moment (at fixed end): M = wL²/2 + Pa (a = distance from fixed end). Max deflection (at free end): Δ = wL⁴/(8EI) + Pa²(3L−a)/(6EI), E = ${STEEL_E_KSI.toLocaleString()} ksi.`
@@ -2614,10 +2634,12 @@ function updateCustomResults(){
     <div class="load-total line2">Computed numerically by superposing every load above (incl. self-weight): reactions from statics, shear/moment by direct summation, deflection by double-integrating M/EI and solving for the two integration constants from the support conditions.</div>`;
 
   lastCustomPasses = {factored:passFactored, service:passService};
+  lastChartBc = bc;
   renderCustomCharts(lastCustomPasses);
 }
 
 let lastCustomPasses = null;
+let lastChartBc = null;
 
 function toggleChart(key){
   state.beamCalc.charts[key] = !state.beamCalc.charts[key];
@@ -2723,9 +2745,9 @@ function renderCustomCharts(passes){
   const box = document.getElementById("beamCharts");
   if(!box) return;
   const bc = state.beamCalc;
-  if(!passes){ box.innerHTML = `<div class="load-total">Diagrams appear once results calculate above.</div>`; return; }
+  if(!passes || !lastChartBc){ box.innerHTML = `<div class="load-total">Diagrams appear once results calculate above.</div>`; return; }
   let html = "";
-  if(bc.charts.load) html += chartCard("Load", "as entered", chartLoadSVG(bc));
+  if(bc.charts.load) html += chartCard("Load", "as entered", chartLoadSVG(lastChartBc));
   if(bc.charts.shear) html += chartCard("Shear — factored", "kip", chartLineSVG(passes.factored.xs, passes.factored.V));
   if(bc.charts.moment) html += chartCard("Moment — factored", "kip-in", chartLineSVG(passes.factored.xs, passes.factored.M));
   if(bc.charts.deflection) html += chartCard("Deflection — service", "in", chartLineSVG(passes.service.xs, passes.service.y));
