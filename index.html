@@ -30,6 +30,8 @@
   --white:#FCFBF8;
   --hot-rolled:#B2433A;
   --cold-formed:#3568A0;
+  --ok:#3E7A4A;
+  --danger:#B2402E;
 }
 *{box-sizing:border-box;}
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%;}
@@ -129,6 +131,53 @@ td.nm{font-weight:500;color:var(--steel-dark);}
 .prop .k{color:var(--ink-soft);}
 .prop .v{font-family:'IBM Plex Mono';font-weight:500;}
 
+.section-gap{margin-top:44px;}
+
+.beam-diagram-card{background:var(--white);border:1.5px solid var(--line);padding:24px 16px 10px;margin:6px 0 26px;}
+.beam-diagram-card svg{width:100%;height:auto;display:block;}
+.beam-diagram-card .steel-stroke{stroke:var(--steel);fill:none;}
+.beam-diagram-card .beam-line{stroke:var(--steel-dark);fill:none;}
+.beam-diagram-card .dim-stroke{stroke:var(--ink-soft);fill:none;}
+.beam-diagram-card .udl-fill{fill:var(--steel);}
+.beam-diagram-card .dim-fill{fill:var(--ink-soft);}
+.beam-diagram-card .load-label{fill:var(--steel-dark);font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;}
+.beam-diagram-card .dim-label{fill:var(--ink-soft);font-family:'IBM Plex Mono',monospace;font-size:12px;}
+
+.calc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:28px;margin-bottom:8px;}
+.calc-col .subhead{font-family:'Space Grotesk';font-weight:600;font-size:14px;margin:0 0 12px;color:var(--steel-dark);}
+.field{margin-bottom:14px;}
+.field label{display:block;font-size:11.5px;color:var(--ink-soft);margin-bottom:5px;}
+.field input{width:100%;border:1.5px solid var(--line);background:var(--white);padding:9px 10px;font-size:14px;font-family:'IBM Plex Mono';color:var(--ink);outline:none;}
+.field input:focus{border-color:var(--steel);}
+.load-row{display:flex;gap:8px;align-items:flex-end;}
+.load-row .load-val{flex:1;}
+.load-row .load-factor{width:74px;flex-shrink:0;}
+.load-row .load-factor label{white-space:nowrap;}
+
+.beam-pick-wrap{position:relative;margin-bottom:16px;}
+.beam-pick-wrap .search-input{height:38px;}
+
+.beam-card{border:1.5px solid var(--line);background:var(--paper-2);padding:14px 16px;}
+.beam-card .beam-empty{font-size:12.5px;color:var(--mill);}
+.beam-card .bc-name{font-family:'IBM Plex Mono';font-weight:500;font-size:15px;color:var(--steel-dark);margin-bottom:10px;}
+.beam-card .bc-props{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:10px;margin-bottom:14px;}
+.beam-card .bc-props .k{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:var(--mill);}
+.beam-card .bc-props .v{display:block;font-family:'IBM Plex Mono';font-weight:500;font-size:14px;margin-top:2px;}
+
+.axis-toggle{display:flex;flex-wrap:wrap;gap:8px;}
+
+.results-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin:6px 0 8px;}
+.result-tile{background:var(--white);border:1.5px solid var(--line);border-top:3px solid var(--steel);padding:16px 16px 14px;}
+.result-tile .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--mill);}
+.result-tile .val{font-family:'IBM Plex Mono';font-weight:500;font-size:24px;margin-top:6px;color:var(--steel-dark);}
+.result-tile .val .unit{font-size:13px;font-weight:400;color:var(--ink-soft);margin-left:4px;}
+.result-tile.ok{border-top-color:var(--ok);}
+.result-tile.ok .val{color:var(--ok);}
+.result-tile.over{border-top-color:var(--danger);}
+.result-tile.over .val{color:var(--danger);}
+.load-total{font-size:12.5px;color:var(--ink-soft);margin:2px 0 6px;}
+.load-total.line2{margin-bottom:20px;}
+
 footer.app-footer{margin-top:40px;padding-top:14px;border-top:1px solid var(--line);font-size:11.5px;line-height:1.5;color:var(--mill);}
 .powered-by{margin-top:16px;display:flex;flex-direction:column;align-items:center;gap:6px;}
 .powered-by span{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--mill);}
@@ -154,6 +203,8 @@ footer.app-footer{margin-top:40px;padding-top:14px;border-top:1px solid var(--li
   .sheet-name{font-size:20px;}
   .page-title{font-size:21px;}
   .tablewrap.scrollable{-webkit-overflow-scrolling:touch;}
+  .beam-diagram-card{padding:16px 6px 4px;}
+  .calc-grid{gap:20px;}
 }
 @media(max-width:480px){
   .brand-title-img{height:24px;}
@@ -1091,6 +1142,14 @@ const CATEGORIES = [
   {key:"hssc", nm:"Round HSS", sub:"Round HSS", subs:[{key:"HSSC", label:"Round HSS"}], icon:"i-hssc"},
 ];
 
+/* Beam-diagram calculators shown in the "Beam Diagrams" section on the home screen. */
+const BEAM_TOOLS = [
+  {key:"simple-udl", nm:"Simple Beam", sub:"Uniformly Distributed Load", icon:"i-beam-udl"},
+  {key:"simple-pt",  nm:"Simple Beam", sub:"Point Load", icon:"i-beam-generic", soon:true},
+  {key:"cant-udl",   nm:"Cantilever",  sub:"Uniformly Distributed Load", icon:"i-beam-generic", soon:true},
+  {key:"cant-pt",    nm:"Cantilever",  sub:"Point Load", icon:"i-beam-generic", soon:true},
+];
+
 const ICONS = {
   "i-w":'<svg viewBox="0 0 48 48" fill="none" stroke-width="3"><path d="M10 8h28M10 40h28M24 8v32"/></svg>',
   "i-c":'<svg viewBox="0 0 48 48" fill="none" stroke-width="3"><path d="M34 8H12v32h22"/></svg>',
@@ -1100,9 +1159,11 @@ const ICONS = {
   "i-t":'<svg viewBox="0 0 48 48" fill="none" stroke-width="3"><path d="M8 10h32M24 10v28"/></svg>',
   "i-hssr":'<svg viewBox="0 0 48 48" fill="none" stroke-width="3"><rect x="8" y="12" width="32" height="24"/></svg>',
   "i-hssc":'<svg viewBox="0 0 48 48" fill="none" stroke-width="3"><circle cx="24" cy="24" r="16"/></svg>',
+  "i-beam-udl":'<svg viewBox="0 0 48 48" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="10" y1="9" x2="10" y2="22"/><line x1="7" y1="19" x2="10" y2="22"/><line x1="13" y1="19" x2="10" y2="22"/><line x1="19" y1="9" x2="19" y2="22"/><line x1="16" y1="19" x2="19" y2="22"/><line x1="22" y1="19" x2="19" y2="22"/><line x1="28" y1="9" x2="28" y2="22"/><line x1="25" y1="19" x2="28" y2="22"/><line x1="31" y1="19" x2="28" y2="22"/><line x1="37" y1="9" x2="37" y2="22"/><line x1="34" y1="19" x2="37" y2="22"/><line x1="40" y1="19" x2="37" y2="22"/><line x1="8" y1="24" x2="40" y2="24" stroke-width="3.5"/><path d="M8 24l-5 9h10z"/><path d="M40 24l-5 9h10z"/><line x1="1" y1="35" x2="13" y2="35"/><line x1="33" y1="35" x2="45" y2="35"/></svg>',
+  "i-beam-generic":'<svg viewBox="0 0 48 48" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="26" x2="40" y2="26" stroke-width="4"/><path d="M8 26l-5 9h10z"/><path d="M40 26l-5 9h10z"/><line x1="1" y1="37" x2="13" y2="37"/><line x1="33" y1="37" x2="45" y2="37"/></svg>',
 };
 
-let state = {view:"home", cat:null, sub:null, member:null, filters:{}, search:"", filtersOpen:false, sortCol:null, sortDir:null};
+let state = {view:"home", cat:null, sub:null, member:null, filters:{}, search:"", filtersOpen:false, sortCol:null, sortDir:null, beamTool:null, beamCalc:null};
 const app = document.getElementById("app");
 
 function allRowsFlat(){
@@ -1117,6 +1178,7 @@ function render(){
   if(state.view==="cat") return renderCat();
   if(state.view==="member") return renderMember();
   if(state.view==="search") return renderSearchResults();
+  if(state.view==="beamcalc") return renderBeamCalc();
 }
 
 function header(){
@@ -1158,6 +1220,18 @@ function renderHome(){
           ${ICONS[c.icon]}
           <span class="nm">${c.nm}</span>
           <span class="sub">${c.sub}</span>
+        </div>`).join("")}
+    </div>
+
+    <div class="eyebrow section-gap">Design Tools</div>
+    <h1 class="page-title">Beam Diagrams</h1>
+    <div class="cat-grid">
+      ${BEAM_TOOLS.map(t=>`
+        <div class="cat-tile" onclick="${t.soon?'':`openBeamCalc('${t.key}')`}">
+          ${t.soon?'<span class="soon-badge">Coming soon</span>':''}
+          ${ICONS[t.icon]}
+          <span class="nm">${t.nm}</span>
+          <span class="sub">${t.sub}</span>
         </div>`).join("")}
     </div>
   ` + footer();
@@ -1444,6 +1518,236 @@ function renderSearchResults(){
     <button class="backlink" onclick="goHome()">&larr; All categories</button>
   ` + footer();
   wireHeader();
+}
+
+/* ---------- Beam Diagrams: simple beam / UDL calculator ---------- */
+const STEEL_E_KSI = 29000;
+
+function openBeamCalc(key){
+  state.view = "beamcalc";
+  state.beamTool = key;
+  state.beamCalc = {
+    dl:"", sl:"", ll:"", span:"", beam:null, axis:"x",
+    dlFactor:1.2, slFactor:1.6, llFactor:1.6,
+    fy:50, allowFactor:0.66
+  };
+  render();
+}
+
+function renderBeamCalc(){
+  if(state.beamTool==="simple-udl") return renderSimpleBeamUDL();
+}
+
+function renderSimpleBeamUDL(){
+  app.innerHTML = header() + `
+    <div class="eyebrow">Beam Diagrams</div>
+    <h1 class="page-title">Simple Beam — Uniformly Distributed Load</h1>
+
+    <div class="beam-diagram-card">${simpleBeamSVG()}</div>
+
+    <div class="calc-grid">
+      <div class="calc-col">
+        <div class="subhead">Loads</div>
+        <div class="field">
+          <div class="load-row">
+            <div class="load-val"><label>Dead load, D (plf) — excl. beam weight</label><input id="bcDL" type="number" step="any" min="0" placeholder="0"></div>
+            <div class="load-factor"><label>Factor</label><input id="bcDLf" type="number" step="any" min="0" value="1.2"></div>
+          </div>
+        </div>
+        <div class="field">
+          <div class="load-row">
+            <div class="load-val"><label>Snow load, S (plf)</label><input id="bcSL" type="number" step="any" min="0" placeholder="0"></div>
+            <div class="load-factor"><label>Factor</label><input id="bcSLf" type="number" step="any" min="0" value="1.6"></div>
+          </div>
+        </div>
+        <div class="field">
+          <div class="load-row">
+            <div class="load-val"><label>Live load, L (plf)</label><input id="bcLL" type="number" step="any" min="0" placeholder="0"></div>
+            <div class="load-factor"><label>Factor</label><input id="bcLLf" type="number" step="any" min="0" value="1.6"></div>
+          </div>
+        </div>
+        <div class="field"><label>Span (ft)</label><input id="bcSpan" type="number" step="any" min="0" placeholder="0"></div>
+      </div>
+      <div class="calc-col">
+        <div class="subhead">Beam</div>
+        <div class="beam-pick-wrap search-wrap">
+          <input id="beamSearchBox" class="search-input mono" placeholder="Type a designation, e.g. W12X26" autocomplete="off">
+          <div id="beamSuggest" class="suggest"></div>
+        </div>
+        <div class="beam-card" id="beamCard"><div class="beam-empty">No beam selected yet.</div></div>
+      </div>
+      <div class="calc-col">
+        <div class="subhead">Design Criteria</div>
+        <div class="field"><label>Yield strength, Fy (ksi)</label><input id="bcFy" type="number" step="any" min="0" value="50"></div>
+        <div class="field"><label>Allowable stress factor (× Fy)</label><input id="bcAllowFactor" type="number" step="any" min="0" max="1" value="0.66"></div>
+      </div>
+    </div>
+
+    <div class="eyebrow">Results</div>
+    <div id="beamResults"></div>
+
+    <button class="backlink" onclick="goHome()">&larr; Home</button>
+  ` + footer();
+  wireHeader();
+  wireBeamCalc();
+  updateBeamResults();
+}
+
+function wireBeamCalc(){
+  const dl=document.getElementById("bcDL"), sl=document.getElementById("bcSL"),
+        ll=document.getElementById("bcLL"), span=document.getElementById("bcSpan"),
+        dlf=document.getElementById("bcDLf"), slf=document.getElementById("bcSLf"), llf=document.getElementById("bcLLf"),
+        fy=document.getElementById("bcFy"), allowFactor=document.getElementById("bcAllowFactor");
+  dl.oninput = ()=>{ state.beamCalc.dl = dl.value; updateBeamResults(); };
+  sl.oninput = ()=>{ state.beamCalc.sl = sl.value; updateBeamResults(); };
+  ll.oninput = ()=>{ state.beamCalc.ll = ll.value; updateBeamResults(); };
+  span.oninput = ()=>{ state.beamCalc.span = span.value; updateSpanLabel(); updateBeamResults(); };
+  dlf.oninput = ()=>{ state.beamCalc.dlFactor = dlf.value; updateBeamResults(); };
+  slf.oninput = ()=>{ state.beamCalc.slFactor = slf.value; updateBeamResults(); };
+  llf.oninput = ()=>{ state.beamCalc.llFactor = llf.value; updateBeamResults(); };
+  fy.oninput = ()=>{ state.beamCalc.fy = fy.value; updateBeamResults(); };
+  allowFactor.oninput = ()=>{ state.beamCalc.allowFactor = allowFactor.value; updateBeamResults(); };
+
+  const box = document.getElementById("beamSearchBox");
+  const sugg = document.getElementById("beamSuggest");
+  box.oninput = ()=>{
+    const q = box.value.trim().toUpperCase();
+    if(q.length===0){ sugg.classList.remove("open"); return; }
+    const matches = beamSearchRows().filter(r=>r.name.toUpperCase().includes(q)).slice(0,12);
+    if(matches.length===0){ sugg.innerHTML = `<div class="suggest-item"><span class="ct">No matches</span></div>`; sugg.classList.add("open"); return; }
+    sugg.innerHTML = matches.map(m=>`<div class="suggest-item" onclick="selectBeamForCalc('${m._key}','${m.name}')"><span class="nm">${m.name}</span><span class="ct">${m._cat}</span></div>`).join("");
+    sugg.classList.add("open");
+  };
+  box.onkeydown = (e)=>{ if(e.key==="Escape") sugg.classList.remove("open"); };
+  document.addEventListener("click",(e)=>{
+    if(!e.target.closest(".beam-pick-wrap")) sugg.classList.remove("open");
+  },{once:true});
+}
+
+/* Only shapes with both Ix and Iy on record make sense for an orientation choice. */
+function beamSearchRows(){
+  return allRowsFlat().filter(r=>r.Ix!=null && r.Iy!=null);
+}
+
+/* W/M/S/HP designations encode weight (plf) as the number after "X" and carry
+   no separate weight field; every other shape here stores weight directly. */
+function beamSelfWeight(row){
+  if(row.weight!=null) return row.weight;
+  const m = row.name.match(/X([\d.]+)/);
+  return m ? parseFloat(m[1]) : 0;
+}
+
+function selectBeamForCalc(subKey, name){
+  const sub = DATA[subKey];
+  const row = sub.rows.find(r=>r.name===name);
+  state.beamCalc.beam = {...row, _key:subKey, _cat:sub.label};
+  document.getElementById("beamSearchBox").value = name;
+  document.getElementById("beamSuggest").classList.remove("open");
+  renderBeamCard();
+  updateBeamResults();
+}
+
+function setBeamAxis(axis){
+  state.beamCalc.axis = axis;
+  renderBeamCard();
+  updateBeamResults();
+}
+
+function renderBeamCard(){
+  const card = document.getElementById("beamCard");
+  const b = state.beamCalc.beam;
+  if(!b){ card.innerHTML = `<div class="beam-empty">No beam selected yet.</div>`; return; }
+  const axis = state.beamCalc.axis;
+  const I = axis==="x" ? b.Ix : b.Iy;
+  card.innerHTML = `
+    <div class="bc-name">${b.name} <span style="color:var(--mill);font-weight:400;">— ${b._cat}</span></div>
+    <div class="bc-props">
+      <div><span class="k">Height</span><span class="v">${b.depth} in</span></div>
+      <div><span class="k">Weight</span><span class="v">${beamSelfWeight(b)} plf</span></div>
+      <div><span class="k">Moment of inertia</span><span class="v">${I} in⁴</span></div>
+    </div>
+    <div class="axis-toggle">
+      <div class="pill ${axis==='x'?'active':''}" onclick="setBeamAxis('x')">Bending about X-X</div>
+      <div class="pill ${axis==='y'?'active':''}" onclick="setBeamAxis('y')">Bending about Y-Y</div>
+    </div>`;
+}
+
+function updateSpanLabel(){
+  const el = document.getElementById("spanDimLabel");
+  if(el) el.textContent = "L = "+(state.beamCalc.span||"—")+" ft";
+}
+
+function updateBeamResults(){
+  const box = document.getElementById("beamResults");
+  const bc = state.beamCalc;
+  const dl=parseFloat(bc.dl)||0, sl=parseFloat(bc.sl)||0, ll=parseFloat(bc.ll)||0, span=parseFloat(bc.span)||0;
+  const dlFactor=parseFloat(bc.dlFactor)||0, slFactor=parseFloat(bc.slFactor)||0, llFactor=parseFloat(bc.llFactor)||0;
+  const fy=parseFloat(bc.fy)||0, allowFactor=parseFloat(bc.allowFactor)||0;
+  const b = bc.beam;
+  if(!b || !span){
+    box.innerHTML = `<div class="results-grid">
+      <div class="result-tile"><div class="lbl">Max moment</div><div class="val">—<span class="unit">kip-in</span></div></div>
+      <div class="result-tile"><div class="lbl">Max deflection</div><div class="val">—<span class="unit">in</span></div></div>
+      <div class="result-tile"><div class="lbl">Max stress</div><div class="val">—<span class="unit">ksi</span></div></div>
+    </div>
+    <div class="load-total">Pick a beam and enter a span to calculate.</div>`;
+    return;
+  }
+  const selfWt = beamSelfWeight(b);
+  // Deflection is a serviceability check, so it uses unfactored (service) loads.
+  const wService = dl+sl+ll+selfWt;
+  // Moment/stress are strength checks, so they use factored loads (self-weight factored with dead load).
+  const wFactored = dlFactor*(dl+selfWt) + slFactor*sl + llFactor*ll;
+  const I = bc.axis==="x" ? b.Ix : b.Iy;
+  const S = bc.axis==="x" ? b.Sx : b.Sy;
+  const Lin = span*12;
+  const wServiceKipIn = wService/12000;
+  const Mmax = wFactored*span*span*0.0015;
+  const defl = (5*wServiceKipIn*Math.pow(Lin,4))/(384*STEEL_E_KSI*I);
+  const stress = S!=null ? Mmax/S : null;
+  const allowStress = fy*allowFactor;
+  const stressClass = stress==null || allowStress<=0 ? "" : (stress>allowStress ? "over" : "ok");
+  box.innerHTML = `<div class="results-grid">
+      <div class="result-tile"><div class="lbl">Max moment</div><div class="val">${Mmax.toFixed(2)}<span class="unit">kip-in</span></div></div>
+      <div class="result-tile"><div class="lbl">Max deflection</div><div class="val">${defl.toFixed(3)}<span class="unit">in</span></div></div>
+      <div class="result-tile ${stressClass}"><div class="lbl">Max stress</div><div class="val">${stress!=null?stress.toFixed(2):'—'}<span class="unit">ksi</span></div></div>
+    </div>
+    <div class="load-total">Service load (deflection) w = ${wService.toFixed(1)} plf — D + S + L + self-weight (${selfWt} plf), bending about ${bc.axis==='x'?'X-X':'Y-Y'}.</div>
+    <div class="load-total line2">Factored load (moment &amp; stress) w = ${wFactored.toFixed(1)} plf — ${dlFactor}×D + ${slFactor}×S + ${llFactor}×L (self-weight factored with D). Allowable stress = ${allowFactor}×Fy = ${allowStress.toFixed(1)} ksi — swap in AISC-specific combinations/limits as needed.</div>`;
+}
+
+function simpleBeamSVG(){
+  const xL=70, xR=570, yBeam=70, n=9;
+  const arrows = Array.from({length:n},(_,i)=>{
+    const x = xL + i*(xR-xL)/(n-1);
+    return `<line class="steel-stroke" x1="${x}" y1="30" x2="${x}" y2="62" stroke-width="2" marker-end="url(#udlArrow)"/>`;
+  }).join("");
+  const tickPts = [-14,-7,0,7,14];
+  const leftTicks = tickPts.map(dx=>`<line class="steel-stroke" x1="${xL+dx}" y1="${yBeam+26}" x2="${xL+dx-6}" y2="${yBeam+36}" stroke-width="1.5"/>`).join("");
+  const rightTicks = tickPts.map(dx=>`<line class="steel-stroke" x1="${xR+dx}" y1="${yBeam+34}" x2="${xR+dx-6}" y2="${yBeam+44}" stroke-width="1.5"/>`).join("");
+  const span = state.beamCalc && state.beamCalc.span ? state.beamCalc.span : "—";
+  return `<svg viewBox="0 0 640 170" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <marker id="udlArrow" markerWidth="8" markerHeight="8" refX="4" refY="7" orient="auto"><path class="udl-fill" d="M0,0 L8,0 L4,8 Z"/></marker>
+      <marker id="dimArrow" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path class="dim-fill" d="M0,0 L8,4 L0,8 Z"/></marker>
+    </defs>
+    <line class="steel-stroke" x1="${xL}" y1="26" x2="${xR}" y2="26" stroke-width="2"/>
+    ${arrows}
+    <text x="${(xL+xR)/2}" y="16" text-anchor="middle" class="load-label">w (plf)</text>
+    <line class="beam-line" x1="${xL}" y1="${yBeam}" x2="${xR}" y2="${yBeam}" stroke-width="6" stroke-linecap="square"/>
+    <path class="steel-stroke" d="M${xL},${yBeam} L${xL-14},${yBeam+26} L${xL+14},${yBeam+26} Z" stroke-width="2.5" stroke-linejoin="round"/>
+    <line class="steel-stroke" x1="${xL-20}" y1="${yBeam+26}" x2="${xL+20}" y2="${yBeam+26}" stroke-width="2"/>
+    ${leftTicks}
+    <path class="steel-stroke" d="M${xR},${yBeam} L${xR-14},${yBeam+26} L${xR+14},${yBeam+26} Z" stroke-width="2.5" stroke-linejoin="round"/>
+    <circle class="steel-stroke" cx="${xR-8}" cy="${yBeam+30}" r="4" stroke-width="2"/>
+    <circle class="steel-stroke" cx="${xR+8}" cy="${yBeam+30}" r="4" stroke-width="2"/>
+    <line class="steel-stroke" x1="${xR-20}" y1="${yBeam+34}" x2="${xR+20}" y2="${yBeam+34}" stroke-width="2"/>
+    ${rightTicks}
+    <line class="dim-stroke" x1="${xL}" y1="130" x2="${xL}" y2="145" stroke-width="1"/>
+    <line class="dim-stroke" x1="${xR}" y1="130" x2="${xR}" y2="145" stroke-width="1"/>
+    <line class="dim-stroke" x1="${xL}" y1="138" x2="${xR}" y2="138" stroke-width="1" marker-start="url(#dimArrow)" marker-end="url(#dimArrow)"/>
+    <text id="spanDimLabel" x="${(xL+xR)/2}" y="156" text-anchor="middle" class="dim-label">L = ${span} ft</text>
+  </svg>`;
 }
 
 render();
