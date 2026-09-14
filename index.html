@@ -151,8 +151,9 @@ td.nm{font-weight:500;color:var(--steel-dark);}
 .calc-col .subhead{font-family:'Space Grotesk';font-weight:600;font-size:14px;margin:0 0 12px;color:var(--steel-dark);}
 .field{margin-bottom:14px;}
 .field label{display:block;font-size:11.5px;color:var(--ink-soft);margin-bottom:5px;}
-.field input{width:100%;border:1.5px solid var(--line);background:var(--white);padding:9px 10px;font-size:14px;font-family:'IBM Plex Mono';color:var(--ink);outline:none;}
-.field input:focus{border-color:var(--steel);}
+.field input,.field select{width:100%;border:1.5px solid var(--line);background:var(--white);padding:9px 10px;font-size:14px;font-family:'IBM Plex Mono';color:var(--ink);outline:none;}
+.field input:focus,.field select:focus{border-color:var(--steel);}
+.field-note{font-size:11.5px;color:var(--mill);margin-top:-8px;margin-bottom:14px;line-height:1.4;}
 .load-row{display:flex;gap:8px;align-items:flex-end;}
 .load-row .load-val{flex:1;}
 .load-row .load-factor{width:74px;flex-shrink:0;}
@@ -1254,6 +1255,12 @@ const BEAM_TOOLS = [
   {key:"custom",     nm:"Custom",      sub:"Define Your Own Load Case", icon:"i-beam-custom"},
 ];
 
+/* Connection design calculators shown in the "Connections" section on the home screen. */
+const CONN_TOOLS = [
+  {key:"weld", nm:"Weld Design", sub:"Fillet Weld Strength (AISC J2)", icon:"i-weld", open:"openWeldCalc"},
+  {key:"bolt", nm:"Bolt Design", sub:"Shear, Tension & Bearing (AISC J3)", icon:"i-bolt", open:"openBoltCalc"},
+];
+
 const ICONS = {
   "i-w":'<svg viewBox="0 0 48 48" fill="none" stroke-width="3"><path d="M10 8h28M10 40h28M24 8v32"/></svg>',
   "i-c":'<svg viewBox="0 0 48 48" fill="none" stroke-width="3"><path d="M34 8H12v32h22"/></svg>',
@@ -1268,9 +1275,11 @@ const ICONS = {
   "i-cantilever-udl":'<svg viewBox="0 0 48 48" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="10" y1="10" x2="10" y2="22"/><line x1="7" y1="19" x2="10" y2="22"/><line x1="13" y1="19" x2="10" y2="22"/><line x1="20" y1="10" x2="20" y2="22"/><line x1="17" y1="19" x2="20" y2="22"/><line x1="23" y1="19" x2="20" y2="22"/><line x1="30" y1="10" x2="30" y2="22"/><line x1="27" y1="19" x2="30" y2="22"/><line x1="33" y1="19" x2="30" y2="22"/><line x1="8" y1="24" x2="40" y2="24" stroke-width="3.5"/><line x1="8" y1="12" x2="8" y2="36" stroke-width="3"/><line x1="4" y1="16" x2="8" y2="20"/><line x1="4" y1="22" x2="8" y2="26"/><line x1="4" y1="28" x2="8" y2="32"/></svg>',
   "i-cantilever-pt":'<svg viewBox="0 0 48 48" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="38" y1="9" x2="38" y2="22"/><line x1="35" y1="19" x2="38" y2="22"/><line x1="41" y1="19" x2="38" y2="22"/><line x1="8" y1="24" x2="40" y2="24" stroke-width="3.5"/><line x1="8" y1="12" x2="8" y2="36" stroke-width="3"/><line x1="4" y1="16" x2="8" y2="20"/><line x1="4" y1="22" x2="8" y2="26"/><line x1="4" y1="28" x2="8" y2="32"/></svg>',
   "i-beam-custom":'<svg viewBox="0 0 48 48" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="14" y1="9" x2="14" y2="22"/><line x1="11" y1="19" x2="14" y2="22"/><line x1="17" y1="19" x2="14" y2="22"/><line x1="8" y1="24" x2="40" y2="24" stroke-width="3.5"/><path d="M8 24l-5 9h10z"/><circle cx="34" cy="30" r="4"/><line x1="30" y1="34" x2="38" y2="34"/><line x1="30" y1="9" x2="30" y2="20" stroke-dasharray="2.5,2.5"/></svg>',
+  "i-weld":'<svg viewBox="0 0 48 48" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 14h16v8H8z"/><path d="M24 22h16v8H24z"/><path d="M24 14l6 8h-6z" fill="currentColor" stroke="none"/></svg>',
+  "i-bolt":'<svg viewBox="0 0 48 48" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="14" width="32" height="20"/><circle cx="18" cy="24" r="3.5"/><circle cx="30" cy="24" r="3.5"/></svg>',
 };
 
-let state = {view:"home", cat:null, sub:null, member:null, filters:{}, search:"", filtersOpen:false, sortCol:null, sortDir:null, beamTool:null, beamCalc:null};
+let state = {view:"home", cat:null, sub:null, member:null, filters:{}, search:"", filtersOpen:false, sortCol:null, sortDir:null, beamTool:null, beamCalc:null, weldCalc:null, boltCalc:null};
 const app = document.getElementById("app");
 
 function allRowsFlat(){
@@ -1286,6 +1295,8 @@ function render(){
   if(state.view==="member") return renderMember();
   if(state.view==="search") return renderSearchResults();
   if(state.view==="beamcalc") return renderBeamCalc();
+  if(state.view==="weldcalc") return renderWeldCalc();
+  if(state.view==="boltcalc") return renderBoltCalc();
 }
 
 function header(){
@@ -1336,6 +1347,17 @@ function renderHome(){
       ${BEAM_TOOLS.map(t=>`
         <div class="cat-tile" onclick="${t.soon?'':`openBeamCalc('${t.key}')`}">
           ${t.soon?'<span class="soon-badge">Coming soon</span>':''}
+          ${ICONS[t.icon]}
+          <span class="nm">${t.nm}</span>
+          <span class="sub">${t.sub}</span>
+        </div>`).join("")}
+    </div>
+
+    <div class="eyebrow section-gap">Design Tools</div>
+    <h1 class="page-title">Connections</h1>
+    <div class="cat-grid">
+      ${CONN_TOOLS.map(t=>`
+        <div class="cat-tile" onclick="${t.open}()">
           ${ICONS[t.icon]}
           <span class="nm">${t.nm}</span>
           <span class="sub">${t.sub}</span>
@@ -2752,6 +2774,432 @@ function renderCustomCharts(passes){
   if(bc.charts.moment) html += chartCard("Moment — factored", "kip-in", chartLineSVG(passes.factored.xs, passes.factored.M));
   if(bc.charts.deflection) html += chartCard("Deflection — service", "in", chartLineSVG(passes.service.xs, passes.service.y));
   box.innerHTML = html || `<div class="load-total">All diagrams hidden — use the buttons above to show one.</div>`;
+}
+
+/* ==========================================================================
+   Connections: Weld Design and Bolt Design calculators (AISC 360-16 Ch. J).
+   Both use the same phi (LRFD) / Omega (ASD) pair for every limit state
+   involved (fillet weld metal — Table J2.5; bolt shear, tension and bearing
+   — Table J3.2 and J3.10), so a single design-method toggle covers everything
+   on the page.
+   ========================================================================== */
+const CONN_PHI = 0.75;
+const CONN_OMEGA = 2.00;
+
+/* Common base/connected-metal grades, for the optional base-metal (weld) and
+   bearing (bolt) checks — Fu values per AISC Manual Table 2-4. */
+const BASE_METAL_GRADES = {
+  a36:     {nm:"A36",           Fu:58},
+  a572_50: {nm:"A572 Grade 50", Fu:65},
+  a992:    {nm:"A992 Grade 50", Fu:65},
+  a572_60: {nm:"A572 Grade 60", Fu:75},
+  custom:  {nm:"Custom",        Fu:null},
+};
+function baseMetalGradeHTML(id, current){
+  return `<select id="${id}">
+    <option value="" ${current?'':'selected'}>Skip check</option>
+    ${Object.entries(BASE_METAL_GRADES).map(([k,g])=>`<option value="${k}" ${current===k?'selected':''}>${g.nm}${g.Fu!=null?` (Fu = ${g.Fu} ksi)`:''}</option>`).join("")}
+  </select>`;
+}
+
+function methodToggleHTML(current){
+  const opts = [["lrfd","LRFD"],["asd","ASD"]];
+  return `<div class="axis-toggle conn-method-toggle">
+    ${opts.map(([val,label])=>`<div class="pill ${current===val?'active':''}" data-val="${val}" onclick="setConnMethod('${val}')">${label}</div>`).join("")}
+  </div>`;
+}
+
+function availStrength(Rn, method){
+  return method==="lrfd" ? CONN_PHI*Rn : Rn/CONN_OMEGA;
+}
+
+/* ---------------------------- Weld Design ---------------------------- */
+
+function openWeldCalc(){
+  state.view = "weldcalc";
+  state.weldCalc = {
+    method:"lrfd", size:"0.3125", length:"", numWelds:"2", fexx:"70", angle:"0",
+    demand:"", baseT:"", baseGrade:"", baseFu:""
+  };
+  render();
+}
+
+function setConnMethod(val){
+  if(state.view==="weldcalc") state.weldCalc.method = val;
+  else if(state.view==="boltcalc") state.boltCalc.method = val;
+  document.querySelectorAll(".conn-method-toggle .pill").forEach(p=>{
+    p.classList.toggle("active", p.dataset.val===val);
+  });
+  if(state.view==="weldcalc") updateWeldResults(); else updateBoltResults();
+}
+
+const WELD_SIZES = [
+  ["0.125",'1/8"'], ["0.1875",'3/16"'], ["0.25",'1/4"'], ["0.3125",'5/16"'],
+  ["0.375",'3/8"'], ["0.4375",'7/16"'], ["0.5",'1/2"'], ["0.625",'5/8"'], ["0.75",'3/4"']
+];
+const WELD_ELECTRODES = ["60","70","80","90","100","110"];
+
+function weldDiagramSVG(wc){
+  const w=640, h=180;
+  const size = Math.max(0.0625, parseFloat(wc.size)||0.3125);
+  const legPx = 14 + size*40;
+  const plateY = 80, plateH = 46;
+  return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">
+    <rect class="steel-stroke" x="60" y="${plateY-plateH}" width="220" height="${plateH}" stroke-width="3"/>
+    <rect class="steel-stroke" x="280" y="${plateY}" width="220" height="${plateH}" stroke-width="3"/>
+    <polygon class="udl-fill" points="280,${plateY} ${280+legPx},${plateY} 280,${plateY-legPx}"/>
+    <polygon class="steel-stroke" points="280,${plateY} ${280+legPx},${plateY} 280,${plateY-legPx}" stroke-width="1.5"/>
+    <text x="${280+legPx+10}" y="${plateY-legPx*0.4}" class="load-label">w = ${WELD_SIZES.find(s=>s[0]===wc.size)?.[1] || size.toFixed(3)+'"'}</text>
+    <text x="320" y="${plateY+plateH+26}" class="dim-label">Fillet weld, E${wc.fexx}XX electrode — load at ${wc.angle||0}° to weld axis</text>
+  </svg>`;
+}
+
+function renderWeldCalc(){
+  const wc = state.weldCalc;
+  app.innerHTML = header() + `
+    <div class="eyebrow">Connections</div>
+    <div class="page-title-row">
+      <h1 class="page-title">Weld Design</h1>
+      <button class="btn no-print" onclick="window.print()">Print results</button>
+    </div>
+
+    <div class="beam-diagram-card">${weldDiagramSVG(wc)}</div>
+
+    <div class="calc-grid">
+      <div class="calc-col">
+        <div class="subhead">Weld</div>
+        <div class="field"><label>Weld size, w (in)</label>
+          <select id="wcSize">
+            ${WELD_SIZES.map(([v,nm])=>`<option value="${v}" ${wc.size===v?'selected':''}>${nm} (${v} in)</option>`).join("")}
+          </select>
+        </div>
+        <div class="field"><label>Length per weld, L (in)</label><input id="wcLength" type="number" step="any" min="0" placeholder="0"></div>
+        <div class="field"><label>Number of welds, n</label><input id="wcNum" type="number" step="1" min="1" value="${wc.numWelds}"></div>
+        <div class="field"><label>Load angle, θ (deg from weld axis)</label><input id="wcAngle" type="number" step="any" min="0" max="90" value="${wc.angle}"></div>
+      </div>
+      <div class="calc-col">
+        <div class="subhead">Electrode &amp; Demand</div>
+        <div class="field"><label>Electrode strength, F<sub>EXX</sub> (ksi)</label>
+          <select id="wcFexx">
+            ${WELD_ELECTRODES.map(v=>`<option value="${v}" ${wc.fexx===v?'selected':''}>E${v}XX (${v} ksi)</option>`).join("")}
+          </select>
+        </div>
+        <div class="field"><label>Applied load (optional, kip)</label><input id="wcDemand" type="number" step="any" min="0" placeholder="skip to just get capacity"></div>
+        <div class="field"><label>Design method</label>${methodToggleHTML(wc.method)}</div>
+      </div>
+      <div class="calc-col">
+        <div class="subhead">Base Metal Check (optional)</div>
+        <div class="field"><label>Base metal thickness, t (in)</label><input id="wcBaseT" type="number" step="any" min="0" placeholder="skip to omit check"></div>
+        <div class="field"><label>Base metal grade</label>${baseMetalGradeHTML("wcBaseGrade", wc.baseGrade)}</div>
+        <div class="field" id="wcBaseFuWrap" ${wc.baseGrade==='custom'?'':'style="display:none"'}><label>Custom F<sub>u</sub> (ksi)</label><input id="wcBaseFu" type="number" step="any" min="0" placeholder="e.g. 65"></div>
+        <div class="field-note">Base metal shear rupture along the weld line, per AISC 360 §J4.2 — enter a thickness and pick a grade to check thinner/weaker-than-weld base material.</div>
+      </div>
+    </div>
+
+    <div class="eyebrow">Results</div>
+    <div id="weldResults"></div>
+
+    <button class="backlink" onclick="goHome()">&larr; Home</button>
+  ` + footer();
+  wireHeader();
+  wireWeldCalc();
+  updateWeldResults();
+}
+
+function wireWeldCalc(){
+  const size=document.getElementById("wcSize"), length=document.getElementById("wcLength"),
+        num=document.getElementById("wcNum"), angle=document.getElementById("wcAngle"),
+        fexx=document.getElementById("wcFexx"), demand=document.getElementById("wcDemand"),
+        baseT=document.getElementById("wcBaseT"), baseGrade=document.getElementById("wcBaseGrade"),
+        baseFu=document.getElementById("wcBaseFu");
+  length.value = state.weldCalc.length;
+  demand.value = state.weldCalc.demand;
+  baseT.value = state.weldCalc.baseT;
+  baseFu.value = state.weldCalc.baseFu;
+  size.onchange = ()=>{ state.weldCalc.size = size.value; redrawWeldDiagram(); updateWeldResults(); };
+  length.oninput = ()=>{ state.weldCalc.length = length.value; updateWeldResults(); };
+  num.oninput = ()=>{ state.weldCalc.numWelds = num.value; updateWeldResults(); };
+  angle.oninput = ()=>{ state.weldCalc.angle = angle.value; redrawWeldDiagram(); updateWeldResults(); };
+  fexx.onchange = ()=>{ state.weldCalc.fexx = fexx.value; redrawWeldDiagram(); updateWeldResults(); };
+  demand.oninput = ()=>{ state.weldCalc.demand = demand.value; updateWeldResults(); };
+  baseT.oninput = ()=>{ state.weldCalc.baseT = baseT.value; updateWeldResults(); };
+  baseGrade.onchange = ()=>{
+    state.weldCalc.baseGrade = baseGrade.value;
+    document.getElementById("wcBaseFuWrap").style.display = baseGrade.value==="custom" ? "" : "none";
+    updateWeldResults();
+  };
+  baseFu.oninput = ()=>{ state.weldCalc.baseFu = baseFu.value; updateWeldResults(); };
+}
+
+function redrawWeldDiagram(){
+  const card = document.querySelector(".beam-diagram-card");
+  if(card) card.innerHTML = weldDiagramSVG(state.weldCalc);
+}
+
+function updateWeldResults(){
+  const box = document.getElementById("weldResults");
+  const wc = state.weldCalc;
+  const w = parseFloat(wc.size)||0;
+  const Lper = parseFloat(wc.length)||0;
+  const n = parseInt(wc.numWelds)||0;
+  const fexx = parseFloat(wc.fexx)||0;
+  const angleDeg = Math.min(90, Math.max(0, parseFloat(wc.angle)||0));
+  const demand = parseFloat(wc.demand);
+  const Ltotal = Lper*n;
+  if(!(w>0) || !(Ltotal>0) || !(fexx>0)){
+    box.innerHTML = `<div class="results-grid">
+      <div class="result-tile"><div class="lbl">Weld strength</div><div class="val">—<span class="unit">kip</span></div></div>
+      <div class="result-tile"><div class="lbl">Strength per inch</div><div class="val">—<span class="unit">kip/in</span></div></div>
+      <div class="result-tile"><div class="lbl">Base metal strength</div><div class="val">—<span class="unit">kip</span></div></div>
+    </div>
+    <div class="load-total">Enter a weld size, length and electrode to calculate.</div>`;
+    return;
+  }
+  const throat = 0.707*w;
+  const angleRad = angleDeg*Math.PI/180;
+  const Fnw = 0.60*fexx*(1.0+0.50*Math.pow(Math.sin(angleRad),1.5));
+  const Awe = throat*Ltotal;
+  const RnWeld = Fnw*Awe;
+  const availWeld = availStrength(RnWeld, wc.method);
+  const availPerIn = availWeld/Ltotal;
+
+  const baseT = parseFloat(wc.baseT);
+  const baseGrade = BASE_METAL_GRADES[wc.baseGrade];
+  const baseFu = baseGrade ? (baseGrade.Fu!=null ? baseGrade.Fu : parseFloat(wc.baseFu)) : NaN;
+  const hasBase = baseT>0 && baseFu>0;
+  let availBase = null;
+  if(hasBase){
+    const RnBase = 0.60*baseFu*baseT*Ltotal;
+    availBase = availStrength(RnBase, wc.method);
+  }
+  const governing = hasBase ? Math.min(availWeld, availBase) : availWeld;
+
+  const hasDemand = demand>0;
+  const dc = hasDemand ? demand/governing : null;
+  const dcClass = !hasDemand ? "" : (dc>1 ? "over" : "ok");
+  const methodLabel = wc.method==="lrfd" ? `φ = ${CONN_PHI}` : `Ω = ${CONN_OMEGA.toFixed(2)}`;
+
+  box.innerHTML = `<div class="results-grid">
+      <div class="result-tile ${hasDemand?dcClass:''}"><div class="lbl">Weld strength (total)${hasDemand?statusMark(dcClass):''}</div><div class="val">${availWeld.toFixed(2)}<span class="unit">kip</span></div></div>
+      <div class="result-tile"><div class="lbl">Strength per inch</div><div class="val">${availPerIn.toFixed(2)}<span class="unit">kip/in</span></div></div>
+      <div class="result-tile"><div class="lbl">Base metal strength</div><div class="val">${availBase!=null?availBase.toFixed(2):'—'}<span class="unit">kip</span></div></div>
+    </div>
+    ${hasDemand?`<div class="load-total">Demand/capacity ratio (vs. governing strength) = ${dc.toFixed(2)}${dc>1?' — exceeds capacity':' — OK'}.</div>`:''}
+    <div class="load-total">Total effective weld length = ${Ltotal.toFixed(2)} in (${Lper.toFixed(2)} in × ${n} weld${n===1?'':'s'}). ${methodLabel}.${hasBase?' Governing strength = min(weld metal, base metal).':''}</div>
+    <div class="load-total line2">Formulas — R<sub>n</sub> = F<sub>nw</sub>·A<sub>we</sub>, F<sub>nw</sub> = 0.60F<sub>EXX</sub>(1.0 + 0.50sin<sup>1.5</sup>θ), A<sub>we</sub> = 0.707w·L (AISC 360 §J2.4)${hasBase?'. Base metal: R<sub>n</sub> = 0.60F<sub>u</sub>·t·L (§J4.2)':''}.</div>`;
+}
+
+/* ---------------------------- Bolt Design ---------------------------- */
+
+const BOLT_GRADES = {
+  a325: {nm:"A325 / F3125 Grp 120", Fnt:90,  FnvN:54, FnvX:68},
+  a490: {nm:"A490 / F3125 Grp 150", Fnt:113, FnvN:68, FnvX:84},
+  a307: {nm:"A307",                 Fnt:45,  FnvN:27, FnvX:27},
+};
+const BOLT_DIAMS = [
+  ["0.5",'1/2"'], ["0.625",'5/8"'], ["0.75",'3/4"'], ["0.875",'7/8"'], ["1",'1"'],
+  ["1.125",'1-1/8"'], ["1.25",'1-1/4"'], ["1.375",'1-3/8"'], ["1.5",'1-1/2"']
+];
+
+function openBoltCalc(){
+  state.view = "boltcalc";
+  state.boltCalc = {
+    method:"lrfd", diam:"0.75", grade:"a325", threads:"n", shearPlanes:"1", numBolts:"1",
+    demandShear:"", demandTension:"", baseT:"", baseGrade:"", baseFu:"", clearDist:""
+  };
+  render();
+}
+
+function shearPlanesToggleHTML(current){
+  const opts = [["1","Single shear"],["2","Double shear"]];
+  return `<div class="axis-toggle bolt-shearplanes-toggle">
+    ${opts.map(([val,label])=>`<div class="pill ${current===val?'active':''}" data-val="${val}" onclick="setBoltField('shearPlanes','${val}','.bolt-shearplanes-toggle')">${label}</div>`).join("")}
+  </div>`;
+}
+function threadsToggleHTML(current){
+  const opts = [["n","Threads included (N)"],["x","Threads excluded (X)"]];
+  return `<div class="axis-toggle bolt-threads-toggle">
+    ${opts.map(([val,label])=>`<div class="pill ${current===val?'active':''}" data-val="${val}" onclick="setBoltField('threads','${val}','.bolt-threads-toggle')">${label}</div>`).join("")}
+  </div>`;
+}
+function setBoltField(field, val, sel){
+  state.boltCalc[field] = val;
+  document.querySelectorAll(`${sel} .pill`).forEach(p=>p.classList.toggle("active", p.dataset.val===val));
+  updateBoltResults();
+}
+
+function boltDiagramSVG(bc){
+  const w=640, h=180;
+  const n = Math.min(6, Math.max(1, parseInt(bc.numBolts)||1));
+  const plateW = 60+n*60, plateX = (w-plateW)/2, plateY=50, plateH=80;
+  const r = 10;
+  let circles = "";
+  for(let i=0;i<n;i++){
+    const cx = plateX+60+i*60;
+    circles += `<circle class="steel-stroke" cx="${cx}" cy="${plateY+plateH/2}" r="${r}" stroke-width="2.5"/>`;
+  }
+  return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">
+    <rect class="steel-stroke" x="${plateX}" y="${plateY}" width="${plateW}" height="${plateH}" stroke-width="3"/>
+    ${circles}
+    <text x="${w/2}" y="${plateY+plateH+30}" text-anchor="middle" class="dim-label">${BOLT_DIAMS.find(d=>d[0]===bc.diam)?.[1]||bc.diam+'"'} dia. — ${n} bolt${n===1?'':'s'}, ${BOLT_GRADES[bc.grade].nm}</text>
+  </svg>`;
+}
+
+function renderBoltCalc(){
+  const bc = state.boltCalc;
+  app.innerHTML = header() + `
+    <div class="eyebrow">Connections</div>
+    <div class="page-title-row">
+      <h1 class="page-title">Bolt Design</h1>
+      <button class="btn no-print" onclick="window.print()">Print results</button>
+    </div>
+
+    <div class="beam-diagram-card">${boltDiagramSVG(bc)}</div>
+
+    <div class="calc-grid">
+      <div class="calc-col">
+        <div class="subhead">Bolt</div>
+        <div class="field"><label>Bolt diameter, d (in)</label>
+          <select id="bcDiam">${BOLT_DIAMS.map(([v,nm])=>`<option value="${v}" ${bc.diam===v?'selected':''}>${nm} (${v} in)</option>`).join("")}</select>
+        </div>
+        <div class="field"><label>Bolt grade</label>
+          <select id="bcGrade">${Object.entries(BOLT_GRADES).map(([k,g])=>`<option value="${k}" ${bc.grade===k?'selected':''}>${g.nm}</option>`).join("")}</select>
+        </div>
+        <div class="field"><label>Threads in shear plane</label>${threadsToggleHTML(bc.threads)}</div>
+        <div class="field"><label>Shear condition</label>${shearPlanesToggleHTML(bc.shearPlanes)}</div>
+        <div class="field"><label>Number of bolts, n</label><input id="bcNum" type="number" step="1" min="1" value="${bc.numBolts}"></div>
+      </div>
+      <div class="calc-col">
+        <div class="subhead">Bearing at Bolt Holes (optional)</div>
+        <div class="field"><label>Connected material thickness, t (in)</label><input id="bcBaseT" type="number" step="any" min="0" placeholder="skip to omit check"></div>
+        <div class="field"><label>Connected material grade</label>${baseMetalGradeHTML("bcBaseGrade", bc.baseGrade)}</div>
+        <div class="field" id="bcBaseFuWrap" ${bc.baseGrade==='custom'?'':'style="display:none"'}><label>Custom F<sub>u</sub> (ksi)</label><input id="bcBaseFu" type="number" step="any" min="0" placeholder="e.g. 65"></div>
+        <div class="field"><label>Clear distance, L<sub>c</sub> (in)</label><input id="bcClearDist" type="number" step="any" min="0" placeholder="edge or hole to hole"></div>
+        <div class="field-note">L<sub>c</sub> = clear distance, in the line of force, from the edge of the hole to the edge of the material or the next hole (AISC 360 §J3.10).</div>
+      </div>
+      <div class="calc-col">
+        <div class="subhead">Demand &amp; Design Criteria</div>
+        <div class="field"><label>Applied shear, total (optional, kip)</label><input id="bcDemandShear" type="number" step="any" min="0" placeholder="skip to just get capacity"></div>
+        <div class="field"><label>Applied tension, total (optional, kip)</label><input id="bcDemandTension" type="number" step="any" min="0" placeholder="skip, or fill both for combined check"></div>
+        <div class="field"><label>Design method</label>${methodToggleHTML(bc.method)}</div>
+      </div>
+    </div>
+
+    <div class="eyebrow">Results</div>
+    <div id="boltResults"></div>
+
+    <button class="backlink" onclick="goHome()">&larr; Home</button>
+  ` + footer();
+  wireHeader();
+  wireBoltCalc();
+  updateBoltResults();
+}
+
+function wireBoltCalc(){
+  const diam=document.getElementById("bcDiam"), grade=document.getElementById("bcGrade"),
+        num=document.getElementById("bcNum"), baseT=document.getElementById("bcBaseT"),
+        baseGrade=document.getElementById("bcBaseGrade"), baseFu=document.getElementById("bcBaseFu"),
+        clearDist=document.getElementById("bcClearDist"),
+        demandShear=document.getElementById("bcDemandShear"), demandTension=document.getElementById("bcDemandTension");
+  baseT.value = state.boltCalc.baseT;
+  baseFu.value = state.boltCalc.baseFu;
+  clearDist.value = state.boltCalc.clearDist;
+  demandShear.value = state.boltCalc.demandShear;
+  demandTension.value = state.boltCalc.demandTension;
+  diam.onchange = ()=>{ state.boltCalc.diam = diam.value; redrawBoltDiagram(); updateBoltResults(); };
+  grade.onchange = ()=>{ state.boltCalc.grade = grade.value; redrawBoltDiagram(); updateBoltResults(); };
+  num.oninput = ()=>{ state.boltCalc.numBolts = num.value; redrawBoltDiagram(); updateBoltResults(); };
+  baseT.oninput = ()=>{ state.boltCalc.baseT = baseT.value; updateBoltResults(); };
+  baseGrade.onchange = ()=>{
+    state.boltCalc.baseGrade = baseGrade.value;
+    document.getElementById("bcBaseFuWrap").style.display = baseGrade.value==="custom" ? "" : "none";
+    updateBoltResults();
+  };
+  baseFu.oninput = ()=>{ state.boltCalc.baseFu = baseFu.value; updateBoltResults(); };
+  clearDist.oninput = ()=>{ state.boltCalc.clearDist = clearDist.value; updateBoltResults(); };
+  demandShear.oninput = ()=>{ state.boltCalc.demandShear = demandShear.value; updateBoltResults(); };
+  demandTension.oninput = ()=>{ state.boltCalc.demandTension = demandTension.value; updateBoltResults(); };
+}
+
+function redrawBoltDiagram(){
+  const card = document.querySelector(".beam-diagram-card");
+  if(card) card.innerHTML = boltDiagramSVG(state.boltCalc);
+}
+
+function updateBoltResults(){
+  const box = document.getElementById("boltResults");
+  const bc = state.boltCalc;
+  const d = parseFloat(bc.diam)||0;
+  const n = parseInt(bc.numBolts)||0;
+  const grade = BOLT_GRADES[bc.grade];
+  const planes = parseInt(bc.shearPlanes)||1;
+  const Fnv = bc.threads==="x" ? grade.FnvX : grade.FnvN;
+  const Fnt = grade.Fnt;
+  const demandShear = parseFloat(bc.demandShear);
+  const demandTension = parseFloat(bc.demandTension);
+
+  if(!(d>0) || !(n>0)){
+    box.innerHTML = `<div class="results-grid">
+      <div class="result-tile"><div class="lbl">Shear strength</div><div class="val">—<span class="unit">kip</span></div></div>
+      <div class="result-tile"><div class="lbl">Tension strength</div><div class="val">—<span class="unit">kip</span></div></div>
+      <div class="result-tile"><div class="lbl">Bearing strength</div><div class="val">—<span class="unit">kip</span></div></div>
+    </div>
+    <div class="load-total">Pick a bolt diameter and grade to calculate.</div>`;
+    return;
+  }
+  const Ab = Math.PI/4*d*d;
+  const RnShearPerBolt = Fnv*Ab*planes;
+  const RnTensionPerBolt = Fnt*Ab;
+  const availShearPerBolt = availStrength(RnShearPerBolt, bc.method);
+  const availTensionPerBolt = availStrength(RnTensionPerBolt, bc.method);
+  const totalAvailShear = availShearPerBolt*n;
+  const totalAvailTension = availTensionPerBolt*n;
+
+  const t = parseFloat(bc.baseT), Lc = parseFloat(bc.clearDist);
+  const baseGrade = BASE_METAL_GRADES[bc.baseGrade];
+  const Fu = baseGrade ? (baseGrade.Fu!=null ? baseGrade.Fu : parseFloat(bc.baseFu)) : NaN;
+  const hasBearing = t>0 && Fu>0 && Lc>0;
+  let totalAvailBearing = null;
+  if(hasBearing){
+    const RnBearingPerBolt = Math.min(1.2*Lc*t*Fu, 2.4*d*t*Fu);
+    totalAvailBearing = availStrength(RnBearingPerBolt, bc.method)*n;
+  }
+  const governingShear = hasBearing ? Math.min(totalAvailShear, totalAvailBearing) : totalAvailShear;
+
+  const hasShearDemand = demandShear>0;
+  const hasTensionDemand = demandTension>0;
+  const dcShear = hasShearDemand ? demandShear/governingShear : null;
+  const dcShearClass = !hasShearDemand ? "" : (dcShear>1?"over":"ok");
+  const dcTension = hasTensionDemand ? demandTension/totalAvailTension : null;
+  const dcTensionClass = !hasTensionDemand ? "" : (dcTension>1?"over":"ok");
+
+  let combinedHTML = "";
+  if(hasShearDemand && hasTensionDemand){
+    const frv = demandShear/(n*Ab*planes);
+    let FntMod = bc.method==="lrfd"
+      ? 1.3*Fnt - (Fnt/(CONN_PHI*Fnv))*frv
+      : 1.3*Fnt - (CONN_OMEGA*Fnt/Fnv)*frv;
+    FntMod = Math.max(0, Math.min(Fnt, FntMod));
+    const RnTensionModPerBolt = FntMod*Ab;
+    const availTensionModPerBolt = availStrength(RnTensionModPerBolt, bc.method);
+    const totalAvailTensionMod = availTensionModPerBolt*n;
+    const dcCombined = demandTension/totalAvailTensionMod;
+    const dcCombinedClass = dcCombined>1?"over":"ok";
+    combinedHTML = `<div class="load-total">Combined shear + tension (AISC 360 §J3.7): required shear stress f<sub>rv</sub> = ${frv.toFixed(2)} ksi → modified tension strength F<sub>nt</sub>' = ${FntMod.toFixed(2)} ksi → combined tension capacity (total) = ${totalAvailTensionMod.toFixed(2)} kip. D/C = ${dcCombined.toFixed(2)}${statusMark(dcCombinedClass)}.</div>`;
+  }
+
+  const methodLabel = bc.method==="lrfd" ? `φ = ${CONN_PHI}` : `Ω = ${CONN_OMEGA.toFixed(2)}`;
+
+  box.innerHTML = `<div class="results-grid">
+      <div class="result-tile ${dcShearClass}"><div class="lbl">Shear strength (total)${statusMark(dcShearClass)}</div><div class="val">${totalAvailShear.toFixed(2)}<span class="unit">kip</span></div></div>
+      <div class="result-tile ${dcTensionClass}"><div class="lbl">Tension strength (total)${statusMark(dcTensionClass)}</div><div class="val">${totalAvailTension.toFixed(2)}<span class="unit">kip</span></div></div>
+      <div class="result-tile"><div class="lbl">Bearing strength (total)</div><div class="val">${totalAvailBearing!=null?totalAvailBearing.toFixed(2):'—'}<span class="unit">kip</span></div></div>
+    </div>
+    ${hasShearDemand?`<div class="load-total">Shear demand/capacity ratio (vs. governing of bolt shear${hasBearing?' &amp; bearing':''}) = ${dcShear.toFixed(2)}${dcShear>1?' — exceeds capacity':' — OK'}.</div>`:''}
+    ${hasTensionDemand?`<div class="load-total">Tension demand/capacity ratio = ${dcTension.toFixed(2)}${dcTension>1?' — exceeds capacity':' — OK'}.</div>`:''}
+    ${combinedHTML}
+    <div class="load-total">Bolt area A<sub>b</sub> = ${Ab.toFixed(3)} in². F<sub>nv</sub> = ${Fnv} ksi, F<sub>nt</sub> = ${Fnt} ksi (Table J3.2). ${methodLabel}.</div>
+    <div class="load-total line2">Formulas — Shear: R<sub>n</sub> = F<sub>nv</sub>·A<sub>b</sub> per shear plane. Tension: R<sub>n</sub> = F<sub>nt</sub>·A<sub>b</sub>.${hasBearing?' Bearing: R<sub>n</sub> = min(1.2L<sub>c</sub>tF<sub>u</sub>, 2.4dtF<sub>u</sub>) (§J3.10).':''}</div>`;
 }
 
 render();
