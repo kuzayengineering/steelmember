@@ -2786,6 +2786,22 @@ function renderCustomCharts(passes){
 const CONN_PHI = 0.75;
 const CONN_OMEGA = 2.00;
 
+/* Common base/connected-metal grades, for the optional base-metal (weld) and
+   bearing (bolt) checks — Fu values per AISC Manual Table 2-4. */
+const BASE_METAL_GRADES = {
+  a36:     {nm:"A36",           Fu:58},
+  a572_50: {nm:"A572 Grade 50", Fu:65},
+  a992:    {nm:"A992 Grade 50", Fu:65},
+  a572_60: {nm:"A572 Grade 60", Fu:75},
+  custom:  {nm:"Custom",        Fu:null},
+};
+function baseMetalGradeHTML(id, current){
+  return `<select id="${id}">
+    <option value="" ${current?'':'selected'}>Skip check</option>
+    ${Object.entries(BASE_METAL_GRADES).map(([k,g])=>`<option value="${k}" ${current===k?'selected':''}>${g.nm}${g.Fu!=null?` (Fu = ${g.Fu} ksi)`:''}</option>`).join("")}
+  </select>`;
+}
+
 function methodToggleHTML(current){
   const opts = [["lrfd","LRFD"],["asd","ASD"]];
   return `<div class="axis-toggle conn-method-toggle">
@@ -2803,7 +2819,7 @@ function openWeldCalc(){
   state.view = "weldcalc";
   state.weldCalc = {
     method:"lrfd", size:"0.3125", length:"", numWelds:"2", fexx:"70", angle:"0",
-    demand:"", baseT:"", baseFu:""
+    demand:"", baseT:"", baseGrade:"", baseFu:""
   };
   render();
 }
@@ -2874,8 +2890,9 @@ function renderWeldCalc(){
       <div class="calc-col">
         <div class="subhead">Base Metal Check (optional)</div>
         <div class="field"><label>Base metal thickness, t (in)</label><input id="wcBaseT" type="number" step="any" min="0" placeholder="skip to omit check"></div>
-        <div class="field"><label>Base metal F<sub>u</sub> (ksi)</label><input id="wcBaseFu" type="number" step="any" min="0" placeholder="e.g. 65"></div>
-        <div class="field-note">Base metal shear rupture along the weld line, per AISC 360 §J4.2 — enter both to check thinner/weaker-than-weld base material.</div>
+        <div class="field"><label>Base metal grade</label>${baseMetalGradeHTML("wcBaseGrade", wc.baseGrade)}</div>
+        <div class="field" id="wcBaseFuWrap" ${wc.baseGrade==='custom'?'':'style="display:none"'}><label>Custom F<sub>u</sub> (ksi)</label><input id="wcBaseFu" type="number" step="any" min="0" placeholder="e.g. 65"></div>
+        <div class="field-note">Base metal shear rupture along the weld line, per AISC 360 §J4.2 — enter a thickness and pick a grade to check thinner/weaker-than-weld base material.</div>
       </div>
     </div>
 
@@ -2893,7 +2910,8 @@ function wireWeldCalc(){
   const size=document.getElementById("wcSize"), length=document.getElementById("wcLength"),
         num=document.getElementById("wcNum"), angle=document.getElementById("wcAngle"),
         fexx=document.getElementById("wcFexx"), demand=document.getElementById("wcDemand"),
-        baseT=document.getElementById("wcBaseT"), baseFu=document.getElementById("wcBaseFu");
+        baseT=document.getElementById("wcBaseT"), baseGrade=document.getElementById("wcBaseGrade"),
+        baseFu=document.getElementById("wcBaseFu");
   length.value = state.weldCalc.length;
   demand.value = state.weldCalc.demand;
   baseT.value = state.weldCalc.baseT;
@@ -2905,6 +2923,11 @@ function wireWeldCalc(){
   fexx.onchange = ()=>{ state.weldCalc.fexx = fexx.value; redrawWeldDiagram(); updateWeldResults(); };
   demand.oninput = ()=>{ state.weldCalc.demand = demand.value; updateWeldResults(); };
   baseT.oninput = ()=>{ state.weldCalc.baseT = baseT.value; updateWeldResults(); };
+  baseGrade.onchange = ()=>{
+    state.weldCalc.baseGrade = baseGrade.value;
+    document.getElementById("wcBaseFuWrap").style.display = baseGrade.value==="custom" ? "" : "none";
+    updateWeldResults();
+  };
   baseFu.oninput = ()=>{ state.weldCalc.baseFu = baseFu.value; updateWeldResults(); };
 }
 
@@ -2940,7 +2963,9 @@ function updateWeldResults(){
   const availWeld = availStrength(RnWeld, wc.method);
   const availPerIn = availWeld/Ltotal;
 
-  const baseT = parseFloat(wc.baseT), baseFu = parseFloat(wc.baseFu);
+  const baseT = parseFloat(wc.baseT);
+  const baseGrade = BASE_METAL_GRADES[wc.baseGrade];
+  const baseFu = baseGrade ? (baseGrade.Fu!=null ? baseGrade.Fu : parseFloat(wc.baseFu)) : NaN;
   const hasBase = baseT>0 && baseFu>0;
   let availBase = null;
   if(hasBase){
@@ -2980,7 +3005,7 @@ function openBoltCalc(){
   state.view = "boltcalc";
   state.boltCalc = {
     method:"lrfd", diam:"0.75", grade:"a325", threads:"n", shearPlanes:"1", numBolts:"1",
-    demandShear:"", demandTension:"", baseT:"", baseFu:"", clearDist:""
+    demandShear:"", demandTension:"", baseT:"", baseGrade:"", baseFu:"", clearDist:""
   };
   render();
 }
@@ -3047,7 +3072,8 @@ function renderBoltCalc(){
       <div class="calc-col">
         <div class="subhead">Bearing at Bolt Holes (optional)</div>
         <div class="field"><label>Connected material thickness, t (in)</label><input id="bcBaseT" type="number" step="any" min="0" placeholder="skip to omit check"></div>
-        <div class="field"><label>Connected material F<sub>u</sub> (ksi)</label><input id="bcBaseFu" type="number" step="any" min="0" placeholder="e.g. 65"></div>
+        <div class="field"><label>Connected material grade</label>${baseMetalGradeHTML("bcBaseGrade", bc.baseGrade)}</div>
+        <div class="field" id="bcBaseFuWrap" ${bc.baseGrade==='custom'?'':'style="display:none"'}><label>Custom F<sub>u</sub> (ksi)</label><input id="bcBaseFu" type="number" step="any" min="0" placeholder="e.g. 65"></div>
         <div class="field"><label>Clear distance, L<sub>c</sub> (in)</label><input id="bcClearDist" type="number" step="any" min="0" placeholder="edge or hole to hole"></div>
         <div class="field-note">L<sub>c</sub> = clear distance, in the line of force, from the edge of the hole to the edge of the material or the next hole (AISC 360 §J3.10).</div>
       </div>
@@ -3072,7 +3098,8 @@ function renderBoltCalc(){
 function wireBoltCalc(){
   const diam=document.getElementById("bcDiam"), grade=document.getElementById("bcGrade"),
         num=document.getElementById("bcNum"), baseT=document.getElementById("bcBaseT"),
-        baseFu=document.getElementById("bcBaseFu"), clearDist=document.getElementById("bcClearDist"),
+        baseGrade=document.getElementById("bcBaseGrade"), baseFu=document.getElementById("bcBaseFu"),
+        clearDist=document.getElementById("bcClearDist"),
         demandShear=document.getElementById("bcDemandShear"), demandTension=document.getElementById("bcDemandTension");
   baseT.value = state.boltCalc.baseT;
   baseFu.value = state.boltCalc.baseFu;
@@ -3083,6 +3110,11 @@ function wireBoltCalc(){
   grade.onchange = ()=>{ state.boltCalc.grade = grade.value; redrawBoltDiagram(); updateBoltResults(); };
   num.oninput = ()=>{ state.boltCalc.numBolts = num.value; redrawBoltDiagram(); updateBoltResults(); };
   baseT.oninput = ()=>{ state.boltCalc.baseT = baseT.value; updateBoltResults(); };
+  baseGrade.onchange = ()=>{
+    state.boltCalc.baseGrade = baseGrade.value;
+    document.getElementById("bcBaseFuWrap").style.display = baseGrade.value==="custom" ? "" : "none";
+    updateBoltResults();
+  };
   baseFu.oninput = ()=>{ state.boltCalc.baseFu = baseFu.value; updateBoltResults(); };
   clearDist.oninput = ()=>{ state.boltCalc.clearDist = clearDist.value; updateBoltResults(); };
   demandShear.oninput = ()=>{ state.boltCalc.demandShear = demandShear.value; updateBoltResults(); };
@@ -3123,7 +3155,9 @@ function updateBoltResults(){
   const totalAvailShear = availShearPerBolt*n;
   const totalAvailTension = availTensionPerBolt*n;
 
-  const t = parseFloat(bc.baseT), Fu = parseFloat(bc.baseFu), Lc = parseFloat(bc.clearDist);
+  const t = parseFloat(bc.baseT), Lc = parseFloat(bc.clearDist);
+  const baseGrade = BASE_METAL_GRADES[bc.baseGrade];
+  const Fu = baseGrade ? (baseGrade.Fu!=null ? baseGrade.Fu : parseFloat(bc.baseFu)) : NaN;
   const hasBearing = t>0 && Fu>0 && Lc>0;
   let totalAvailBearing = null;
   if(hasBearing){
