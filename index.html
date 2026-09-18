@@ -2806,6 +2806,14 @@ function baseMetalGradeHTML(id, current){
   </select>`;
 }
 
+/* Factor of safety for the connection tools = available strength / applied load (the inverse of the D/C ratio). */
+function capacityFosTile(dc){
+  if(dc==null) return `<div class="result-tile"><div class="lbl">Factor of safety</div><div class="val">—</div></div>`;
+  const fos = dc>0 ? 1/dc : Infinity;
+  const cls = fos<1 ? "over" : "ok";
+  return `<div class="result-tile ${cls}"><div class="lbl">Factor of safety${statusMark(cls)}</div><div class="val">${isFinite(fos)?fos.toFixed(2):"∞"}</div></div>`;
+}
+
 function methodToggleHTML(current){
   const opts = [["lrfd","LRFD"],["asd","ASD"]];
   return `<div class="axis-toggle conn-method-toggle">
@@ -2955,6 +2963,7 @@ function updateWeldResults(){
       <div class="result-tile"><div class="lbl">Weld strength</div><div class="val">—<span class="unit">kip</span></div></div>
       <div class="result-tile"><div class="lbl">Strength per inch</div><div class="val">—<span class="unit">kip/in</span></div></div>
       <div class="result-tile"><div class="lbl">Base metal strength</div><div class="val">—<span class="unit">kip</span></div></div>
+      <div class="result-tile"><div class="lbl">Factor of safety</div><div class="val">—</div></div>
     </div>
     <div class="load-total">Enter a weld size, length and electrode to calculate.</div>`;
     return;
@@ -2987,8 +2996,9 @@ function updateWeldResults(){
       <div class="result-tile ${hasDemand?dcClass:''}"><div class="lbl">Weld strength (total)${hasDemand?statusMark(dcClass):''}</div><div class="val">${availWeld.toFixed(2)}<span class="unit">kip</span></div></div>
       <div class="result-tile"><div class="lbl">Strength per inch</div><div class="val">${availPerIn.toFixed(2)}<span class="unit">kip/in</span></div></div>
       <div class="result-tile"><div class="lbl">Base metal strength</div><div class="val">${availBase!=null?availBase.toFixed(2):'—'}<span class="unit">kip</span></div></div>
+      ${capacityFosTile(dc)}
     </div>
-    ${hasDemand?`<div class="load-total">Demand/capacity ratio (vs. governing strength) = ${dc.toFixed(2)}${dc>1?' — exceeds capacity':' — OK'}.</div>`:''}
+    ${hasDemand?`<div class="load-total">Demand/capacity ratio (vs. governing strength) = ${dc.toFixed(2)}${dc>1?' — exceeds capacity':' — OK'}. Factor of safety = available strength / applied load = ${(1/dc).toFixed(2)}.</div>`:''}
     <div class="load-total">Total effective weld length = ${Ltotal.toFixed(2)} in (${Lper.toFixed(2)} in × ${n} weld${n===1?'':'s'}). ${methodLabel}.${hasBase?' Governing strength = min(weld metal, base metal).':''}</div>
     <div class="load-total line2">Formulas — R<sub>n</sub> = F<sub>nw</sub>·A<sub>we</sub>, F<sub>nw</sub> = 0.60F<sub>EXX</sub>(1.0 + 0.50sin<sup>1.5</sup>θ), A<sub>we</sub> = 0.707w·L (AISC 360 §J2.4)${hasBase?'. Base metal: R<sub>n</sub> = 0.60F<sub>u</sub>·t·L (§J4.2)':''}.</div>`;
 }
@@ -3147,6 +3157,7 @@ function updateBoltResults(){
       <div class="result-tile"><div class="lbl">Shear strength</div><div class="val">—<span class="unit">kip</span></div></div>
       <div class="result-tile"><div class="lbl">Tension strength</div><div class="val">—<span class="unit">kip</span></div></div>
       <div class="result-tile"><div class="lbl">Bearing strength</div><div class="val">—<span class="unit">kip</span></div></div>
+      <div class="result-tile"><div class="lbl">Factor of safety</div><div class="val">—</div></div>
     </div>
     <div class="load-total">Pick a bolt diameter and grade to calculate.</div>`;
     return;
@@ -3178,6 +3189,7 @@ function updateBoltResults(){
   const dcTensionClass = !hasTensionDemand ? "" : (dcTension>1?"over":"ok");
 
   let combinedHTML = "";
+  let dcCombinedVal = null;
   if(hasShearDemand && hasTensionDemand){
     const frv = demandShear/(n*Ab*planes);
     let FntMod = bc.method==="lrfd"
@@ -3188,9 +3200,13 @@ function updateBoltResults(){
     const availTensionModPerBolt = availStrength(RnTensionModPerBolt, bc.method);
     const totalAvailTensionMod = availTensionModPerBolt*n;
     const dcCombined = demandTension/totalAvailTensionMod;
+    dcCombinedVal = dcCombined;
     const dcCombinedClass = dcCombined>1?"over":"ok";
     combinedHTML = `<div class="load-total">Combined shear + tension (AISC 360 §J3.7): required shear stress f<sub>rv</sub> = ${frv.toFixed(2)} ksi → modified tension strength F<sub>nt</sub>' = ${FntMod.toFixed(2)} ksi → combined tension capacity (total) = ${totalAvailTensionMod.toFixed(2)} kip. D/C = ${dcCombined.toFixed(2)}${statusMark(dcCombinedClass)}.</div>`;
   }
+
+  const dcList = [[dcShear,"shear"],[dcTension,"tension"],[dcCombinedVal,"combined shear + tension"]].filter(([v])=>v!=null);
+  const govDc = dcList.length ? dcList.reduce((a,b)=>b[0]>a[0]?b:a) : null;
 
   const methodLabel = bc.method==="lrfd" ? `φ = ${CONN_PHI}` : `Ω = ${CONN_OMEGA.toFixed(2)}`;
 
@@ -3198,10 +3214,12 @@ function updateBoltResults(){
       <div class="result-tile ${dcShearClass}"><div class="lbl">Shear strength (total)${statusMark(dcShearClass)}</div><div class="val">${totalAvailShear.toFixed(2)}<span class="unit">kip</span></div></div>
       <div class="result-tile ${dcTensionClass}"><div class="lbl">Tension strength (total)${statusMark(dcTensionClass)}</div><div class="val">${totalAvailTension.toFixed(2)}<span class="unit">kip</span></div></div>
       <div class="result-tile"><div class="lbl">Bearing strength (total)</div><div class="val">${totalAvailBearing!=null?totalAvailBearing.toFixed(2):'—'}<span class="unit">kip</span></div></div>
+      ${capacityFosTile(govDc?govDc[0]:null)}
     </div>
     ${hasShearDemand?`<div class="load-total">Shear demand/capacity ratio (vs. governing of bolt shear${hasBearing?' &amp; bearing':''}) = ${dcShear.toFixed(2)}${dcShear>1?' — exceeds capacity':' — OK'}.</div>`:''}
     ${hasTensionDemand?`<div class="load-total">Tension demand/capacity ratio = ${dcTension.toFixed(2)}${dcTension>1?' — exceeds capacity':' — OK'}.</div>`:''}
     ${combinedHTML}
+    ${govDc?`<div class="load-total">Factor of safety = available strength / applied load = ${(govDc[0]>0?1/govDc[0]:Infinity).toFixed(2)} (governed by ${govDc[1]}).</div>`:''}
     <div class="load-total">Bolt area A<sub>b</sub> = ${Ab.toFixed(3)} in². F<sub>nv</sub> = ${Fnv} ksi, F<sub>nt</sub> = ${Fnt} ksi (Table J3.2). ${methodLabel}.</div>
     <div class="load-total line2">Formulas — Shear: R<sub>n</sub> = F<sub>nv</sub>·A<sub>b</sub> per shear plane. Tension: R<sub>n</sub> = F<sub>nt</sub>·A<sub>b</sub>.${hasBearing?' Bearing: R<sub>n</sub> = min(1.2L<sub>c</sub>tF<sub>u</sub>, 2.4dtF<sub>u</sub>) (§J3.10).':''}</div>`;
 }
