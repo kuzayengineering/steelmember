@@ -1854,6 +1854,14 @@ function resolvePointLocation(span, locRaw, defaultFrac){
   return span*defaultFrac;
 }
 
+/* Factor of safety against yielding = Fy / actual (max) stress. */
+function fosTile(fy, stress){
+  if(!(stress>0) || !(fy>0)) return `<div class="result-tile"><div class="lbl">Factor of safety</div><div class="val">—</div></div>`;
+  const fos = fy/stress;
+  const cls = fos<1 ? "over" : "";
+  return `<div class="result-tile ${cls}"><div class="lbl">Factor of safety${statusMark(cls)}</div><div class="val">${fos.toFixed(2)}</div></div>`;
+}
+
 function statusMark(cls){
   if(cls==="ok") return ` <span class="status-mark">✓</span>`;
   if(cls==="over") return ` <span class="status-mark">✗</span>`;
@@ -1873,6 +1881,7 @@ function updateBeamResults(){
       <div class="result-tile"><div class="lbl">Max moment</div><div class="val">—<span class="unit">kip-in</span></div></div>
       <div class="result-tile"><div class="lbl">Max deflection</div><div class="val">—<span class="unit">in</span></div></div>
       <div class="result-tile"><div class="lbl">Max stress</div><div class="val">—<span class="unit">ksi</span></div></div>
+      <div class="result-tile"><div class="lbl">Factor of safety</div><div class="val">—</div></div>
     </div>
     <div class="load-total">Pick a beam and enter a span to calculate.</div>`;
     lastCustomPasses = null; lastChartBc = null;
@@ -1897,11 +1906,12 @@ function updateBeamResults(){
       <div class="result-tile"><div class="lbl">Max moment</div><div class="val">${r.Mmax.toFixed(2)}<span class="unit">kip-in</span></div></div>
       <div class="result-tile ${deflClass}"><div class="lbl">Max deflection${statusMark(deflClass)}</div><div class="val">${r.defl.toFixed(3)}<span class="unit">in</span></div></div>
       <div class="result-tile ${stressClass}"><div class="lbl">Max stress${statusMark(stressClass)}</div><div class="val">${stress!=null?stress.toFixed(2):'—'}<span class="unit">ksi</span></div></div>
+      ${fosTile(fy,stress)}
     </div>
     <div class="load-total">${r.serviceLine} Bending about ${axisLabel}.</div>
     <div class="load-total">Deflection limit = L/240 = ${deflLimit.toFixed(3)} in.</div>
     <div class="load-total">${r.factoredLine} Allowable stress = ${allowFactor}×Fy = ${allowStress.toFixed(1)} ksi — swap in AISC-specific combinations/limits as needed.</div>
-    <div class="load-total line2">${r.formulaLine} Max stress: f = M/S (S = ${bc.axis==='x'?'Sx':'Sy'}).</div>`;
+    <div class="load-total line2">${r.formulaLine} Factor of safety = F<sub>y</sub> / max stress. Max stress: f = M/S (S = ${bc.axis==='x'?'Sx':'Sy'}).</div>`;
 }
 
 /* ---------- Shared SVG pieces for the beam diagrams ---------- */
@@ -2609,6 +2619,7 @@ function updateCustomResults(){
       <div class="result-tile"><div class="lbl">Max moment</div><div class="val">—<span class="unit">kip-in</span></div></div>
       <div class="result-tile"><div class="lbl">Max deflection</div><div class="val">—<span class="unit">in</span></div></div>
       <div class="result-tile"><div class="lbl">Max stress</div><div class="val">—<span class="unit">ksi</span></div></div>
+      <div class="result-tile"><div class="lbl">Factor of safety</div><div class="val">—</div></div>
     </div>
     <div class="load-total">${msg}</div>`;
     lastCustomPasses = null;
@@ -2642,9 +2653,10 @@ function updateCustomResults(){
       <div class="result-tile"><div class="lbl">Max moment</div><div class="val">${Math.abs(Mmax).toFixed(2)}<span class="unit">kip-in</span></div></div>
       <div class="result-tile ${deflClass}"><div class="lbl">Max deflection${statusMark(deflClass)}</div><div class="val">${Math.abs(defl).toFixed(3)}<span class="unit">in</span></div></div>
       <div class="result-tile ${stressClass}"><div class="lbl">Max stress${statusMark(stressClass)}</div><div class="val">${stress!=null?stress.toFixed(2):'—'}<span class="unit">ksi</span></div></div>
+      ${fosTile(fy,stress)}
     </div>
     <div class="load-total">Max moment occurs at x = ${(MmaxLoc/12).toFixed(2)} ft from the left end. Max deflection occurs at x = ${(deflLoc/12).toFixed(2)} ft. Bending about ${axisLabel}.</div>
-    <div class="load-total">Deflection limit = L/240 = ${deflLimit.toFixed(3)} in. Allowable stress = ${allowFactor}×Fy = ${allowStress.toFixed(1)} ksi.</div>
+    <div class="load-total">Deflection limit = L/240 = ${deflLimit.toFixed(3)} in. Allowable stress = ${allowFactor}×Fy = ${allowStress.toFixed(1)} ksi. Factor of safety = F<sub>y</sub> / max stress.</div>
     <div class="load-total line2">Computed numerically by superposing every load above (incl. self-weight): reactions from statics, shear/moment by direct summation, deflection by double-integrating M/EI and solving for the two integration constants from the support conditions.</div>`;
 
   lastCustomPasses = {factored:passFactored, service:passService};
