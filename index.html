@@ -207,9 +207,6 @@ td.nm{font-weight:500;color:var(--steel-dark);}
 .cat-live{fill:var(--hot-rolled);stroke:var(--hot-rolled);}
 
 footer.app-footer{margin-top:40px;padding-top:14px;border-top:1px solid var(--line);font-size:11.5px;line-height:1.5;color:var(--mill);}
-.powered-by{margin-top:16px;display:flex;flex-direction:column;align-items:center;gap:6px;}
-.powered-by span{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--mill);}
-.powered-by img{height:28px;width:auto;display:block;}
 
 @media(max-width:720px){
   .app{padding:0 14px 40px;}
@@ -288,9 +285,6 @@ footer.app-footer{margin-top:40px;padding-top:14px;border-top:1px solid var(--li
   .load-total.line2{margin-bottom:4px;}
   footer.app-footer{margin-top:8px;padding-top:5px;font-size:7.5px;line-height:1.3;}
   footer.app-footer p{margin:2px 0;}
-  .powered-by{margin-top:6px;gap:2px;}
-  .powered-by span{font-size:6.5px;}
-  .powered-by img{height:16px;}
 }
 </style>
 </head>
@@ -1322,10 +1316,6 @@ function footer(){
   <footer class="app-footer">
     <p>It is the responsibility of the user to verify all values against current manufacturer and AISC references. Kuzay Engineering LLC provides no guarantee of accuracy of this data.</p>
     <p><a href="privacy.html" style="color:var(--steel);">Privacy Policy</a></p>
-    <div class="powered-by">
-      <span>Powered by</span>
-      <img src="${KUZAY_LOGO}" alt="Kuzay Engineering">
-    </div>
   </footer>`;
 }
 
