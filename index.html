@@ -1247,6 +1247,7 @@ const BEAM_TOOLS = [
   {key:"cant-udl",   nm:"Cantilever",  sub:"Uniformly Distributed Load", icon:"i-cantilever-udl"},
   {key:"cant-pt",    nm:"Cantilever",  sub:"Point Load", icon:"i-cantilever-pt"},
   {key:"custom",     nm:"Custom",      sub:"Define Your Own Load Case", icon:"i-beam-custom"},
+  {key:"column",     nm:"Column",      sub:"Axial Compression (AISC E)", icon:"i-column", open:"openColumnCalc"},
 ];
 
 /* Connection design calculators shown in the "Connections" section on the home screen. */
@@ -1269,11 +1270,12 @@ const ICONS = {
   "i-cantilever-udl":'<svg viewBox="0 0 48 48" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="10" y1="10" x2="10" y2="22"/><line x1="7" y1="19" x2="10" y2="22"/><line x1="13" y1="19" x2="10" y2="22"/><line x1="20" y1="10" x2="20" y2="22"/><line x1="17" y1="19" x2="20" y2="22"/><line x1="23" y1="19" x2="20" y2="22"/><line x1="30" y1="10" x2="30" y2="22"/><line x1="27" y1="19" x2="30" y2="22"/><line x1="33" y1="19" x2="30" y2="22"/><line x1="8" y1="24" x2="40" y2="24" stroke-width="3.5"/><line x1="8" y1="12" x2="8" y2="36" stroke-width="3"/><line x1="4" y1="16" x2="8" y2="20"/><line x1="4" y1="22" x2="8" y2="26"/><line x1="4" y1="28" x2="8" y2="32"/></svg>',
   "i-cantilever-pt":'<svg viewBox="0 0 48 48" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="38" y1="9" x2="38" y2="22"/><line x1="35" y1="19" x2="38" y2="22"/><line x1="41" y1="19" x2="38" y2="22"/><line x1="8" y1="24" x2="40" y2="24" stroke-width="3.5"/><line x1="8" y1="12" x2="8" y2="36" stroke-width="3"/><line x1="4" y1="16" x2="8" y2="20"/><line x1="4" y1="22" x2="8" y2="26"/><line x1="4" y1="28" x2="8" y2="32"/></svg>',
   "i-beam-custom":'<svg viewBox="0 0 48 48" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="14" y1="9" x2="14" y2="22"/><line x1="11" y1="19" x2="14" y2="22"/><line x1="17" y1="19" x2="14" y2="22"/><line x1="8" y1="24" x2="40" y2="24" stroke-width="3.5"/><path d="M8 24l-5 9h10z"/><circle cx="34" cy="30" r="4"/><line x1="30" y1="34" x2="38" y2="34"/><line x1="30" y1="9" x2="30" y2="20" stroke-dasharray="2.5,2.5"/></svg>',
+  "i-column":'<svg viewBox="0 0 48 48" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="24" y1="4" x2="24" y2="14"/><line x1="20" y1="10" x2="24" y2="14"/><line x1="28" y1="10" x2="24" y2="14"/><line x1="24" y1="14" x2="24" y2="38" stroke-width="5"/><line x1="12" y1="40" x2="36" y2="40"/><line x1="14" y1="40" x2="10" y2="45"/><line x1="22" y1="40" x2="18" y2="45"/><line x1="30" y1="40" x2="26" y2="45"/><line x1="38" y1="40" x2="34" y2="45"/></svg>',
   "i-weld":'<svg viewBox="0 0 48 48" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 14h16v8H8z"/><path d="M24 22h16v8H24z"/><path d="M24 14l6 8h-6z" fill="currentColor" stroke="none"/></svg>',
   "i-bolt":'<svg viewBox="0 0 48 48" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="14" width="32" height="20"/><circle cx="18" cy="24" r="3.5"/><circle cx="30" cy="24" r="3.5"/></svg>',
 };
 
-let state = {view:"home", cat:null, sub:null, member:null, filters:{}, search:"", filtersOpen:false, sortCol:null, sortDir:null, beamTool:null, beamCalc:null, weldCalc:null, boltCalc:null};
+let state = {view:"home", cat:null, sub:null, member:null, filters:{}, search:"", filtersOpen:false, sortCol:null, sortDir:null, beamTool:null, beamCalc:null, weldCalc:null, boltCalc:null, columnCalc:null};
 const app = document.getElementById("app");
 
 function allRowsFlat(){
@@ -1291,6 +1293,7 @@ function render(){
   if(state.view==="beamcalc") return renderBeamCalc();
   if(state.view==="weldcalc") return renderWeldCalc();
   if(state.view==="boltcalc") return renderBoltCalc();
+  if(state.view==="columncalc") return renderColumnCalc();
 }
 
 const KUZAY_LOGO = "data:image/png;base64,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";
@@ -1337,7 +1340,7 @@ function renderHome(){
     <h1 class="page-title">Beam Diagrams</h1>
     <div class="cat-grid">
       ${BEAM_TOOLS.map(t=>`
-        <div class="cat-tile" onclick="${t.soon?'':`openBeamCalc('${t.key}')`}">
+        <div class="cat-tile" onclick="${t.open?t.open+'()':t.soon?'':`openBeamCalc('${t.key}')`}">
           ${t.soon?'<span class="soon-badge">Coming soon</span>':''}
           ${ICONS[t.icon]}
           <span class="nm">${t.nm}</span>
@@ -2839,10 +2842,15 @@ function openWeldCalc(){
 function setConnMethod(val){
   if(state.view==="weldcalc") state.weldCalc.method = val;
   else if(state.view==="boltcalc") state.boltCalc.method = val;
+  else if(state.view==="columncalc"){
+    const cc = state.columnCalc, f = COL_FACTOR_DEFAULTS[val];
+    cc.method = val; cc.dlFactor = f.dl; cc.slFactor = f.sl; cc.llFactor = f.ll;
+    document.getElementById("ccDLf").value = f.dl; document.getElementById("ccSLf").value = f.sl; document.getElementById("ccLLf").value = f.ll;
+  }
   document.querySelectorAll(".conn-method-toggle .pill").forEach(p=>{
     p.classList.toggle("active", p.dataset.val===val);
   });
-  if(state.view==="weldcalc") updateWeldResults(); else updateBoltResults();
+  if(state.view==="weldcalc") updateWeldResults(); else if(state.view==="columncalc") updateColumnResults(); else updateBoltResults();
 }
 
 const WELD_SIZES = [
@@ -3222,6 +3230,317 @@ function updateBoltResults(){
     ${govDc?`<div class="load-total">Factor of safety = available strength / applied load = ${(govDc[0]>0?1/govDc[0]:Infinity).toFixed(2)} (governed by ${govDc[1]}).</div>`:''}
     <div class="load-total">Bolt area A<sub>b</sub> = ${Ab.toFixed(3)} in². F<sub>nv</sub> = ${Fnv} ksi, F<sub>nt</sub> = ${Fnt} ksi (Table J3.2). ${methodLabel}.</div>
     <div class="load-total line2">Formulas — Shear: R<sub>n</sub> = F<sub>nv</sub>·A<sub>b</sub> per shear plane. Tension: R<sub>n</sub> = F<sub>nt</sub>·A<sub>b</sub>.${hasBearing?' Bearing: R<sub>n</sub> = min(1.2L<sub>c</sub>tF<sub>u</sub>, 2.4dtF<sub>u</sub>) (§J3.10).':''}</div>`;
+}
+
+/* ==========================================================================
+   Column Design (AISC 360-16 Chapter E): axial compression, flexural buckling
+   of doubly-symmetric rolled I-shapes, rectangular/square HSS, round HSS and
+   pipe, with the Section E7 effective-width reduction for slender elements.
+   Torsional / flexural-torsional buckling (E4) is not evaluated.
+   ========================================================================== */
+const COLUMN_KEYS = ["W","M","S","HP","HSSQ","HSSR","HSSC","PIPE"];
+const HSS_DESIGN_WALL = 0.93;
+const COL_PHI = 0.90;
+const COL_OMEGA = 1.67;
+const COL_FACTOR_DEFAULTS = {asd:{dl:"1.0",sl:"1.0",ll:"1.0"}, lrfd:{dl:"1.2",sl:"1.6",ll:"1.6"}};
+
+function columnSearchRows(){
+  return allRowsFlat().filter(r=>COLUMN_KEYS.includes(r._key) && r.area>0 && r.Ix>0 && r.Iy>0);
+}
+
+function openColumnCalc(){
+  state.view = "columncalc";
+  state.columnCalc = {
+    shape:null, method:"asd",
+    dl:"", sl:"", ll:"", dlFactor:"1.0", slFactor:"1.0", llFactor:"1.0",
+    fy:"50", Kx:"1.0", Ky:"1.0", Lx:"", Ly:""
+  };
+  render();
+}
+
+function columnGeometry(row){
+  const k = row._key;
+  if(k==="W"||k==="M"||k==="HP") return {type:"I", d:row.depth, bf:row.bf, tf:row.tf, tw:row.tw};
+  if(k==="S") return {type:"S"};
+  if(k==="HSSR") return {type:"rect", H:row.depth, B:row.width, t:HSS_DESIGN_WALL*row.thickness};
+  if(k==="HSSQ"){
+    const m = row.name.match(/^HSS([\d.]+)X/);
+    const B = m ? parseFloat(m[1]) : null;
+    return {type:"rect", H:B, B:B, t:row.thickness};
+  }
+  if(k==="PIPE") return {type:"round", D:row.od, t:HSS_DESIGN_WALL*row.wall};
+  return {type:"round", D:row.od, t:row.wall};
+}
+
+/* Section properties used for the column check. Pipe rows in the database are tabulated on the
+   nominal wall, so they're recomputed here on the 0.93 design wall (AISC 360 §B4.2). */
+/* Area and second moments of a rounded rectangle B (x) by H (y), corner radius r, by strip integration. */
+function roundedRectProps(B, H, r){
+  const n = 2000, dy = H/n;
+  let A = 0, Ix = 0, Iy = 0;
+  for(let i=0;i<n;i++){
+    const y = -H/2 + (i+0.5)*dy;
+    const edge = H/2-Math.abs(y);
+    const cut = edge<r ? r-Math.sqrt(Math.max(0, r*r-(r-edge)*(r-edge))) : 0;
+    const w = B-2*cut;
+    A += w*dy;
+    Ix += w*y*y*dy;
+    Iy += w*w*w/12*dy;
+  }
+  return {A, Ix, Iy};
+}
+
+/* Rectangular HSS on the design wall: outside corner radius 2t, inside radius t. */
+function hssRectSection(B, H, t){
+  const o = roundedRectProps(B, H, 2*t), i = roundedRectProps(B-2*t, H-2*t, t);
+  return {Ag:o.A-i.A, Ix:o.Ix-i.Ix, Iy:o.Iy-i.Iy};
+}
+
+function columnSection(row){
+  if(row._key==="HSSR") return hssRectSection(row.width, row.depth, HSS_DESIGN_WALL*row.thickness);
+  if(row._key==="PIPE"){
+    const D = row.od, di = D-2*HSS_DESIGN_WALL*row.wall;
+    const I = Math.PI/64*(Math.pow(D,4)-Math.pow(di,4));
+    return {Ag:Math.PI/4*(D*D-di*di), Ix:I, Iy:I};
+  }
+  return {Ag:row.area, Ix:row.Ix, Iy:row.Iy};
+}
+
+/* Available compressive strength per AISC 360-16 E3 (flexural buckling) and E7 (slender elements). */
+function columnStrength(row, fy, Kx, Lx, Ky, Ly){
+  const E = STEEL_E_KSI;
+  const sec = columnSection(row);
+  const Ag = sec.Ag;
+  const rx = Math.sqrt(sec.Ix/Ag), ry = Math.sqrt(sec.Iy/Ag);
+  const KLrx = Kx*Lx*12/rx, KLry = Ky*Ly*12/ry;
+  const KLr = Math.max(KLrx, KLry);
+  const governs = KLrx>=KLry ? "x-x" : "y-y";
+  const Fe = Math.PI*Math.PI*E/(KLr*KLr);
+  const Fcr = fy/Fe<=2.25 ? Math.pow(0.658, fy/Fe)*fy : 0.877*Fe;
+
+  const g = columnGeometry(row);
+  const sq = Math.sqrt(E/Fcr);
+  const elements = [];
+  const notes = [];
+  let reduction = 0;
+  const addElement = (name, b, t, lamR, count, be)=>{
+    const lam = b/t;
+    const slender = lam>lamR;
+    elements.push({name, lam, lamR, slender});
+    if(slender) reduction += count*(b-be)*t;
+  };
+  if(g.type==="I"){
+    const bF = g.bf/2, lamF = bF/g.tf;
+    const beF = lamF<=0.56*sq ? bF : 0.834*g.tf*sq*(1-0.184/lamF*sq);
+    addElement("Flange", bF, g.tf, 0.56*Math.sqrt(E/fy), 4, beF);
+    const h = g.d-2*g.tf, lamW = h/g.tw;
+    const beW = lamW<=1.49*sq ? h : 1.95*g.tw*sq*(1-0.351/lamW*sq);
+    addElement("Web", h, g.tw, 1.49*Math.sqrt(E/fy), 1, beW);
+    notes.push("Web h taken as d − 2t<sub>f</sub> (fillet radius isn't in the database), which slightly overstates h/t<sub>w</sub>.");
+  } else if(g.type==="S"){
+    notes.push("Flange thickness isn't in the database for S-shapes, so local (slender element) buckling isn't checked.");
+  } else if(g.type==="rect"){
+    notes.push("Rectangular HSS properties are recomputed on the 0.93 × nominal design wall (AISC 360 §B4.2); the tabulated values are on the nominal wall.");
+    const lamR = 1.40*Math.sqrt(E/fy);
+    [["Wall (B)", g.B], ["Wall (H)", g.H]].forEach(([nm, dim])=>{
+      const b = dim-3*g.t, lam = b/g.t;
+      const be = lam<=1.40*sq ? b : 1.93*g.t*sq*(1-0.386/lam*sq);
+      addElement(nm, b, g.t, lamR, 2, be);
+    });
+  } else if(g.type==="round"){
+    if(row._key==="PIPE") notes.push("Pipe properties recomputed on the 0.93 × nominal design wall (AISC 360 §B4.2).");
+    const Dt = g.D/g.t, lamR = 0.11*E/fy;
+    elements.push({name:"Wall (D/t)", lam:Dt, lamR, slender:Dt>lamR});
+    if(Dt>lamR){
+      const AeRatio = 0.038*E/(fy*Dt)+2/3;
+      reduction = Ag*(1-AeRatio);
+      if(Dt>=0.45*E/fy) notes.push("D/t exceeds the 0.45E/F<sub>y</sub> limit of AISC 360-16 §E7 — not recommended for use as a column.");
+    }
+  }
+  const Ae = Ag-reduction;
+  const Pn = Fcr*Ae;
+  const avail = {asd:Pn/COL_OMEGA, lrfd:COL_PHI*Pn};
+  return {Ag, Ae, rx, ry, KLrx, KLry, KLr, governs, Fe, Fcr, Pn, avail, elements, notes};
+}
+
+function columnDiagramSVG(cc){
+  const w=640, h=200, cx=320, top=50, bot=160;
+  const Lx = parseFloat(cc.Lx), Ly = parseFloat(cc.Ly);
+  const lenLabel = Math.max(Lx||0, Ly||0);
+  return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">
+    ${beamSvgDefs()}
+    <line class="beam-line" x1="${cx}" y1="${top}" x2="${cx}" y2="${bot}" stroke-width="12" stroke-linecap="square"/>
+    <line class="steel-stroke" x1="${cx}" y1="${top-32}" x2="${cx}" y2="${top-4}" stroke-width="2.5" marker-end="url(#udlArrow)"/>
+    <text x="${cx+14}" y="${top-14}" class="load-label">P</text>
+    <line class="steel-stroke" x1="${cx-30}" y1="${bot+8}" x2="${cx+30}" y2="${bot+8}" stroke-width="3"/>
+    ${[-24,-12,0,12,24].map(dx=>`<line class="steel-stroke" x1="${cx+dx}" y1="${bot+8}" x2="${cx+dx-6}" y2="${bot+18}" stroke-width="1.5"/>`).join("")}
+    <line class="dim-stroke" x1="${cx+60}" y1="${top}" x2="${cx+60}" y2="${bot}" stroke-width="1.2" marker-start="url(#dimArrow)" marker-end="url(#dimArrow)"/>
+    <text x="${cx+70}" y="${(top+bot)/2+4}" class="dim-label">${lenLabel>0?"L = "+lenLabel.toFixed(1)+" ft":"L"}</text>
+  </svg>`;
+}
+
+function renderColumnCalc(){
+  const cc = state.columnCalc;
+  app.innerHTML = header() + `
+    <div class="eyebrow">Beam Diagrams</div>
+    <div class="page-title-row">
+      <h1 class="page-title">Column Design</h1>
+      <button class="btn no-print" onclick="window.print()">Print results</button>
+    </div>
+
+    <div class="beam-diagram-card">${columnDiagramSVG(cc)}</div>
+
+    <div class="calc-grid">
+      <div class="calc-col">
+        <div class="subhead">Axial Loads</div>
+        <div class="field"><div class="load-row">
+          <div class="load-val"><label>Dead load, D (kip) — excl. column weight</label><input id="ccDL" type="number" step="any" min="0" placeholder="0"></div>
+          <div class="load-factor"><label>Factor</label><input id="ccDLf" type="number" step="any" min="0" value="${cc.dlFactor}"></div>
+        </div></div>
+        <div class="field"><div class="load-row">
+          <div class="load-val"><label>Snow load, S (kip)</label><input id="ccSL" type="number" step="any" min="0" placeholder="0"></div>
+          <div class="load-factor"><label>Factor</label><input id="ccSLf" type="number" step="any" min="0" value="${cc.slFactor}"></div>
+        </div></div>
+        <div class="field"><div class="load-row">
+          <div class="load-val"><label>Live load, L (kip)</label><input id="ccLL" type="number" step="any" min="0" placeholder="0"></div>
+          <div class="load-factor"><label>Factor</label><input id="ccLLf" type="number" step="any" min="0" value="${cc.llFactor}"></div>
+        </div></div>
+        <div class="field"><label>Design method</label>${methodToggleHTML(cc.method)}</div>
+        <div class="field-note">Switching method resets the load factors to ASD (1.0) or LRFD (1.2 D, 1.6 S, 1.6 L) defaults — edit as needed.</div>
+      </div>
+      <div class="calc-col">
+        <div class="subhead">Column</div>
+        <div class="beam-pick-wrap search-wrap">
+          <input id="ccSearchBox" class="search-input mono" placeholder="Type a designation, e.g. W12X65" autocomplete="off">
+          <div id="ccSuggest" class="suggest"></div>
+        </div>
+        <div class="beam-card" id="ccCard"><div class="beam-empty">No column selected yet. Available: W, M, S, HP, HSS and pipe.</div></div>
+        <div class="field" style="margin-top:14px;"><label>Yield strength, F<sub>y</sub> (ksi)</label><input id="ccFy" type="number" step="any" min="0" value="${cc.fy}"></div>
+      </div>
+      <div class="calc-col">
+        <div class="subhead">Length &amp; Bracing</div>
+        <div class="field"><label>Unbraced length, x-x axis, L<sub>x</sub> (ft)</label><input id="ccLx" type="number" step="any" min="0" placeholder="0"></div>
+        <div class="field"><label>Unbraced length, y-y axis, L<sub>y</sub> (ft)</label><input id="ccLy" type="number" step="any" min="0" placeholder="0"></div>
+        <div class="field"><label>Effective length factor, K<sub>x</sub></label><input id="ccKx" type="number" step="any" min="0" value="${cc.Kx}"></div>
+        <div class="field"><label>Effective length factor, K<sub>y</sub></label><input id="ccKy" type="number" step="any" min="0" value="${cc.Ky}"></div>
+      </div>
+    </div>
+
+    <div class="eyebrow">Results</div>
+    <div id="columnResults"></div>
+
+    <button class="backlink" onclick="goHome()">&larr; Home</button>
+  ` + footer();
+  wireHeader();
+  wireColumnCalc();
+  renderColumnCard();
+  updateColumnResults();
+}
+
+function renderColumnCard(){
+  const card = document.getElementById("ccCard");
+  const s = state.columnCalc.shape;
+  if(!s){ return; }
+  const sec = columnSection(s);
+  const rx = Math.sqrt(sec.Ix/sec.Ag), ry = Math.sqrt(sec.Iy/sec.Ag);
+  card.innerHTML = `
+    <div class="bc-name">${s.name} <span style="color:var(--mill);font-weight:400;">— ${s._cat}</span></div>
+    <div class="bc-props">
+      <div><span class="k">Area</span><span class="v">${+sec.Ag.toFixed(2)} in²</span></div>
+      <div><span class="k">Weight</span><span class="v">${beamSelfWeight(s)} plf</span></div>
+      <div><span class="k">r<sub>x</sub></span><span class="v">${rx.toFixed(2)} in</span></div>
+      <div><span class="k">r<sub>y</sub></span><span class="v">${ry.toFixed(2)} in</span></div>
+    </div>`;
+}
+
+function selectColumnShape(subKey, name){
+  const sub = DATA[subKey];
+  const row = sub.rows.find(r=>r.name===name);
+  state.columnCalc.shape = {...row, _key:subKey, _cat:sub.label};
+  document.getElementById("ccSearchBox").value = name;
+  document.getElementById("ccSuggest").classList.remove("open");
+  renderColumnCard();
+  updateColumnResults();
+}
+
+function wireColumnCalc(){
+  const cc = state.columnCalc;
+  const bind = (id, field, redraw)=>{
+    const el = document.getElementById(id);
+    el.value = cc[field];
+    el.oninput = ()=>{ cc[field] = el.value; if(redraw) redrawColumnDiagram(); updateColumnResults(); };
+  };
+  bind("ccDL","dl"); bind("ccSL","sl"); bind("ccLL","ll");
+  bind("ccDLf","dlFactor"); bind("ccSLf","slFactor"); bind("ccLLf","llFactor");
+  bind("ccFy","fy"); bind("ccKx","Kx"); bind("ccKy","Ky");
+  bind("ccLx","Lx",true); bind("ccLy","Ly",true);
+
+  const box = document.getElementById("ccSearchBox");
+  const sugg = document.getElementById("ccSuggest");
+  box.oninput = ()=>{
+    const q = box.value.trim().toUpperCase();
+    if(q.length===0){ sugg.classList.remove("open"); return; }
+    const matches = columnSearchRows().filter(r=>r.name.toUpperCase().includes(q)).slice(0,12);
+    if(matches.length===0){ sugg.innerHTML = `<div class="suggest-item"><span class="ct">No matches</span></div>`; sugg.classList.add("open"); return; }
+    sugg.innerHTML = matches.map(m=>`<div class="suggest-item" onclick="selectColumnShape('${m._key}','${m.name}')"><span class="nm">${m.name}</span><span class="ct">${m._cat}</span></div>`).join("");
+    sugg.classList.add("open");
+  };
+  box.onkeydown = (e)=>{ if(e.key==="Escape") sugg.classList.remove("open"); };
+  document.addEventListener("click",(e)=>{
+    if(!e.target.closest(".beam-pick-wrap")) sugg.classList.remove("open");
+  },{once:true});
+}
+
+function redrawColumnDiagram(){
+  const card = document.querySelector(".beam-diagram-card");
+  if(card) card.innerHTML = columnDiagramSVG(state.columnCalc);
+}
+
+function updateColumnResults(){
+  const box = document.getElementById("columnResults");
+  const cc = state.columnCalc;
+  const s = cc.shape;
+  const fy = parseFloat(cc.fy)||0;
+  const Kx = parseFloat(cc.Kx)||0, Ky = parseFloat(cc.Ky)||0;
+  const Lx = parseFloat(cc.Lx)||0, Ly = parseFloat(cc.Ly)||0;
+  const dash = `<div class="results-grid">
+      <div class="result-tile"><div class="lbl">Slenderness, KL/r</div><div class="val">—</div></div>
+      <div class="result-tile"><div class="lbl">Critical stress, F<sub>cr</sub></div><div class="val">—<span class="unit">ksi</span></div></div>
+      <div class="result-tile"><div class="lbl">Available strength</div><div class="val">—<span class="unit">kip</span></div></div>
+      <div class="result-tile"><div class="lbl">Applied load</div><div class="val">—<span class="unit">kip</span></div></div>
+      <div class="result-tile"><div class="lbl">Factor of safety</div><div class="val">—</div></div>
+    </div>`;
+  if(!s || !(fy>0) || !(Kx>0) || !(Ky>0) || !(Lx>0) || !(Ly>0)){
+    box.innerHTML = dash + `<div class="load-total">Pick a column and enter unbraced lengths (both axes), K factors and F<sub>y</sub> to calculate.</div>`;
+    return;
+  }
+  const r = columnStrength(s, fy, Kx, Lx, Ky, Ly);
+  const avail = r.avail[cc.method];
+  const dlF = parseFloat(cc.dlFactor)||0, slF = parseFloat(cc.slFactor)||0, llF = parseFloat(cc.llFactor)||0;
+  const D = parseFloat(cc.dl)||0, S = parseFloat(cc.sl)||0, L = parseFloat(cc.ll)||0;
+  const selfWt = beamSelfWeight(s)*Math.max(Lx,Ly)/1000;
+  const P = dlF*(D+selfWt) + slF*S + llF*L;
+  const hasLoad = P>0;
+  const dc = hasLoad ? P/avail : null;
+  const dcClass = !hasLoad ? "" : (dc>1?"over":"ok");
+  const methodLabel = cc.method==="lrfd" ? `φ<sub>c</sub> = ${COL_PHI.toFixed(2)}` : `Ω<sub>c</sub> = ${COL_OMEGA.toFixed(2)}`;
+  const klrClass = r.KLr>200 ? "over" : "";
+
+  const slenderList = r.elements.filter(e=>e.slender);
+  const elemLine = r.elements.map(e=>`${e.name} ${e.lam.toFixed(1)} (λ<sub>r</sub> = ${e.lamR.toFixed(1)})${e.slender?" — slender":""}`).join("; ");
+
+  box.innerHTML = `<div class="results-grid">
+      <div class="result-tile ${klrClass}"><div class="lbl">Slenderness, KL/r${klrClass?statusMark(klrClass):''}</div><div class="val">${r.KLr.toFixed(1)}<span class="unit">${r.governs}</span></div></div>
+      <div class="result-tile"><div class="lbl">Critical stress, F<sub>cr</sub></div><div class="val">${r.Fcr.toFixed(2)}<span class="unit">ksi</span></div></div>
+      <div class="result-tile ${dcClass}"><div class="lbl">Available strength${hasLoad?statusMark(dcClass):''}</div><div class="val">${avail.toFixed(1)}<span class="unit">kip</span></div></div>
+      <div class="result-tile"><div class="lbl">Applied load</div><div class="val">${hasLoad?P.toFixed(1):'—'}<span class="unit">kip</span></div></div>
+      ${capacityFosTile(dc)}
+    </div>
+    ${hasLoad?`<div class="load-total">Demand/capacity ratio = ${dc.toFixed(2)}${dc>1?' — exceeds capacity':' — OK'}. Factor of safety = available strength / applied load = ${(1/dc).toFixed(2)}. Applied load includes column self-weight (${selfWt.toFixed(2)} kip, using the longer unbraced length as the height).</div>`:''}
+    <div class="load-total">KL/r about x-x = ${r.KLrx.toFixed(1)} (r<sub>x</sub> = ${r.rx.toFixed(2)} in); about y-y = ${r.KLry.toFixed(1)} (r<sub>y</sub> = ${r.ry.toFixed(2)} in). ${r.KLr>200?'KL/r exceeds the recommended limit of 200 (AISC 360 §E2). ':''}Elastic buckling stress F<sub>e</sub> = ${r.Fe.toFixed(1)} ksi. ${methodLabel}.</div>
+    <div class="load-total">A<sub>g</sub> = ${r.Ag.toFixed(2)} in²${slenderList.length?`, effective area A<sub>e</sub> = ${r.Ae.toFixed(2)} in² (slender elements, AISC 360 §E7)`:''}. Nominal strength P<sub>n</sub> = F<sub>cr</sub>·A<sub>e</sub> = ${r.Pn.toFixed(1)} kip. Element slenderness: ${elemLine||'not checked'}.</div>
+    ${r.notes.map(n=>`<div class="load-total">${n}</div>`).join("")}
+    <div class="load-total line2">Formulas (AISC 360-16 §E3) — F<sub>e</sub> = π²E/(KL/r)²; F<sub>cr</sub> = [0.658<sup>F<sub>y</sub>/F<sub>e</sub></sup>]F<sub>y</sub> when F<sub>y</sub>/F<sub>e</sub> ≤ 2.25, else 0.877F<sub>e</sub>. Torsional and flexural-torsional buckling (§E4) are not evaluated.</div>`;
 }
 
 render();
