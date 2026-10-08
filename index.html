@@ -240,6 +240,48 @@ footer.app-footer{margin-top:40px;padding-top:14px;border-top:1px solid var(--li
   .spw-table th,.spw-table td{padding:6px 5px;}
 }
 
+
+/* Sheet Pile Wall: printable report (hidden on screen) */
+.spw-report{display:none;}
+@page spw{margin:0.5in;}
+@media print{
+  body.spw-page{page:spw;}
+  body.spw-page header.top, body.spw-page .spw-screen{display:none !important;}
+  body.spw-page .spw-report{display:block;color:#000;}
+  body.spw-page footer.app-footer p:nth-child(2){display:none;}
+  body.spw-page .app{padding:0;}
+  .spw-report, .spw-report *{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .rpt-head{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #2A3746;padding-bottom:6px;margin-bottom:12px;}
+  .rpt-head img{height:34px;display:block;margin-bottom:4px;}
+  .rpt-title{font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:600;color:#20242A;}
+  .rpt-meta{font-size:9.5px;text-align:right;color:#444;line-height:1.5;}
+  .rpt-top{display:grid;grid-template-columns:3.9in minmax(0,1fr);gap:16px;align-items:start;margin-bottom:6px;}
+  .rpt-sketch{border:1px solid #aaa;padding:4px;break-inside:avoid;}
+  .rpt-sketch svg{width:100%;height:auto;max-height:none !important;display:block;}
+  .rpt-sec{font-family:'Space Grotesk',sans-serif;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#2A3746;border-bottom:1px solid #999;margin:10px 0 4px;padding-bottom:2px;}
+  .rpt-kv{width:100%;border-collapse:collapse;font-size:9.5px;}
+  .rpt-data{min-width:0;}
+  .rpt-kv th{position:static;background:none;text-align:left;font-family:'IBM Plex Sans',sans-serif;font-size:9.5px;font-weight:400;text-transform:none;letter-spacing:0;white-space:normal;color:#444;padding:2px 8px 2px 0;width:46%;vertical-align:top;}
+  .rpt-kv td{font-family:'IBM Plex Mono',monospace;font-size:9.5px;white-space:normal;border:0;padding:2px 0;}
+  .rpt-boxes{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:6px 0;}
+  .rpt-box{border:1px solid #888;padding:5px 8px;break-inside:avoid;}
+  .rpt-box .l{font-size:7.5px;text-transform:uppercase;letter-spacing:.05em;color:#555;}
+  .rpt-box .v{font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:500;margin-top:2px;color:#20242A;}
+  .rpt-box .v small{font-size:8.5px;color:#444;margin-left:3px;font-weight:400;}
+  .rpt-box.over{border-color:#B2402E;} .rpt-box.over .v{color:#B2402E;}
+  .rpt-note{font-size:8.5px;line-height:1.45;color:#333;margin:5px 0;}
+  .rpt-page2{break-before:page;}
+  .rpt-charts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:6px;}
+  .spw-report .beam-diagram-card{border:1px solid #aaa;padding:4px;margin:0;break-inside:avoid;}
+  .spw-report .beam-diagram-card svg{max-height:none !important;width:100%;height:auto;display:block;margin:0;}
+  .spw-report .spw-table{font-size:8.5px;border:1px solid #aaa;}
+  .spw-report .spw-table th{position:static;font-size:7.5px;padding:3px 5px;background:#eee;color:#333;white-space:normal;}
+  .spw-report .spw-table td{font-size:8.5px;padding:3px 5px;white-space:normal;}
+  .spw-report .rpt-soil{table-layout:fixed;}
+  .spw-report .rpt-soil th, .spw-report .rpt-soil td{padding:3px 3px;font-size:8px;overflow-wrap:anywhere;}
+  .spw-report .load-total{font-size:8.5px;}
+}
+
 @media(max-width:720px){
   .app{padding:0 14px 40px;}
   .top-row{gap:10px;padding:0 14px;}
@@ -1324,6 +1366,7 @@ function allRowsFlat(){
 
 function render(){
   window.scrollTo(0,0);
+  document.body.classList.toggle("spw-page", state.view==="spwcalc");
   if(state.view==="home") return renderHome();
   if(state.view==="cat") return renderCat();
   if(state.view==="member") return renderMember();
@@ -4062,7 +4105,7 @@ function spwNewLayer(preset){
 function openSpwCalc(){
   state.view = "spwcalc";
   state.spwCalc = {
-    type:"cant", theory:"rankine",
+    type:"cant", theory:"rankine", project:"",
     H:"12", scour:"0", anchorDepth:"3", anchorSpacing:"",
     q:"250", beta:"0", water:false, sealed:true, elTop:"10", elB:"4", elF:"0",
     dFa:"0.5", dFp:"0.33", minActive:"0.25",
@@ -4140,6 +4183,7 @@ function spwSectionOptionsHTML(pick){
 function renderSpwCalc(){
   const s = state.spwCalc;
   app.innerHTML = header() + `
+    <div class="spw-screen">
     <div class="eyebrow">Retaining Walls</div>
     <div class="page-title-row">
       <h1 class="page-title">Sheet Pile Wall</h1>
@@ -4154,6 +4198,7 @@ function renderSpwCalc(){
       <div class="calc-grid">
         <div class="calc-col">
           <div class="subhead">Wall &amp; Geometry</div>
+          <div class="field"><label>Project / description (printed on report)</label><input data-k="project" type="text" value="${(s.project||'').replace(/"/g,'&quot;')}" placeholder="e.g. Harbor seawall — Sta. 10+00"></div>
           <div class="field"><label>Wall type</label>${spwToggleHTML("type",[["cant","Cantilever"],["anch","Anchored (tieback)"]],s.type)}</div>
           ${spwFieldHTML("Excavation depth, H (ft) — top of wall to dredge line","H",s,{min:0})}
           ${spwFieldHTML("Additional scour / over-excavation (ft)","scour",s,{min:0})}
@@ -4219,6 +4264,8 @@ function renderSpwCalc(){
     <div id="spwResults"></div>
 
     <button class="backlink" onclick="goHome()">&larr; Home</button>
+    </div>
+    <div class="spw-report" id="spwReport"></div>
   ` + footer();
   wireHeader();
   wireSpwCalc();
@@ -4446,6 +4493,118 @@ function spwSketchSVG(s, r){
   </svg>`;
 }
 
+
+/* Printable report: a separate, form-free layout shown only when printing (see @media print). */
+function spwFillReport(s, r, c){
+  const el = document.getElementById("spwReport");
+  if(!el) return;
+  const pr = spwParams(s);
+  const date = new Date().toLocaleDateString(undefined,{year:"numeric",month:"long",day:"numeric"});
+  const head = `<div class="rpt-head">
+      <div><img src="${KUZAY_LOGO}" alt="Kuzay Engineering"><div class="rpt-title">Sheet Pile Wall Design</div></div>
+      <div class="rpt-meta">${s.project?`<strong>${s.project.replace(/</g,"&lt;")}</strong><br>`:''}${date}<br>Steelmember — preliminary limit-equilibrium design</div>
+    </div>`;
+  if(!r.ok || !c){
+    el.innerHTML = head + `<div class="rpt-note" style="color:#B2402E;font-size:11px;">Inputs are incomplete: ${r.error||''}</div>`;
+    return;
+  }
+  const f1 = v=>(+v).toFixed(1);
+  const elev = z=>{ const e=pr.elTop-z; return (e<0?"−":"+")+Math.abs(e).toFixed(1)+" ft"; };
+  const kv = (k,v)=>`<tr><th>${k}</th><td>${v}</td></tr>`;
+  const Hd = r.Hd;
+  const wallKV = [
+    kv("Wall type", s.type==="anch"?"Anchored (single tieback)":"Cantilever"),
+    kv("Top of wall elevation", (pr.elTop<0?"−":"+")+Math.abs(pr.elTop).toFixed(1)+" ft"),
+    kv("Excavation depth, H", f1(pr.H)+" ft"),
+    pr.scour>0 ? kv("Scour allowance", f1(pr.scour)+" ft") : "",
+    kv("Design dredge elevation", elev(Hd)),
+    s.type==="anch" ? kv("Anchor depth", f1(pr.a)+" ft (EL "+elev(pr.a)+")") : "",
+    (s.type==="anch" && c.spacing>0) ? kv("Anchor spacing", c.spacing+" ft") : "",
+  ].join("");
+  const loadKV = [
+    kv("Uniform surcharge, q", pr.q+" psf"),
+    kv("Backfill slope, β", pr.beta+"°"),
+    pr.water ? kv("Water level, front", isFinite(pr.Zf)?elev(Math.max(0,Math.min(pr.Zf,Hd))):"at dredge line") : kv("Water","none"),
+    pr.water ? kv("Water level, behind", elev(pr.Zb)+(s.sealed?" (sealed wall)":" (free-draining — same as front)")) : "",
+  ].join("");
+  const methodKV = [
+    kv("Earth pressure theory", s.theory==="coulomb" ? `Coulomb (δ<sub>a</sub> = ${s.dFa}φ, δ<sub>p</sub> = ${s.dFp}φ)` : "Rankine"),
+    kv("Safety on passive", r.mode==="embed" ? `none; embedment × ${r.embedFactor.toFixed(2)}` : `FS = ${r.FSp.toFixed(2)}`),
+    kv("Steel", `F<sub>y</sub> = ${c.Fy} ksi, F<sub>b</sub> = ${c.ratio.toFixed(2)}F<sub>y</sub> = ${c.Fb.toFixed(1)} ksi`),
+    (c.minTf>0||c.minTw>0) ? kv("Minimum thickness", `${c.minTf>0?`t<sub>f</sub> ≥ ${c.minTf} in`:''}${c.minTf>0&&c.minTw>0?', ':''}${c.minTw>0?`t<sub>w</sub> ≥ ${c.minTw} in`:''}`) : "",
+  ].join("");
+
+  const tops=[0]; pr.layers.forEach((l,i)=>tops.push(tops[i]+(l.t>0?l.t:1e9)));
+  const soilRows = pr.layers.map((l,i)=>{
+    const pre = s.layers[i].preset;
+    const nm = pre==="custom" ? "Custom" : SPW_SOIL_PRESETS[pre].nm;
+    const last = i===pr.layers.length-1;
+    return `<tr><td>${i+1}</td><td>${nm}</td><td>${f1(tops[i])} – ${last?"toe":f1(tops[i+1])}</td><td>${l.g}</td><td>${pr.water?l.gs:'—'}</td><td>${l.phi}</td><td>${l.c}</td><td>${r.coef[i].ka.toFixed(2)} / ${r.coef[i].kp.toFixed(2)}</td></tr>`;
+  }).join("");
+
+  const box = (l,v,u,cls)=>`<div class="rpt-box ${cls||''}"><div class="l">${l}</div><div class="v">${v}${u?`<small>${u}</small>`:''}</div></div>`;
+  const boxes = [
+    box(r.mode==="embed"?`Embedment D (×${r.embedFactor.toFixed(2)})`:"Embedment, D", f1(r.D), "ft"),
+    box("Sheet length, L", f1(r.L), "ft"),
+    box("Suggested length", c.Lrnd, "ft"),
+    box("Max moment", f1(c.Mabs), "kip-ft/ft"),
+    box("Max shear", f1(Math.abs(r.Vmax)), "kip/ft"),
+    r.anch ? box("Anchor force", f1(r.T), "kip/ft") : "",
+    (r.anch && c.spacing>0) ? box("Per anchor @ "+c.spacing+" ft", f1(r.T*c.spacing), "kip") : "",
+    box("Required S", f1(c.Sreq), "in³/ft"),
+  ].join("");
+
+  let pickHTML = "";
+  if(s.pick){
+    const [k,nm] = s.pick.split("|");
+    const row = DATA[k] && DATA[k].rows.find(x=>x.name===nm);
+    if(row){
+      const Mcap=row.elasticS*c.Fb/12, dc=c.Mabs/Mcap;
+      pickHTML = `<div class="rpt-sec">Selected section — ${row.name}</div>
+        <div class="rpt-boxes">
+          ${box("Section modulus S", row.elasticS, "in³/ft")}
+          ${box("Moment capacity", Mcap.toFixed(1), "kip-ft/ft")}
+          ${box("Demand / capacity", dc.toFixed(2), "", dc>1?"over":"")}
+          ${box("Factor of safety", dc>0?(1/dc).toFixed(2):"∞", "", dc>1?"over":"")}
+        </div>`;
+    }
+  }
+  const warn = r.warnings.map(w=>`<div class="rpt-note" style="color:#B2402E;">⚠ ${w}</div>`).join("");
+  const charts = `<div class="rpt-charts">
+      ${spwProfileChart("Net pressure","ksf",c.plot.z,[
+          {ys:c.plot.drive, cls:"chart-line", w:1, dash:"4 3"},
+          {ys:c.plot.res, cls:"chart-line", w:1, dash:"4 3"},
+          {ys:c.plot.net, cls:"chart-line", w:2}], c.marks, v=>v.toFixed(2))}
+      ${spwProfileChart("Shear","kip/ft",c.plot.z,[{ys:c.plot.V, cls:"chart-line", w:2}], c.marks, v=>v.toFixed(1))}
+      ${spwProfileChart("Bending moment","kip-ft/ft",c.plot.z,[{ys:c.plot.M, cls:"chart-line", w:2}], c.marks, v=>v.toFixed(1))}
+    </div>`;
+  el.innerHTML = head + `
+    <div class="rpt-top">
+      <div class="beam-diagram-card rpt-sketch">${spwSketchSVG(s, r)}</div>
+      <div class="rpt-data">
+        <div class="rpt-sec" style="margin-top:0;">Wall &amp; geometry</div><table class="rpt-kv">${wallKV}</table>
+        <div class="rpt-sec">Loads &amp; water</div><table class="rpt-kv">${loadKV}</table>
+        <div class="rpt-sec">Method &amp; steel</div><table class="rpt-kv">${methodKV}</table>
+        <div class="rpt-sec">Soil profile <span style="text-transform:none;font-weight:400;letter-spacing:0;">(depth from top of wall; γ pcf, c psf)</span></div>
+        <table class="spw-table rpt-soil"><colgroup><col style="width:5%"><col style="width:29%"><col style="width:15%"><col style="width:9%"><col style="width:9%"><col style="width:7%"><col style="width:8%"><col style="width:18%"></colgroup><thead><tr><th>#</th><th>Soil</th><th>Depth (ft)</th><th>γ</th><th>γ<sub>sat</sub></th><th>φ°</th><th>c</th><th>K<sub>a</sub> / K<sub>p</sub></th></tr></thead><tbody>${soilRows}</tbody></table>
+      </div>
+    </div>
+    <div class="rpt-sec">Results</div>
+    <div class="rpt-boxes">${boxes}</div>
+    <div class="rpt-note">Computed length ${f1(r.L)} ft = ${f1(Hd)} ft to the design dredge line${r.scour>0?` (including ${r.scour} ft scour)`:''} + ${f1(r.D)} ft embedment. Maximum moment ${f1(c.Mabs)} kip-ft/ft at ${f1(r.zM)} ft below the top of wall; required S = M<sub>max</sub>/F<sub>b</sub> = ${f1(c.Mabs)} × 12 / ${c.Fb.toFixed(1)} = ${f1(c.Sreq)} in³ per foot of wall.</div>
+    ${warn}${pickHTML}
+    <div class="rpt-page2">
+      <div class="rpt-sec">Pressure, shear &amp; moment diagrams</div>
+      ${charts}
+      <div class="rpt-sec">Lightest sections that work</div>
+      ${c.table}
+      <div class="rpt-sec">Method &amp; scope</div>
+      <div class="rpt-note">${r.anch?'Anchored wall — free-earth-support method: embedment from moment equilibrium about the anchor, anchor force from horizontal equilibrium.':`Cantilever wall — embedment from moment equilibrium about the toe${r.mode==="embed"?`, computed depth multiplied by ${r.embedFactor.toFixed(2)} with unreduced passive resistance`:` with passive resistance divided by ${r.FSp.toFixed(2)}`}.`}
+        Active pressure σ<sub>a</sub> = K<sub>a</sub>(σ′<sub>v</sub> + q) − 2c√K<sub>a</sub> (not less than zero${pr.minActive>0?`; cohesive layers not less than ${pr.minActive}·σ<sub>v</sub>`:''}); passive σ<sub>p</sub> = K<sub>p</sub>σ′<sub>v</sub> + 2c√K<sub>p</sub>, divided by the passive factor of safety. Water is hydrostatic only (no seepage). Section moduli are per foot of wall from the Steelmember database.</div>
+      <div class="rpt-note"><strong>Scope &amp; limits.</strong> Classical limit-equilibrium (hand-calculation) methods: no wall deflection, no soil–structure interaction, no global/rotational stability, anchor capacity or deadman/waler design, bearing or vertical load, seepage or liquefaction. Uniform surcharge only. For preliminary sizing and for checking other software — the engineer of record must verify all inputs and results.</div>
+    </div>`;
+}
+
 /* ----- results ----- */
 function spwStatusTile(label, val, unit, cls){
   return `<div class="result-tile ${cls||''}"><div class="lbl">${label}${cls?statusMark(cls):''}</div><div class="val">${val}${unit?`<span class="unit">${unit}</span>`:''}</div></div>`;
@@ -4460,6 +4619,7 @@ function updateSpwResults(){
   if(sk) sk.innerHTML = spwSketchSVG(s, r);
   if(!r.ok){
     box.innerHTML = `<div class="load-total" style="color:var(--danger);">${r.error}</div>`;
+    spwFillReport(s, r, null);
     return;
   }
   const Fy = parseFloat(s.Fy), ratio = parseFloat(s.fbRatio);
@@ -4527,6 +4687,7 @@ function updateSpwResults(){
       ${spwProfileChart("Bending moment","kip-ft/ft",plot.z,[{ys:plot.M, cls:"chart-line", w:2}], marks, v=>v.toFixed(1))}
     </div>`;
 
+  spwFillReport(s, r, {Fy, ratio, Fb, Mabs, Sreq, spacing, Lrnd, minTf, minTw, table, marks, plot});
   box.innerHTML = `${warn}<div class="results-grid">${tiles.join("")}</div>
     <div class="load-total">Suggested sheet length ≈ ${Lrnd} ft (computed ${r.L.toFixed(1)} ft = ${r.Hd.toFixed(1)} ft to the design dredge line${r.scour>0?` (including ${r.scour} ft scour)`:''} + ${r.D.toFixed(1)} ft embedment). Maximum moment ${Mabs.toFixed(1)} kip-ft/ft at ${r.zM.toFixed(1)} ft below the top${r.anch&&r.Mpos>0.01&&r.Mneg<-0.01?` (positive peak ${r.Mpos.toFixed(1)} at ${r.zPos.toFixed(1)} ft, negative peak ${Math.abs(r.Mneg).toFixed(1)} at ${r.zNeg.toFixed(1)} ft)`:''}.</div>
     <div class="load-total line2">Required S = M<sub>max</sub> / F<sub>b</sub> = ${Mabs.toFixed(1)} × 12 / ${Fb.toFixed(1)} ksi = ${Sreq.toFixed(1)} in³ per foot of wall (F<sub>b</sub> = ${(ratio).toFixed(2)}·F<sub>y</sub>, F<sub>y</sub> = ${Fy} ksi).</div>
