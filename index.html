@@ -208,6 +208,38 @@ td.nm{font-weight:500;color:var(--steel-dark);}
 
 footer.app-footer{margin-top:40px;padding-top:14px;border-top:1px solid var(--line);font-size:11.5px;line-height:1.5;color:var(--mill);}
 
+
+/* Sheet Pile Wall tool: sticky wall elevation beside the inputs on wide screens */
+.spw-layout{display:grid;grid-template-columns:minmax(320px,430px) 1fr;gap:28px;align-items:start;margin-bottom:8px;}
+.spw-left{position:sticky;top:84px;}
+.spw-left .beam-diagram-card{margin:0;padding:12px 8px 6px;}
+.spw-sketch svg{max-height:calc(100vh - 110px);margin:0 auto;}
+.spw-right .calc-grid{grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:22px;}
+.spw-layer{display:grid;grid-template-columns:repeat(5,minmax(0,1fr)) 34px;gap:2px 10px;border:1.5px solid var(--line);background:var(--white);padding:12px 12px 2px;margin-bottom:10px;}
+.spw-layer .spw-preset{grid-column:1/6;}
+.spw-layer .spw-del{grid-column:6;grid-row:1;align-self:end;margin-bottom:14px;}
+.spw-layer .spw-del .btn{padding:8px 0;width:34px;justify-content:center;}
+.spw-layer input[disabled]{color:var(--mill);background:var(--paper-2);}
+.spw-charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;}
+.spw-table{width:100%;border-collapse:collapse;font-family:'IBM Plex Mono',monospace;font-size:12.5px;background:var(--white);border:1.5px solid var(--line);}
+.spw-table th{text-align:left;font-family:'IBM Plex Sans';font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.04em;color:var(--mill);padding:8px 10px;border-bottom:1.5px solid var(--line);}
+.spw-table td{padding:7px 10px;border-bottom:1px solid var(--line);}
+.spw-table tr:last-child td{border-bottom:none;}
+.spw-details{margin:18px 0 6px;}
+.spw-details summary{cursor:pointer;font-size:13px;font-weight:500;color:var(--steel);}
+@media(max-width:900px){
+  .spw-layout{grid-template-columns:1fr;gap:18px;}
+  .spw-left{position:static;}
+  .spw-sketch svg{max-height:440px;margin:0 auto;}
+}
+@media(max-width:560px){
+  .spw-layer{grid-template-columns:repeat(3,minmax(0,1fr));}
+  .spw-layer .spw-preset{grid-column:1/3;}
+  .spw-layer .spw-del{grid-column:3;}
+  .spw-table{font-size:11px;}
+  .spw-table th,.spw-table td{padding:6px 5px;}
+}
+
 @media(max-width:720px){
   .app{padding:0 14px 40px;}
   .top-row{gap:10px;padding:0 14px;}
@@ -1256,6 +1288,11 @@ const CONN_TOOLS = [
   {key:"bolt", nm:"Bolt Design", sub:"Shear, Tension & Bearing (AISC J3)", icon:"i-bolt", open:"openBoltCalc"},
 ];
 
+/* Retaining-wall design tools shown in the "Retaining Walls" section on the home screen. */
+const WALL_TOOLS = [
+  {key:"spw", nm:"Sheet Pile Wall", sub:"Cantilever & Anchored (Limit Equilibrium)", icon:"i-spw", open:"openSpwCalc"},
+];
+
 const ICONS = {
   "i-w":'<svg viewBox="0 0 48 48" fill="none" stroke-width="3"><path d="M10 8h28M10 40h28M24 8v32"/></svg>',
   "i-c":'<svg viewBox="0 0 48 48" fill="none" stroke-width="3"><path d="M34 8H12v32h22"/></svg>',
@@ -1272,6 +1309,7 @@ const ICONS = {
   "i-beam-custom":'<svg viewBox="0 0 48 48" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="14" y1="9" x2="14" y2="22"/><line x1="11" y1="19" x2="14" y2="22"/><line x1="17" y1="19" x2="14" y2="22"/><line x1="8" y1="24" x2="40" y2="24" stroke-width="3.5"/><path d="M8 24l-5 9h10z"/><circle cx="34" cy="30" r="4"/><line x1="30" y1="34" x2="38" y2="34"/><line x1="30" y1="9" x2="30" y2="20" stroke-dasharray="2.5,2.5"/></svg>',
   "i-column":'<svg viewBox="0 0 48 48" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="24" y1="4" x2="24" y2="14"/><line x1="20" y1="10" x2="24" y2="14"/><line x1="28" y1="10" x2="24" y2="14"/><line x1="24" y1="14" x2="24" y2="38" stroke-width="5"/><line x1="12" y1="40" x2="36" y2="40"/><line x1="14" y1="40" x2="10" y2="45"/><line x1="22" y1="40" x2="18" y2="45"/><line x1="30" y1="40" x2="26" y2="45"/><line x1="38" y1="40" x2="34" y2="45"/></svg>',
   "i-weld":'<svg viewBox="0 0 48 48" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 14h16v8H8z"/><path d="M24 22h16v8H24z"/><path d="M24 14l6 8h-6z" fill="currentColor" stroke="none"/></svg>',
+  "i-spw":'<svg viewBox="0 0 48 48" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="30" y1="5" x2="30" y2="43" stroke-width="4.5"/><path d="M8 13h17M21 10l4 3-4 3"/><path d="M14 24h11M21 21l4 3-4 3"/><path d="M20 35h5M21 32l4 3-4 3" /><path d="M34 26h10" stroke-width="2"/></svg>',
   "i-bolt":'<svg viewBox="0 0 48 48" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="14" width="32" height="20"/><circle cx="18" cy="24" r="3.5"/><circle cx="30" cy="24" r="3.5"/></svg>',
 };
 
@@ -1294,6 +1332,7 @@ function render(){
   if(state.view==="weldcalc") return renderWeldCalc();
   if(state.view==="boltcalc") return renderBoltCalc();
   if(state.view==="columncalc") return renderColumnCalc();
+  if(state.view==="spwcalc") return renderSpwCalc();
 }
 
 const KUZAY_LOGO = "data:image/png;base64,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";
@@ -1352,6 +1391,17 @@ function renderHome(){
     <h1 class="page-title">Connections</h1>
     <div class="cat-grid">
       ${CONN_TOOLS.map(t=>`
+        <div class="cat-tile" onclick="${t.open}()">
+          ${ICONS[t.icon]}
+          <span class="nm">${t.nm}</span>
+          <span class="sub">${t.sub}</span>
+        </div>`).join("")}
+    </div>
+
+    <div class="eyebrow section-gap">Design Tools</div>
+    <h1 class="page-title">Retaining Walls</h1>
+    <div class="cat-grid">
+      ${WALL_TOOLS.map(t=>`
         <div class="cat-tile" onclick="${t.open}()">
           ${ICONS[t.icon]}
           <span class="nm">${t.nm}</span>
@@ -3788,6 +3838,682 @@ if("serviceWorker" in navigator){
     navigator.serviceWorker.register("sw.js").catch(()=>{});
   });
 }
+
+/* ==========================================================================
+   Retaining Walls: Sheet Pile Wall — classical limit-equilibrium design of
+   cantilever and single-anchor (free-earth-support) walls.
+   Pressures are integrated numerically on a fine depth grid so layered soils,
+   groundwater, cohesion, surcharge and sloping backfill all share one code path.
+   Units: ft, pcf, psf (pressures), kip/ft and kip-ft/ft (wall resultants).
+   ========================================================================== */
+const SPW_GAMMA_W = 62.4;
+const SPW_DZ = 0.02;
+const SPW_MAX_EMBED = 300;
+
+/* Active earth-pressure coefficient. Rankine (with sloping backfill) or Coulomb (vertical wall, wall friction delta). */
+function spwKa(phi, beta, delta, theory){
+  if(!(phi>0)) return 1;
+  const p=phi*Math.PI/180, b=beta*Math.PI/180, d=delta*Math.PI/180;
+  if(theory==="coulomb"){
+    const inner = Math.sin(p+d)*Math.sin(p-b)/(Math.cos(d)*Math.cos(b));
+    if(inner<0) return NaN;
+    const r = 1+Math.sqrt(inner);
+    return Math.cos(p)*Math.cos(p)/(Math.cos(d)*r*r);
+  }
+  const cb=Math.cos(b), disc=cb*cb-Math.cos(p)*Math.cos(p);
+  if(disc<0) return NaN;
+  const s=Math.sqrt(disc);
+  return cb*(cb-s)/(cb+s);
+}
+
+/* Passive coefficient for a level surface on the excavation side. */
+function spwKp(phi, delta, theory){
+  if(!(phi>0)) return 1;
+  const p=phi*Math.PI/180, d=delta*Math.PI/180;
+  if(theory==="coulomb"){
+    const inner = Math.sin(p+d)*Math.sin(p)/Math.cos(d);
+    const r = 1-Math.sqrt(inner);
+    if(!(r>0)) return NaN;
+    return Math.cos(p)*Math.cos(p)/(Math.cos(d)*r*r);
+  }
+  const t=Math.tan(Math.PI/4+p/2);
+  return t*t;
+}
+
+/* Solves the wall. p = {type:"cant"|"anch", theory, H, scour, a, beta, dFa, dFp, q, water, Zb, Zf,
+   layers:[{t,g,gs,phi,c}], safety:"fs"|"embed", FSp, embedFactor}. Depths measured from the top of the wall. */
+function spwSolve(p){
+  const err = m=>({ok:false, error:m});
+  const GW = SPW_GAMMA_W;
+  const scour = p.scour>0 ? p.scour : 0;
+  if(!(p.H>0)) return err("Enter the retained height — top of wall (retained ground) to the dredge line.");
+  const Hd = p.H + scour;
+  if(!p.layers || !p.layers.length) return err("Add at least one soil layer.");
+  for(let i=0;i<p.layers.length;i++){
+    const L=p.layers[i], n=i+1;
+    if(!(L.g>0)) return err(`Layer ${n}: enter a moist unit weight.`);
+    if(p.water && !(L.gs>0)) return err(`Layer ${n}: enter a saturated unit weight (groundwater is on).`);
+    if(p.water && L.gs<=GW) return err(`Layer ${n}: saturated unit weight must exceed the unit weight of water (${GW} pcf).`);
+    if(!(L.phi>=0 && L.phi<=50)) return err(`Layer ${n}: friction angle must be between 0° and 50°.`);
+    if(i<p.layers.length-1 && !(L.t>0)) return err(`Layer ${n}: enter a thickness (only the last layer may extend to the toe).`);
+  }
+  if(p.water && !(p.Zb>=0)) return err("Enter the depth to the groundwater table behind the wall.");
+  const anch = p.type==="anch";
+  if(anch){
+    if(!(p.a>0)) return err("Enter the depth of the anchor below the top of the wall.");
+    if(!(p.a<Hd)) return err("The anchor must be above the dredge line (anchor depth < excavation depth).");
+  }
+  const mode = p.safety==="embed" && !anch ? "embed" : "fs";
+  const FSp = mode==="fs" ? p.FSp : 1;
+  if(!(FSp>=1)) return err("Factor of safety on passive resistance must be 1.0 or greater.");
+  const embedFactor = mode==="embed" ? (p.embedFactor>=1 ? p.embedFactor : 1.2) : 1;
+
+  const coef = [];
+  for(let i=0;i<p.layers.length;i++){
+    const L=p.layers[i];
+    const dA = p.theory==="coulomb" ? p.dFa*L.phi : 0;
+    const dP = p.theory==="coulomb" ? p.dFp*L.phi : 0;
+    const ka = spwKa(L.phi, p.beta||0, dA, p.theory);
+    const kp = spwKp(L.phi, dP, p.theory);
+    if(isNaN(ka)) return err(`Layer ${i+1}: the backfill slope (${p.beta}°) exceeds the friction angle — no stable active wedge.`);
+    if(isNaN(kp)) return err(`Layer ${i+1}: passive coefficient is undefined for this friction angle / wall friction.`);
+    coef.push({ka, kp});
+  }
+
+  const gw = p.water ? {Zb:p.Zb, Zf: Math.min(isFinite(p.Zf)&&p.Zf!=null ? p.Zf : Hd, Hd)} : null;
+  const dz = SPW_DZ;
+  const N = Math.ceil((Hd + SPW_MAX_EMBED)/dz);
+  const id = Math.round(Hd/dz);
+  const tops = [0]; p.layers.forEach((L,i)=>tops.push(tops[i]+(L.t>0?L.t:1e9)));
+
+  const Fd=new Float64Array(N+1), Md=new Float64Array(N+1), Fr=new Float64Array(N+1), Mr=new Float64Array(N+1);
+  const driveA=new Float32Array(N), resA=new Float32Array(N);
+  const q = p.q>0 ? p.q : 0;
+  let svB=0, svF=0, li=0;
+  const invFS = 1/FSp;
+  const minAct = p.minActive>0 ? p.minActive : 0;
+  for(let k=0;k<N;k++){
+    const z=(k+0.5)*dz;
+    while(li<p.layers.length-1 && z>=tops[li+1]) li++;
+    const L=p.layers[li], c=coef[li];
+    const wetB = gw && z>gw.Zb;
+    const gB = wetB ? L.gs-GW : L.g;
+    const svBmid = svB + gB*dz/2; svB += gB*dz;
+    let pa = c.ka*(svBmid+q) - 2*(L.c||0)*Math.sqrt(c.ka);
+    if(pa<0) pa=0;
+    /* Cohesive layers: don't let the c-term wipe out the active pressure — keep a minimum fraction of the vertical stress. */
+    if(L.c>0 && minAct>0) pa = Math.max(pa, minAct*(svBmid+q));
+    let pp = 0;
+    if(k>=id){
+      const gF = gw ? L.gs-GW : L.g;
+      const svFmid = svF + gF*dz/2; svF += gF*dz;
+      pp = c.kp*svFmid + 2*(L.c||0)*Math.sqrt(c.kp);
+    }
+    let w = 0;
+    if(gw){
+      const uB = z>gw.Zb ? GW*(z-gw.Zb) : 0;
+      const uF = z>gw.Zf ? GW*(z-gw.Zf) : 0;
+      w = uB-uF;
+    }
+    const drive = pa + w, res = pp*invFS;
+    driveA[k]=drive; resA[k]=res;
+    Fd[k+1]=Fd[k]+drive*dz/1000; Md[k+1]=Md[k]+drive*z*dz/1000;
+    Fr[k+1]=Fr[k]+res*dz/1000;   Mr[k+1]=Mr[k]+res*z*dz/1000;
+  }
+
+  const g = anch
+    ? i=> (Md[i]-Mr[i]) - p.a*(Fd[i]-Fr[i])
+    : i=> (i*dz)*(Fd[i]-Fr[i]) - (Md[i]-Mr[i]);
+  const warnings = [];
+  let zt = null;
+  if(g(id)<=0){
+    zt = Hd;
+    warnings.push("Moment equilibrium is satisfied with no embedment below the dredge line — the active pressures are small relative to the retained height. Use a practical minimum embedment for constructability, scour and toe stability.");
+  } else {
+    for(let i=id+1;i<=N;i++){
+      if(g(i)<=0){
+        const g0=g(i-1), g1=g(i);
+        zt = (i-1 + g0/(g0-g1))*dz;
+        break;
+      }
+    }
+  }
+  if(zt==null) return err(`No stable embedment found within ${SPW_MAX_EMBED} ft — the passive resistance is too small for these soil strengths and loads. Check the soil properties, groundwater and factor of safety.`);
+
+  const D0 = zt-Hd;
+  const D = D0*embedFactor;
+  const ie = Math.min(N, Math.round(zt/dz));
+
+  const Fnet = i=>Fd[i]-Fr[i];
+  const Mnet = i=>Md[i]-Mr[i];
+  /* Anchor force from moment equilibrium about the toe, interpolated to the exact (off-grid) toe depth. */
+  const lin = (arr,x)=>{ const i=Math.floor(x), f=x-i; return i>=N ? arr[N] : arr[i]*(1-f)+arr[i+1]*f; };
+  const xt = zt/dz;
+  const Ft = lin(Fd,xt)-lin(Fr,xt), Mt = lin(Md,xt)-lin(Mr,xt);
+  const T = anch ? (zt*Ft - Mt)/(zt-p.a) : 0;
+  if(anch && T<0) warnings.push("The computed anchor force is negative (the wall is pushed back toward the retained side). Re-check water levels and the anchor depth.");
+
+  const Varr = new Float64Array(ie+1), Marr = new Float64Array(ie+1);
+  let Mmax=0, iM=0, Vmax=0, iV=0, Mpos=0, Mneg=0, iPos=0, iNeg=0;
+  for(let i=0;i<=ie;i++){
+    const z=i*dz;
+    const V = Fnet(i) - (anch && z>p.a ? T : 0);
+    const M = z*Fnet(i) - Mnet(i) - (anch && z>p.a ? T*(z-p.a) : 0);
+    Varr[i]=V; Marr[i]=M;
+    if(Math.abs(M)>Math.abs(Mmax)){ Mmax=M; iM=i; }
+    if(Math.abs(V)>Math.abs(Vmax)){ Vmax=V; iV=i; }
+    if(M>Mpos){ Mpos=M; iPos=i; }
+    if(M<Mneg){ Mneg=M; iNeg=i; }
+  }
+
+  const step = Math.max(1, Math.floor(ie/260));
+  const plot = {z:[], drive:[], res:[], net:[], V:[], M:[]};
+  for(let i=0;i<=ie;i+=step){
+    const kk = Math.min(i, N-1);
+    plot.z.push(i*dz);
+    plot.drive.push(driveA[kk]/1000); plot.res.push(-resA[kk]/1000);
+    plot.net.push((driveA[kk]-resA[kk])/1000);
+    plot.V.push(Varr[i]); plot.M.push(Marr[i]);
+  }
+  if(plot.z[plot.z.length-1] < ie*dz){
+    const i=ie, kk=Math.min(i,N-1);
+    plot.z.push(i*dz); plot.drive.push(driveA[kk]/1000); plot.res.push(-resA[kk]/1000);
+    plot.net.push((driveA[kk]-resA[kk])/1000); plot.V.push(Varr[i]); plot.M.push(Marr[i]);
+  }
+
+  return {
+    ok:true, warnings, mode, FSp, embedFactor, anch,
+    Hd, scour, zt, D0, D, L: Hd + D,
+    T, Mmax, zM: iM*dz, Vmax, zV: iV*dz, Mpos, zPos: iPos*dz, Mneg, zNeg: iNeg*dz,
+    coef, gw, plot,
+    totalDrive: Fd[ie], totalResist: Fr[ie]
+  };
+}
+
+/* ---------------------------- Sheet Pile Wall: UI ---------------------------- */
+
+const SPW_SOIL_PRESETS = {
+  loose:     {nm:"Loose sand",                g:105, gs:120, phi:28, c:0},
+  medium:    {nm:"Medium dense sand",         g:115, gs:125, phi:32, c:0},
+  dense:     {nm:"Dense sand",                g:125, gs:132, phi:36, c:0},
+  gravel:    {nm:"Dense sand & gravel",       g:130, gs:138, phi:38, c:0},
+  silty:     {nm:"Silty sand / sandy silt",   g:112, gs:122, phi:29, c:0},
+  softclay:  {nm:"Soft clay (undrained)",     g:105, gs:105, phi:0,  c:500},
+  medclay:   {nm:"Medium clay (undrained)",   g:115, gs:115, phi:0,  c:1000},
+  stiffclay: {nm:"Stiff clay (undrained)",    g:125, gs:125, phi:0,  c:2000},
+  custom:    {nm:"Custom"},
+};
+
+const SPW_STEEL_GRADES = [
+  ["39","ASTM A328 (Fy = 39 ksi)"],
+  ["50","ASTM A572 Gr 50 / A690 (Fy = 50 ksi)"],
+  ["55","ASTM A572 Gr 55 (Fy = 55 ksi)"],
+  ["60","ASTM A572 Gr 60 (Fy = 60 ksi)"],
+  ["65","ASTM A572 Gr 65 (Fy = 65 ksi)"],
+  ["70","ASTM A572 Gr 70 (Fy = 70 ksi)"],
+];
+
+function spwNewLayer(preset){
+  const p = SPW_SOIL_PRESETS[preset];
+  return {preset, t:"", g:String(p.g), gs:String(p.gs), phi:String(p.phi), c:String(p.c)};
+}
+
+function openSpwCalc(){
+  state.view = "spwcalc";
+  state.spwCalc = {
+    type:"cant", theory:"rankine",
+    H:"12", scour:"0", anchorDepth:"3", anchorSpacing:"",
+    q:"250", beta:"0", water:false, Zb:"", Zf:"",
+    dFa:"0.5", dFp:"0.33", minActive:"0.25",
+    safety:"fs", FSp:"1.5", embedFactor:"1.2",
+    layers:[spwNewLayer("medium")],
+    Fy:"50", fbRatio:"0.65", family:"all", pick:""
+  };
+  render();
+}
+
+const spwNum = v=>{ const x=parseFloat(v); return isFinite(x) ? x : NaN; };
+
+function spwParams(s){
+  return {
+    type:s.type, theory:s.theory,
+    H:spwNum(s.H), scour:spwNum(s.scour)||0, a:spwNum(s.anchorDepth),
+    beta:spwNum(s.beta)||0, dFa:spwNum(s.dFa), dFp:spwNum(s.dFp), q:spwNum(s.q)||0,
+    water:s.water, Zb:spwNum(s.Zb), Zf:spwNum(s.Zf),
+    minActive:spwNum(s.minActive)||0,
+    layers:s.layers.map(L=>({t:spwNum(L.t), g:spwNum(L.g), gs:spwNum(L.gs), phi:spwNum(L.phi), c:spwNum(L.c)||0})),
+    safety:s.safety, FSp:spwNum(s.FSp), embedFactor:spwNum(s.embedFactor)
+  };
+}
+
+function spwToggleHTML(field, opts, current){
+  return `<div class="axis-toggle" data-toggle="${field}">
+    ${opts.map(([val,label])=>`<div class="pill ${String(current)===String(val)?'active':''}" data-val="${val}" onclick="setSpwField('${field}','${val}')">${label}</div>`).join("")}
+  </div>`;
+}
+
+function spwFieldHTML(label, key, s, extra){
+  const ex = extra||{};
+  return `<div class="field" ${ex.id?`id="${ex.id}"`:''} ${ex.hidden?'style="display:none"':''}><label>${label}</label>
+    <input data-k="${key}" type="number" step="${ex.step||'any'}" ${ex.min!=null?`min="${ex.min}"`:''} ${ex.max!=null?`max="${ex.max}"`:''} value="${s[key]}" ${ex.ph?`placeholder="${ex.ph}"`:''}></div>`;
+}
+
+function spwLayerRowsHTML(s){
+  const n = s.layers.length;
+  return s.layers.map((L,i)=>{
+    const last = i===n-1;
+    return `<div class="spw-layer">
+      <div class="field spw-preset"><label>Layer ${i+1} — soil type</label>
+        <select data-li="${i}" data-lk="preset">
+          ${Object.entries(SPW_SOIL_PRESETS).map(([k,p])=>`<option value="${k}" ${L.preset===k?'selected':''}>${p.nm}</option>`).join("")}
+        </select></div>
+      <div class="field"><label>Thickness (ft)</label>
+        ${last?`<input type="text" value="to toe" disabled>`:`<input data-li="${i}" data-lk="t" type="number" step="any" min="0" value="${L.t}">`}</div>
+      <div class="field"><label>γ moist (pcf)</label><input data-li="${i}" data-lk="g" type="number" step="any" min="0" value="${L.g}"></div>
+      <div class="field"><label>γ sat (pcf)</label><input data-li="${i}" data-lk="gs" type="number" step="any" min="0" value="${L.gs}"></div>
+      <div class="field"><label>φ (deg)</label><input data-li="${i}" data-lk="phi" type="number" step="any" min="0" max="50" value="${L.phi}"></div>
+      <div class="field"><label>c (psf)</label><input data-li="${i}" data-lk="c" type="number" step="any" min="0" value="${L.c}"></div>
+      <div class="spw-del">${n>1?`<button class="btn ghost" title="Remove layer" onclick="removeSpwLayer(${i})">✕</button>`:''}</div>
+    </div>`;
+  }).join("");
+}
+
+function spwSectionOptionsHTML(pick){
+  const groups = Object.entries(DATA).filter(([k,v])=>v.parent==="Sheet Piles");
+  return `<option value="">— none (just show lightest options) —</option>` + groups.map(([k,v])=>
+    `<optgroup label="${v.label}">${v.rows.filter(r=>r.elasticS>0).map(r=>`<option value="${k}|${r.name}" ${pick===k+'|'+r.name?'selected':''}>${r.name}</option>`).join("")}</optgroup>`
+  ).join("");
+}
+
+function renderSpwCalc(){
+  const s = state.spwCalc;
+  app.innerHTML = header() + `
+    <div class="eyebrow">Retaining Walls</div>
+    <div class="page-title-row">
+      <h1 class="page-title">Sheet Pile Wall</h1>
+      <button class="btn no-print" onclick="window.print()">Print results</button>
+    </div>
+    <div class="load-total" style="margin-bottom:16px;">Classical limit-equilibrium design of cantilever and single-anchor steel sheet pile walls — embedment, anchor force, maximum moment and shear, and section selection from the Sheet Piles database.</div>
+
+    <div class="spw-layout">
+    <div class="spw-left"><div class="beam-diagram-card spw-sketch" id="spwSketch"></div></div>
+    <div class="spw-right">
+    <div id="spwForm">
+      <div class="calc-grid">
+        <div class="calc-col">
+          <div class="subhead">Wall &amp; Geometry</div>
+          <div class="field"><label>Wall type</label>${spwToggleHTML("type",[["cant","Cantilever"],["anch","Anchored (tieback)"]],s.type)}</div>
+          ${spwFieldHTML("Excavation depth, H (ft) — top of wall to dredge line","H",s,{min:0})}
+          ${spwFieldHTML("Additional scour / over-excavation (ft)","scour",s,{min:0})}
+          <div id="spwAnchorFields" ${s.type==="anch"?'':'style="display:none"'}>
+            ${spwFieldHTML("Anchor depth below top of wall (ft)","anchorDepth",s,{min:0})}
+            ${spwFieldHTML("Anchor spacing along wall (ft, optional)","anchorSpacing",s,{min:0,ph:"for force per anchor"})}
+          </div>
+        </div>
+        <div class="calc-col">
+          <div class="subhead">Surcharge &amp; Groundwater</div>
+          ${spwFieldHTML("Uniform surcharge, q (psf)","q",s,{min:0})}
+          ${spwFieldHTML("Backfill slope, β (deg)","beta",s,{min:0,max:45})}
+          <div class="field"><label>Groundwater</label>${spwToggleHTML("water",[["false","None"],["true","Present"]],s.water)}</div>
+          <div id="spwWaterFields" ${s.water?'':'style="display:none"'}>
+            ${spwFieldHTML("Water depth behind wall, from top of wall (ft)","Zb",s,{min:0})}
+            ${spwFieldHTML("Water depth in front of wall (ft)","Zf",s,{min:0,ph:"blank = at dredge line"})}
+            <div class="field-note">Net hydrostatic pressure is applied with no seepage. For dewatered or leaking excavations, check the flow-net / seepage condition separately.</div>
+          </div>
+        </div>
+        <div class="calc-col">
+          <div class="subhead">Earth Pressure &amp; Safety</div>
+          <div class="field"><label>Earth pressure theory</label>${spwToggleHTML("theory",[["rankine","Rankine"],["coulomb","Coulomb"]],s.theory)}</div>
+          <div id="spwCoulombFields" ${s.theory==="coulomb"?'':'style="display:none"'}>
+            ${spwFieldHTML("Active wall friction, δ/φ","dFa",s,{min:0,max:1,step:"0.01"})}
+            ${spwFieldHTML("Passive wall friction, δ/φ","dFp",s,{min:0,max:0.5,step:"0.01"})}
+          </div>
+          <div id="spwSafetyFields">
+            <div class="field" id="spwSafetyToggle" ${s.type==="cant"?'':'style="display:none"'}><label>Safety approach (cantilever)</label>${spwToggleHTML("safety",[["fs","FS on passive"],["embed","Increase embedment"]],s.safety)}</div>
+            <div id="spwFSWrap" ${(s.type==="anch"||s.safety==="fs")?'':'style="display:none"'}>${spwFieldHTML("Factor of safety on passive resistance","FSp",s,{min:1,step:"0.05"})}</div>
+            <div id="spwEmbedWrap" ${(s.type==="cant"&&s.safety==="embed")?'':'style="display:none"'}>${spwFieldHTML("Embedment multiplier on computed depth","embedFactor",s,{min:1,step:"0.05"})}</div>
+          </div>
+          ${spwFieldHTML("Min. active pressure in cohesive soil (× σ<sub>v</sub>)","minActive",s,{min:0,max:1,step:"0.05"})}
+        </div>
+      </div>
+
+      <div class="subhead" style="margin:6px 0 10px;color:var(--steel-dark);font-family:'Space Grotesk';font-weight:600;font-size:14px;">Soil Profile <span style="color:var(--mill);font-weight:400;font-size:12px;">— depth measured from top of wall; same layers on both sides</span></div>
+      <div id="spwLayers">${spwLayerRowsHTML(s)}</div>
+      <button class="btn ghost" onclick="addSpwLayer()" style="margin-bottom:24px;">+ Add layer</button>
+
+      <div class="calc-grid">
+        <div class="calc-col">
+          <div class="subhead">Steel &amp; Section</div>
+          <div class="field"><label>Steel grade</label>
+            <select data-k="Fy">${SPW_STEEL_GRADES.map(([v,nm])=>`<option value="${v}" ${s.Fy===v?'selected':''}>${nm}</option>`).join("")}</select></div>
+          ${spwFieldHTML("Allowable bending stress, F<sub>b</sub> / F<sub>y</sub>","fbRatio",s,{min:0.1,max:1,step:"0.01"})}
+          <div class="field"><label>Candidate sections</label>${spwToggleHTML("family",[["all","All"],["hot","Hot rolled"],["cold","Cold formed"]],s.family)}</div>
+        </div>
+        <div class="calc-col">
+          <div class="subhead">Check a Specific Section</div>
+          <div class="field"><label>Section</label><select data-k="pick" id="spwPick">${spwSectionOptionsHTML(s.pick)}</select></div>
+          <div class="field-note">Section modulus is per lineal foot of wall (S/WF) from the Sheet Piles database, assuming full interlock shear transfer.</div>
+        </div>
+      </div>
+    </div>
+    </div>
+    </div>
+
+    <div class="eyebrow">Results</div>
+    <div id="spwResults"></div>
+
+    <button class="backlink" onclick="goHome()">&larr; Home</button>
+  ` + footer();
+  wireHeader();
+  wireSpwCalc();
+  updateSpwResults();
+}
+
+function setSpwField(field, val){
+  const s = state.spwCalc;
+  s[field] = field==="water" ? val==="true" : val;
+  document.querySelectorAll(`#spwForm [data-toggle="${field}"] .pill`).forEach(p=>p.classList.toggle("active", p.dataset.val===val));
+  const show = (id,on)=>{ const el=document.getElementById(id); if(el) el.style.display = on ? "" : "none"; };
+  show("spwAnchorFields", s.type==="anch");
+  show("spwWaterFields", s.water);
+  show("spwCoulombFields", s.theory==="coulomb");
+  show("spwSafetyToggle", s.type==="cant");
+  show("spwFSWrap", s.type==="anch" || s.safety==="fs");
+  show("spwEmbedWrap", s.type==="cant" && s.safety==="embed");
+  updateSpwResults();
+}
+
+function wireSpwCalc(){
+  const form = document.getElementById("spwForm");
+  form.addEventListener("input", e=>{
+    const t = e.target, s = state.spwCalc;
+    if(t.dataset.k){
+      s[t.dataset.k] = t.value;
+      updateSpwResults();
+    } else if(t.dataset.li!=null){
+      const L = s.layers[+t.dataset.li], lk = t.dataset.lk;
+      if(lk==="preset"){
+        const p = SPW_SOIL_PRESETS[t.value];
+        L.preset = t.value;
+        if(t.value!=="custom"){ L.g=String(p.g); L.gs=String(p.gs); L.phi=String(p.phi); L.c=String(p.c); }
+        document.getElementById("spwLayers").innerHTML = spwLayerRowsHTML(s);
+      } else {
+        L[lk] = t.value;
+        if(lk!=="t" && L.preset!=="custom"){
+          L.preset = "custom";
+          const sel = form.querySelector(`select[data-li="${t.dataset.li}"][data-lk="preset"]`);
+          if(sel) sel.value = "custom";
+        }
+      }
+      updateSpwResults();
+    }
+  });
+}
+
+function addSpwLayer(){
+  const s = state.spwCalc;
+  const last = s.layers[s.layers.length-1];
+  if(!(parseFloat(last.t)>0)) last.t = "10";
+  s.layers.push(spwNewLayer("dense"));
+  document.getElementById("spwLayers").innerHTML = spwLayerRowsHTML(s);
+  updateSpwResults();
+}
+function removeSpwLayer(i){
+  const s = state.spwCalc;
+  if(s.layers.length<2) return;
+  s.layers.splice(i,1);
+  document.getElementById("spwLayers").innerHTML = spwLayerRowsHTML(s);
+  updateSpwResults();
+}
+
+/* Section candidates from the Sheet Piles database, filtered by rolling type. */
+function spwSectionRows(family){
+  const sheetCat = CATEGORIES.find(c=>c.key==="sheetpiles");
+  const out = [];
+  Object.entries(DATA).forEach(([k,v])=>{
+    if(v.parent!=="Sheet Piles") return;
+    const sub = sheetCat.subs.find(x=>x.key===k);
+    const rolled = sub && sub.rolled;
+    if(family!=="all" && rolled!==family) return;
+    v.rows.forEach(r=>{
+      if(!(r.elasticS>0)) return;
+      /* PZC rows carry weight per pile (lb/ft) instead of wall weight (psf) — convert so all families sort alike. */
+      const ww = r.wallWeight>0 ? r.wallWeight : (r.weight>0 && r.width>0 ? +(r.weight/(r.width/12)).toFixed(2) : Infinity);
+      out.push({key:k, fam:v.label, rolled, ...r, wallWeight:ww});
+    });
+  });
+  return out;
+}
+
+/* ----- charts ----- */
+function spwNiceStep(len){
+  const raw = len/6, mag = Math.pow(10, Math.floor(Math.log10(raw)));
+  const f = raw/mag;
+  return (f<1.5?1:f<3.5?2:f<7.5?5:10)*mag;
+}
+
+function spwProfileChart(title, unit, zs, series, marks, fmt){
+  const w=320, h=440, top=24, bot=416, padL=44, padR=16;
+  const L = zs[zs.length-1] || 1;
+  const yOf = z=> top + z/L*(bot-top);
+  const cx = padL + (w-padL-padR)/2;
+  const maxAbs = Math.max(1e-9, ...series.flatMap(sr=>sr.ys.map(v=>Math.abs(v))));
+  const xs = (w-padL-padR)/2 - 8;
+  const sc = xs/maxAbs;
+  const step = spwNiceStep(L);
+  let ticks="";
+  for(let z=0; z<=L+1e-6; z+=step){
+    ticks += `<line class="dim-stroke" x1="${padL-4}" y1="${yOf(z)}" x2="${padL}" y2="${yOf(z)}" stroke-width="1"/>
+      <text x="${padL-7}" y="${yOf(z)+4}" text-anchor="end" class="dim-label">${+z.toFixed(1)}</text>`;
+  }
+  const lines = series.map(sr=>{
+    const pts = sr.ys.map((v,i)=>`${(cx+v*sc).toFixed(1)},${yOf(zs[i]).toFixed(1)}`).join(" ");
+    return `<polyline points="${pts}" fill="none" class="${sr.cls||'chart-line'}" stroke-width="${sr.w||2}" ${sr.dash?`stroke-dasharray="${sr.dash}"`:''}/>`;
+  }).join("");
+  const main = series[series.length-1];
+  const peak = main.ys.reduce((b,v,i)=> Math.abs(v)>Math.abs(b.v) ? {v,i} : b, {v:0,i:0});
+  const px = cx+peak.v*sc, py = yOf(zs[peak.i]);
+  const anchorSide = px>cx ? "start" : "end";
+  const peakMark = Math.abs(peak.v)>1e-9 ? `<circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="3" class="chart-peak-dot"/>
+    <text x="${(px+(px>cx?6:-6)).toFixed(1)}" y="${(py+4).toFixed(1)}" text-anchor="${anchorSide}" class="chart-peak-label">${fmt(peak.v)}</text>` : "";
+  const markLines = (marks||[]).map(m=>`<line class="dim-stroke" x1="${padL}" y1="${yOf(m.z)}" x2="${w-padR}" y2="${yOf(m.z)}" stroke-width="1" stroke-dasharray="4 3"/>
+    <text x="${w-padR}" y="${yOf(m.z)-4}" text-anchor="end" class="dim-label">${m.label}</text>`).join("");
+  return chartCard(title, unit, `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">
+    <line class="dim-stroke" x1="${cx}" y1="${top}" x2="${cx}" y2="${bot}" stroke-width="1"/>
+    <line class="dim-stroke" x1="${padL}" y1="${top}" x2="${padL}" y2="${bot}" stroke-width="1"/>
+    ${ticks}${markLines}${lines}${peakMark}
+    <text x="12" y="${top-8}" class="dim-label">depth (ft)</text>
+  </svg>`);
+}
+
+function spwSketchSVG(s, r){
+  const pr = spwParams(s);
+  const W=440, Hh=568, top=70, bot=516;
+  if(!(pr.H>0)) return `<svg viewBox="0 0 ${W} 200" xmlns="http://www.w3.org/2000/svg"><text x="${W/2}" y="100" text-anchor="middle" class="dim-label">Enter an excavation depth to draw the wall</text></svg>`;
+  const known = !!(r && r.ok);
+  const Hd = pr.H + Math.max(0, pr.scour||0);
+  const L = known ? r.L : Hd*1.7;
+  const yOf = z=> top + z/L*(bot-top);
+  const wallX=236, xL=84, xR=396;
+  const y0 = yOf(0), yD = yOf(Hd), yT = yOf(L);
+  const f1 = v=>(+v).toFixed(1);
+  const tops = [0]; pr.layers.forEach((l,i)=>tops.push(tops[i]+(l.t>0?l.t:1e9)));
+  let bands="", labels="";
+  pr.layers.forEach((l,i)=>{
+    const zTop=tops[i], zBot=Math.min(tops[i+1], L);
+    if(zTop>=L) return;
+    const op = 0.07 + (i%3)*0.06;
+    const yt=yOf(zTop), yb=yOf(zBot);
+    bands += `<rect x="${xL}" y="${yt}" width="${wallX-3-xL}" height="${yb-yt}" fill="var(--steel)" opacity="${op}"/>`;
+    if(zBot>Hd){ const zr=Math.max(zTop,Hd); bands += `<rect x="${wallX+3}" y="${yOf(zr)}" width="${xR-wallX-3}" height="${yb-yOf(zr)}" fill="var(--steel)" opacity="${op}"/>`; }
+    const preset = s.layers[i].preset;
+    const nm = preset==="custom" ? "Layer "+(i+1) : SPW_SOIL_PRESETS[preset].nm;
+    const prop = l.phi>0 ? `γ ${l.g} · φ ${l.phi}°${l.c>0?` · c ${l.c}`:''}` : `γ ${l.g} · c ${l.c} psf`;
+    const tyTop = yt+14;
+    if(yb-tyTop>12) labels += `<text x="${xL+6}" y="${tyTop}" class="dim-label" style="font-size:10.5px;font-weight:600;">${nm}</text>`;
+    if(yb-tyTop>26) labels += `<text x="${xL+6}" y="${tyTop+13}" class="dim-label" style="font-size:10px;">${prop}</text>`;
+    if(i>0) labels += `<line class="dim-stroke" x1="${xL}" y1="${yt}" x2="${wallX-3}" y2="${yt}" stroke-width="1" stroke-dasharray="3 3"/>
+      <text x="${xL-5}" y="${yt+4}" text-anchor="end" class="dim-label" style="font-size:10px;">${f1(zTop)}'</text>`;
+  });
+  // sloped backfill
+  const bd = Math.min(pr.beta||0, 35);
+  const run = wallX-3-xL, rise = Math.min(60, Math.tan(bd*Math.PI/180)*run);
+  const gy = x=> y0 - rise*(wallX-3-x)/run;
+  let slope = "";
+  if(rise>0.5){
+    slope = `<polygon points="${xL},${y0-rise} ${wallX-3},${y0} ${xL},${y0}" fill="var(--steel)" opacity="0.07"/>
+      <text x="${xL+6}" y="${y0-rise+16}" class="dim-label" style="font-size:10.5px;">β = ${pr.beta}°</text>`;
+  }
+  let ground = `<line class="steel-stroke" x1="${xL}" y1="${gy(xL)}" x2="${wallX-3}" y2="${y0}" stroke-width="2.5"/>
+    <line class="steel-stroke" x1="${wallX+3}" y1="${yD}" x2="${xR}" y2="${yD}" stroke-width="2.5"/>`;
+  if(pr.scour>0) ground += `<line class="dim-stroke" x1="${wallX+3}" y1="${yOf(pr.H)}" x2="${xR}" y2="${yOf(pr.H)}" stroke-width="1" stroke-dasharray="4 3"/>
+    <text x="${xR}" y="${yOf(pr.H)-4}" text-anchor="end" class="dim-label" style="font-size:10px;">nominal dredge</text>`;
+  // surcharge
+  let sur = "";
+  if(pr.q>0){
+    for(let x=xL+12; x<wallX-12; x+=24){
+      const g0=gy(x);
+      sur += `<line class="dim-stroke" x1="${x}" y1="${g0-22}" x2="${x}" y2="${g0-4}" stroke-width="1.5"/><path class="dim-fill" d="M${x-3.5},${g0-9} L${x},${g0-3} L${x+3.5},${g0-9} Z"/>`;
+    }
+    sur += `<line class="dim-stroke" x1="${xL+12}" y1="${gy(xL+12)-22}" x2="${wallX-14}" y2="${gy(wallX-14)-22}" stroke-width="1.5"/>
+      <text x="${xL}" y="${gy(xL)-30}" class="load-label" style="font-size:12px;">q = ${pr.q} psf</text>`;
+  }
+  // water
+  let wat = "";
+  if(pr.water && pr.Zb>=0){
+    const Zf = Math.min(isFinite(pr.Zf)?pr.Zf:Hd, Hd);
+    const mk=(x,y,lbl,anc)=>`<path d="M${x-8},${y-9} L${x+8},${y-9} L${x},${y} Z" fill="var(--cold-formed)" stroke="none"/>
+      <text x="${x+(anc==="end"?-13:13)}" y="${y-5}" text-anchor="${anc}" class="dim-label" style="font-size:10.5px;fill:var(--cold-formed);font-weight:600;">${lbl}</text>`;
+    if(pr.Zb<L){
+      wat += `<line x1="${xL}" y1="${yOf(pr.Zb)}" x2="${wallX-3}" y2="${yOf(pr.Zb)}" stroke="var(--cold-formed)" stroke-width="1.5" stroke-dasharray="6 3"/>` + mk(wallX-30, yOf(pr.Zb), `GW ${f1(pr.Zb)}'`, "end");
+    }
+    if(Zf<Hd) wat += `<rect x="${wallX+3}" y="${yOf(Zf)}" width="${xR-wallX-3}" height="${yD-yOf(Zf)}" fill="var(--cold-formed)" opacity="0.16"/>`;
+    wat += `<line x1="${wallX+3}" y1="${yOf(Zf)}" x2="${xR}" y2="${yOf(Zf)}" stroke="var(--cold-formed)" stroke-width="1.5" stroke-dasharray="6 3"/>` + mk(xR-34, yOf(Zf), `${f1(Zf)}'`, "end");
+  }
+  // wall
+  const wall = `<rect x="${wallX-3}" y="${y0}" width="6" height="${yD-y0}" fill="var(--steel-dark)"/>
+    <rect x="${wallX-3}" y="${yD}" width="6" height="${yT-yD}" fill="var(--steel-dark)" ${known?'':'opacity="0.35"'}/>`;
+  // anchor
+  let anc = "";
+  if(pr.type==="anch" && pr.a>0 && pr.a<Hd){
+    const ay = yOf(pr.a);
+    anc = `<line class="steel-stroke" x1="${wallX-3}" y1="${ay}" x2="${xL+8}" y2="${ay}" stroke-width="2.5" stroke-dasharray="8 3"/>
+      <circle cx="${xL+8}" cy="${ay}" r="5.5" fill="var(--rivet)" stroke="none"/>
+      <text x="${wallX+10}" y="${ay-3}" class="load-label" style="font-size:11px;">Anchor @ ${f1(pr.a)}'</text>
+      ${known?`<text x="${wallX+10}" y="${ay+12}" class="load-label" style="font-size:11px;fill:var(--rivet);">T = ${r.T.toFixed(1)} k/ft</text>`:''}`;
+  }
+  // dimensions (right edge)
+  const dimX = 418;
+  const vdim = (z1,z2,label)=>{
+    const a=yOf(z1), b=yOf(z2), m=(a+b)/2;
+    return `<line class="dim-stroke" x1="${dimX}" y1="${a}" x2="${dimX}" y2="${b}" stroke-width="1"/>
+      <line class="dim-stroke" x1="${dimX-5}" y1="${a}" x2="${dimX+5}" y2="${a}" stroke-width="1"/>
+      <line class="dim-stroke" x1="${dimX-5}" y1="${b}" x2="${dimX+5}" y2="${b}" stroke-width="1"/>
+      <text transform="translate(${dimX+14},${m}) rotate(-90)" text-anchor="middle" class="load-label" style="font-size:12px;">${label}</text>`;
+  };
+  let dims = `<line class="dim-stroke" x1="${wallX+3}" y1="${y0}" x2="${dimX+5}" y2="${y0}" stroke-width="0.8" stroke-dasharray="2 3"/>` + vdim(0, Hd, `H = ${f1(Hd)} ft`);
+  dims += known ? vdim(Hd, L, `D = ${f1(r.D)} ft`) : `<text transform="translate(${dimX+14},${(yD+yT)/2}) rotate(-90)" text-anchor="middle" class="dim-label">D = ?</text>`;
+  dims += `<line class="dim-stroke" x1="${wallX+3}" y1="${yD}" x2="${dimX+5}" y2="${yD}" stroke-width="0.8" stroke-dasharray="2 3"/>`;
+  const foot = known ? `<text x="${wallX}" y="${yT+16}" text-anchor="middle" class="load-label" style="font-size:12px;">L = ${f1(r.L)} ft</text>` : `<text x="${wallX}" y="${yT+16}" text-anchor="middle" class="dim-label">enter valid inputs for embedment</text>`;
+  return `<svg viewBox="0 0 ${W} ${Hh}" xmlns="http://www.w3.org/2000/svg">
+    ${bands}${slope}${ground}${labels}${wat}${sur}${wall}${anc}${dims}${foot}
+    <text x="${xL}" y="${Hh-6}" class="dim-label" style="font-size:10px;letter-spacing:.06em;">RETAINED SIDE</text>
+    <text x="${xR}" y="${Hh-6}" text-anchor="end" class="dim-label" style="font-size:10px;letter-spacing:.06em;">EXCAVATION SIDE</text>
+  </svg>`;
+}
+
+/* ----- results ----- */
+function spwStatusTile(label, val, unit, cls){
+  return `<div class="result-tile ${cls||''}"><div class="lbl">${label}${cls?statusMark(cls):''}</div><div class="val">${val}${unit?`<span class="unit">${unit}</span>`:''}</div></div>`;
+}
+
+function updateSpwResults(){
+  const box = document.getElementById("spwResults");
+  if(!box) return;
+  const s = state.spwCalc;
+  const r = spwSolve(spwParams(s));
+  const sk = document.getElementById("spwSketch");
+  if(sk) sk.innerHTML = spwSketchSVG(s, r);
+  if(!r.ok){
+    box.innerHTML = `<div class="load-total" style="color:var(--danger);">${r.error}</div>`;
+    return;
+  }
+  const Fy = parseFloat(s.Fy), ratio = parseFloat(s.fbRatio);
+  const Fb = Fy*(ratio>0?ratio:0.65);
+  const Mabs = Math.abs(r.Mmax);
+  const Sreq = Mabs*12/Fb;
+  const spacing = parseFloat(s.anchorSpacing);
+  const Lrnd = Math.ceil(r.L - 1e-9);
+
+  const tiles = [
+    spwStatusTile(r.mode==="embed"?"Embedment, D (×"+r.embedFactor.toFixed(2)+")":"Embedment, D", r.D.toFixed(1), "ft"),
+    spwStatusTile("Sheet length, L", r.L.toFixed(1), "ft"),
+    spwStatusTile("Max moment", Mabs.toFixed(1), "kip-ft/ft"),
+    spwStatusTile("Max shear", Math.abs(r.Vmax).toFixed(1), "kip/ft"),
+  ];
+  if(r.anch){
+    tiles.push(spwStatusTile("Anchor force", r.T.toFixed(1), "kip/ft"));
+    if(spacing>0) tiles.push(spwStatusTile("Per anchor @ "+spacing+" ft", (r.T*spacing).toFixed(1), "kip"));
+  }
+  tiles.push(spwStatusTile("Required S", Sreq.toFixed(1), "in³/ft"));
+
+  // section check
+  const rows = spwSectionRows(s.family).filter(x=>x.elasticS>=Sreq)
+    .sort((a,b)=>(a.wallWeight-b.wallWeight)||(a.elasticS-b.elasticS)).slice(0,10);
+  let pickBlock = "";
+  if(s.pick){
+    const [k,nm] = s.pick.split("|");
+    const row = DATA[k] && DATA[k].rows.find(x=>x.name===nm);
+    if(row){
+      const Mcap = row.elasticS*Fb/12, dc = Mabs/Mcap, cls = dc>1?"over":"ok";
+      pickBlock = `<div class="eyebrow" style="margin-top:22px;">Selected section — ${row.name}</div>
+        <div class="results-grid">
+          ${spwStatusTile("Moment capacity", Mcap.toFixed(1), "kip-ft/ft")}
+          ${spwStatusTile("Demand / capacity", dc.toFixed(2), "", cls)}
+          ${capacityFosTile(dc)}
+          ${spwStatusTile("S / I", row.elasticS+" / "+row.I, "in³, in⁴ per ft")}
+        </div>`;
+    }
+  }
+  const table = rows.length ? `<table class="spw-table">
+      <thead><tr><th>Section</th><th>S (in³/ft)</th><th>I (in⁴/ft)</th><th>Wt (psf)</th><th>M<sub>cap</sub> (kip-ft/ft)</th><th>D/C</th></tr></thead>
+      <tbody>${rows.map(x=>{ const Mc=x.elasticS*Fb/12; return `<tr><td>${x.name}</td><td>${x.elasticS}</td><td>${x.I}</td><td>${isFinite(x.wallWeight)?x.wallWeight:'—'}</td><td>${Mc.toFixed(1)}</td><td>${(Mabs/Mc).toFixed(2)}</td></tr>`; }).join("")}</tbody>
+    </table>` : `<div class="load-total">No ${s.family==="all"?"":(s.family==="hot"?"hot-rolled ":"cold-formed ")}section in the database has S ≥ ${Sreq.toFixed(1)} in³/ft at this stress level — increase the steel grade, use a deeper/stiffer section, add an anchor level, or reduce the retained height.</div>`;
+
+  const warn = r.warnings.map(w=>`<div class="load-total" style="color:var(--danger);">⚠ ${w}</div>`).join("");
+  const coefRows = r.coef.map((c,i)=>`<tr><td>Layer ${i+1}</td><td>${c.ka.toFixed(3)}</td><td>${c.kp.toFixed(3)}</td></tr>`).join("");
+  const pr = spwParams(s);
+
+  const marks = [{z:r.Hd, label:"dredge line"}];
+  if(r.anch) marks.push({z:pr.a, label:"anchor"});
+  const plot = r.plot;
+  const charts = `<div class="spw-charts">
+      ${spwProfileChart("Net pressure","ksf",plot.z,[
+          {ys:plot.drive, cls:"chart-line", w:1, dash:"4 3"},
+          {ys:plot.res, cls:"chart-line", w:1, dash:"4 3"},
+          {ys:plot.net, cls:"chart-line", w:2}], marks, v=>v.toFixed(2))}
+      ${spwProfileChart("Shear","kip/ft",plot.z,[{ys:plot.V, cls:"chart-line", w:2}], marks, v=>v.toFixed(1))}
+      ${spwProfileChart("Bending moment","kip-ft/ft",plot.z,[{ys:plot.M, cls:"chart-line", w:2}], marks, v=>v.toFixed(1))}
+    </div>`;
+
+  box.innerHTML = `${warn}<div class="results-grid">${tiles.join("")}</div>
+    <div class="load-total">Suggested sheet length ≈ ${Lrnd} ft (computed ${r.L.toFixed(1)} ft = ${r.Hd.toFixed(1)} ft to the design dredge line${r.scour>0?` (including ${r.scour} ft scour)`:''} + ${r.D.toFixed(1)} ft embedment). Maximum moment ${Mabs.toFixed(1)} kip-ft/ft at ${r.zM.toFixed(1)} ft below the top${r.anch&&r.Mpos>0.01&&r.Mneg<-0.01?` (positive peak ${r.Mpos.toFixed(1)} at ${r.zPos.toFixed(1)} ft, negative peak ${Math.abs(r.Mneg).toFixed(1)} at ${r.zNeg.toFixed(1)} ft)`:''}.</div>
+    <div class="load-total line2">Required S = M<sub>max</sub> / F<sub>b</sub> = ${Mabs.toFixed(1)} × 12 / ${Fb.toFixed(1)} ksi = ${Sreq.toFixed(1)} in³ per foot of wall (F<sub>b</sub> = ${(ratio).toFixed(2)}·F<sub>y</sub>, F<sub>y</sub> = ${Fy} ksi).</div>
+    ${pickBlock}
+    <div class="eyebrow" style="margin-top:22px;">Lightest sections that work</div>
+    ${table}
+    <div class="eyebrow" style="margin-top:26px;">Diagrams</div>
+    ${charts}
+    <details class="spw-details"><summary>Earth pressure coefficients &amp; method</summary>
+      <table class="spw-table" style="margin:10px 0;"><thead><tr><th>Layer</th><th>K<sub>a</sub></th><th>K<sub>p</sub></th></tr></thead><tbody>${coefRows}</tbody></table>
+      <div class="load-total">${s.theory==="rankine"?'Rankine theory (no wall friction); backfill slope β applied to K<sub>a</sub>.':`Coulomb theory with wall friction δ<sub>a</sub> = ${s.dFa}φ, δ<sub>p</sub> = ${s.dFp}φ. Vertical force equilibrium on the wall is not checked.`}
+      Active pressure σ<sub>a</sub> = K<sub>a</sub>(σ′<sub>v</sub> + q) − 2c√K<sub>a</sub> (not less than zero${pr.minActive>0?`; cohesive layers not less than ${pr.minActive}·σ<sub>v</sub>`:''}); passive σ<sub>p</sub> = K<sub>p</sub>σ′<sub>v</sub> + 2c√K<sub>p</sub>, reduced by the passive factor of safety.</div>
+      <div class="load-total">${r.anch?'Anchored wall: free-earth-support method — embedment from moment equilibrium about the anchor; anchor force from horizontal equilibrium.':`Cantilever: embedment from moment equilibrium about the toe${r.mode==="embed"?`; computed depth multiplied by ${r.embedFactor.toFixed(2)}, passive unreduced`:` with passive resistance divided by ${r.FSp.toFixed(2)}`}.`}
+      Total driving force ${r.totalDrive.toFixed(1)} kip/ft, passive ${r.totalResist.toFixed(1)} kip/ft${r.mode==="fs"?' (after FS)':''}.</div>
+    </details>
+    <div class="load-total" style="margin-top:14px;"><strong>Scope &amp; limits.</strong> Classical limit-equilibrium (hand-calculation) methods: no wall deflection, no soil–structure interaction, no global/rotational slope stability, anchor capacity or deadman/waler design, bearing or vertical load, seepage or liquefaction. Uniform surcharge only. Results are for preliminary sizing and for checking other software — the engineer of record must verify all inputs and results.</div>`;
+}
+
 </script>
 </body>
 </html>
