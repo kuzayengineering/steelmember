@@ -1745,7 +1745,7 @@ const STEEL_E_KSI = 29000;
 function openBeamCalc(key){
   state.view = "beamcalc";
   state.beamTool = key;
-  const common = {beam:null, axis:"x", dlFactor:1.0, slFactor:1.0, llFactor:1.0, fy:50, allowFactor:0.66, method:"asd", lb:"", cb:"",
+  const common = {beam:null, beamBase:null, double:false, axis:"x", dlFactor:1.0, slFactor:1.0, llFactor:1.0, fy:50, allowFactor:0.66, method:"asd", lb:"", cb:"",
     charts:{load:true, shear:true, moment:true, deflection:true}};
   if(key==="continuous"){
     state.beamCalc = openContinuousDefaults(common);
@@ -1918,14 +1918,45 @@ function beamHeight(row){
 function selectBeamForCalc(subKey, name){
   const sub = DATA[subKey];
   const row = sub.rows.find(r=>r.name===name);
-  state.beamCalc.beam = {...row, _key:subKey, _cat:sub.label};
+  const bc = state.beamCalc;
+  bc.beamBase = {...row, _key:subKey, _cat:sub.label};
+  if(!beamCanDouble(bc.beamBase)) bc.double = false;
+  bc.beam = beamSectionFor(bc);
   document.getElementById("beamSearchBox").value = name;
   document.getElementById("beamSuggest").classList.remove("open");
   renderBeamCard();
   refreshResults();
 }
 
+/* A "double" section is two identical channels acting together about the X-X axis.
+   Section properties that add (A, I, S, Z, J, Cw, weight) are doubled; the geometry used for
+   local buckling (b_f, t_f, h/t_w, r_ts) stays per-channel, and t_w is doubled so the shear area
+   doubles. With r_ts, L_p and L_r unchanged this gives exactly twice the single-channel flexural
+   strength at every unbraced length (the channels are treated as laterally independent, which is
+   conservative if they are stitched into one built-up member), and twice the shear strength. */
+function beamCanDouble(b){ return !!b && (b._key==="C" || b._key==="MC"); }
+function beamDoubled(base){
+  const d = k=> base[k]!=null ? base[k]*2 : base[k];
+  return {...base, name:"2 × "+base.name, _double:true,
+    area:d("area"), Ix:d("Ix"), Iy:d("Iy"), Sx:d("Sx"), Sy:d("Sy"), Zx:d("Zx"), Zy:d("Zy"), J:d("J"), Cw:d("Cw"),
+    weight:beamSelfWeight(base)*2, tw:d("tw")};
+}
+function beamSectionFor(bc){
+  const base = bc.beamBase;
+  if(!base) return null;
+  return (bc.double && beamCanDouble(base)) ? beamDoubled(base) : base;
+}
+function setBeamDouble(on){
+  const bc = state.beamCalc;
+  bc.double = !!on;
+  if(bc.double) bc.axis = "x";
+  bc.beam = beamSectionFor(bc);
+  renderBeamCard();
+  refreshResults();
+}
+
 function setBeamAxis(axis){
+  if(axis==="y" && state.beamCalc.double) return;
   state.beamCalc.axis = axis;
   renderBeamCard();
   refreshResults();
@@ -1939,6 +1970,10 @@ function renderBeamCard(){
   const I = axis==="x" ? b.Ix : b.Iy;
   card.innerHTML = `
     <div class="bc-name">${b.name} <span style="color:var(--mill);font-weight:400;">— ${b._cat}</span></div>
+    ${beamCanDouble(state.beamCalc.beamBase) ? `<div class="axis-toggle" style="margin-bottom:10px;">
+      <div class="pill ${state.beamCalc.double?'':'active'}" onclick="setBeamDouble(false)">Single</div>
+      <div class="pill ${state.beamCalc.double?'active':''}" onclick="setBeamDouble(true)">Double (2 channels)</div>
+    </div>` : ""}
     <div class="bc-props">
       <div><span class="k">Height</span><span class="v">${beamHeight(b)} in</span></div>
       <div><span class="k">Weight</span><span class="v">${beamSelfWeight(b)} plf</span></div>
@@ -1946,8 +1981,9 @@ function renderBeamCard(){
     </div>
     <div class="axis-toggle">
       <div class="pill ${axis==='x'?'active':''}" onclick="setBeamAxis('x')">Bending about X-X</div>
-      <div class="pill ${axis==='y'?'active':''}" onclick="setBeamAxis('y')">Bending about Y-Y</div>
-    </div>`;
+      <div class="pill ${axis==='y'?'active':''}" onclick="setBeamAxis('y')" ${state.beamCalc.double?'style="opacity:.4;cursor:not-allowed;" title="Y-Y depends on how the channels are spaced"':''}>Bending about Y-Y</div>
+    </div>
+    ${state.beamCalc.double ? `<div class="field-note" style="margin:8px 0 0;">Double section: X-X bending only — strengths and stiffness are those of two channels working together (back-to-back or boxed); Y-Y depends on the spacing between them.</div>` : ""}`;
 }
 
 function redrawDiagram(){
@@ -3881,6 +3917,7 @@ function beamChecksHTML(bc, pass, spanFt, freeEnd, ov){
     lines += `<div class="load-total">Shear not evaluated: ${sh.unsupported}</div>`;
   }
   const dcMax = dcs.length ? Math.max(...dcs) : null;
+  if(b._double) lines = `<div class="load-total">Double channel: section properties and the flexural and shear strengths below are twice those of a single channel (LTB treats the two channels as laterally independent — conservative if they are stitched into a built-up member).</div>` + lines;
   return head + `<div class="results-grid">${flexTile}${limitTile}${shearTile}${capacityFosTile(dcMax)}</div>${lines}
     <div class="load-total line2">Strengths use the design method selected above. Unbraced length L<sub>b</sub> = ${lbFt.toFixed(1)} ft. Factor of safety = available strength / demand, governing of flexure and shear. Torsion, web crippling and yielding, and combined forces are not checked.</div>`;
 }
@@ -5005,7 +5042,7 @@ function renderContinuousBeamCalc(){
   ` + footer();
   wireHeader();
   wireContinuousBeam();
-  if(bc.beam){ renderBeamCard(); document.getElementById("beamSearchBox").value = bc.beam.name; }
+  if(bc.beam){ renderBeamCard(); document.getElementById("beamSearchBox").value = (bc.beamBase||bc.beam).name; }
   updateContinuousResults();
 }
 
