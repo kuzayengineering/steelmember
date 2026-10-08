@@ -3897,7 +3897,7 @@ function spwSolve(p){
     if(!(L.phi>=0 && L.phi<=50)) return err(`Layer ${n}: friction angle must be between 0° and 50°.`);
     if(i<p.layers.length-1 && !(L.t>0)) return err(`Layer ${n}: enter a thickness (only the last layer may extend to the toe).`);
   }
-  if(p.water && !(p.Zb>=0)) return err("Enter the depth to the groundwater table behind the wall.");
+  if(p.water && !isFinite(p.Zb)) return err("Enter the design water level behind the wall.");
   const anch = p.type==="anch";
   if(anch){
     if(!(p.a>0)) return err("Enter the depth of the anchor below the top of the wall.");
@@ -3920,7 +3920,7 @@ function spwSolve(p){
     coef.push({ka, kp});
   }
 
-  const gw = p.water ? {Zb:p.Zb, Zf: Math.min(isFinite(p.Zf)&&p.Zf!=null ? p.Zf : Hd, Hd)} : null;
+  const gw = p.water ? {Zb:p.Zb, Zf: Math.max(0, Math.min(isFinite(p.Zf) ? p.Zf : Hd, Hd))} : null;
   const dz = SPW_DZ;
   const N = Math.ceil((Hd + SPW_MAX_EMBED)/dz);
   const id = Math.round(Hd/dz);
@@ -4037,6 +4037,7 @@ const SPW_SOIL_PRESETS = {
   medium:    {nm:"Medium dense sand",         g:115, gs:125, phi:32, c:0},
   dense:     {nm:"Dense sand",                g:125, gs:132, phi:36, c:0},
   gravel:    {nm:"Dense sand & gravel",       g:130, gs:138, phi:38, c:0},
+  breaker:   {nm:"Breaker run (4\" minus crushed limestone)", g:135, gs:142, phi:38, c:0},
   silty:     {nm:"Silty sand / sandy silt",   g:112, gs:122, phi:29, c:0},
   softclay:  {nm:"Soft clay (undrained)",     g:105, gs:105, phi:0,  c:500},
   medclay:   {nm:"Medium clay (undrained)",   g:115, gs:115, phi:0,  c:1000},
@@ -4063,7 +4064,7 @@ function openSpwCalc(){
   state.spwCalc = {
     type:"cant", theory:"rankine",
     H:"12", scour:"0", anchorDepth:"3", anchorSpacing:"",
-    q:"250", beta:"0", water:false, Zb:"", Zf:"",
+    q:"250", beta:"0", water:false, sealed:true, elTop:"10", elB:"4", elF:"0",
     dFa:"0.5", dFp:"0.33", minActive:"0.25",
     safety:"fs", FSp:"1.5", embedFactor:"1.2",
     layers:[spwNewLayer("medium")],
@@ -4074,12 +4075,23 @@ function openSpwCalc(){
 
 const spwNum = v=>{ const x=parseFloat(v); return isFinite(x) ? x : NaN; };
 
+/* Design water levels are entered as elevations; the solver works in depth below the top of wall.
+   Free-draining wall: the level behind equals the level in front. Sealed wall: independent levels. */
+function spwWaterDepths(s){
+  const top = spwNum(s.elTop)||0;
+  const Hd = (spwNum(s.H)||0) + (spwNum(s.scour)||0);
+  const elF = spwNum(s.elF);
+  const Zf = isFinite(elF) ? top-elF : NaN;
+  const Zb = s.sealed ? (isFinite(spwNum(s.elB)) ? top-spwNum(s.elB) : NaN) : (isFinite(Zf) ? Zf : Hd);
+  return {Zb, Zf};
+}
+
 function spwParams(s){
   return {
     type:s.type, theory:s.theory,
     H:spwNum(s.H), scour:spwNum(s.scour)||0, a:spwNum(s.anchorDepth),
     beta:spwNum(s.beta)||0, dFa:spwNum(s.dFa), dFp:spwNum(s.dFp), q:spwNum(s.q)||0,
-    water:s.water, Zb:spwNum(s.Zb), Zf:spwNum(s.Zf),
+    water:s.water, elTop:spwNum(s.elTop)||0, ...spwWaterDepths(s),
     minActive:spwNum(s.minActive)||0,
     layers:s.layers.map(L=>({t:spwNum(L.t), g:spwNum(L.g), gs:spwNum(L.gs), phi:spwNum(L.phi), c:spwNum(L.c)||0})),
     safety:s.safety, FSp:spwNum(s.FSp), embedFactor:spwNum(s.embedFactor)
@@ -4145,6 +4157,7 @@ function renderSpwCalc(){
           <div class="field"><label>Wall type</label>${spwToggleHTML("type",[["cant","Cantilever"],["anch","Anchored (tieback)"]],s.type)}</div>
           ${spwFieldHTML("Excavation depth, H (ft) — top of wall to dredge line","H",s,{min:0})}
           ${spwFieldHTML("Additional scour / over-excavation (ft)","scour",s,{min:0})}
+          ${spwFieldHTML("Top of wall elevation (ft, your datum)","elTop",s)}
           <div id="spwAnchorFields" ${s.type==="anch"?'':'style="display:none"'}>
             ${spwFieldHTML("Anchor depth below top of wall (ft)","anchorDepth",s,{min:0})}
             ${spwFieldHTML("Anchor spacing along wall (ft, optional)","anchorSpacing",s,{min:0,ph:"for force per anchor"})}
@@ -4154,11 +4167,12 @@ function renderSpwCalc(){
           <div class="subhead">Surcharge &amp; Groundwater</div>
           ${spwFieldHTML("Uniform surcharge, q (psf)","q",s,{min:0})}
           ${spwFieldHTML("Backfill slope, β (deg)","beta",s,{min:0,max:45})}
-          <div class="field"><label>Groundwater</label>${spwToggleHTML("water",[["false","None"],["true","Present"]],s.water)}</div>
+          <div class="field"><label>Design water level</label>${spwToggleHTML("water",[["false","None"],["true","Include water"]],s.water)}</div>
           <div id="spwWaterFields" ${s.water?'':'style="display:none"'}>
-            ${spwFieldHTML("Water depth behind wall, from top of wall (ft)","Zb",s,{min:0})}
-            ${spwFieldHTML("Water depth in front of wall (ft)","Zf",s,{min:0,ph:"blank = at dredge line"})}
-            <div class="field-note">Net hydrostatic pressure is applied with no seepage. For dewatered or leaking excavations, check the flow-net / seepage condition separately.</div>
+            ${spwFieldHTML("Water level in front of wall — elevation (ft)","elF",s,{ph:"blank = at dredge line"})}
+            <div class="field"><label>Water behind wall</label>${spwToggleHTML("sealed",[["false","Same as front (free-draining)"],["true","Independent (sealed wall)"]],s.sealed)}</div>
+            <div id="spwElBWrap" ${s.sealed?'':'style="display:none"'}>${spwFieldHTML("Water level behind wall — elevation (ft)","elB",s)}</div>
+            <div class="field-note">Levels are elevations on the same datum as the top of wall. A sealed wall holds the level behind it while the level in front changes (e.g. low tide), producing a net hydrostatic load. The level behind may be above the top of wall (ponding); the level in front is limited to between the top of wall and the dredge line. Hydrostatic only — no seepage; check flow-net conditions separately.</div>
           </div>
         </div>
         <div class="calc-col">
@@ -4213,11 +4227,12 @@ function renderSpwCalc(){
 
 function setSpwField(field, val){
   const s = state.spwCalc;
-  s[field] = field==="water" ? val==="true" : val;
+  s[field] = (field==="water"||field==="sealed") ? val==="true" : val;
   document.querySelectorAll(`#spwForm [data-toggle="${field}"] .pill`).forEach(p=>p.classList.toggle("active", p.dataset.val===val));
   const show = (id,on)=>{ const el=document.getElementById(id); if(el) el.style.display = on ? "" : "none"; };
   show("spwAnchorFields", s.type==="anch");
   show("spwWaterFields", s.water);
+  show("spwElBWrap", s.sealed);
   show("spwCoulombFields", s.theory==="coulomb");
   show("spwSafetyToggle", s.type==="cant");
   show("spwFSWrap", s.type==="anch" || s.safety==="fs");
@@ -4351,7 +4366,7 @@ function spwSketchSVG(s, r){
     bands += `<rect x="${xL}" y="${yt}" width="${wallX-3-xL}" height="${yb-yt}" fill="var(--steel)" opacity="${op}"/>`;
     if(zBot>Hd){ const zr=Math.max(zTop,Hd); bands += `<rect x="${wallX+3}" y="${yOf(zr)}" width="${xR-wallX-3}" height="${yb-yOf(zr)}" fill="var(--steel)" opacity="${op}"/>`; }
     const preset = s.layers[i].preset;
-    const nm = preset==="custom" ? "Layer "+(i+1) : SPW_SOIL_PRESETS[preset].nm;
+    const nm = preset==="custom" ? "Layer "+(i+1) : SPW_SOIL_PRESETS[preset].nm.replace(/\s*\(.*$/,"");
     const prop = l.phi>0 ? `γ ${l.g} · φ ${l.phi}°${l.c>0?` · c ${l.c}`:''}` : `γ ${l.g} · c ${l.c} psf`;
     const tyTop = yt+14;
     if(yb-tyTop>12) labels += `<text x="${xL+6}" y="${tyTop}" class="dim-label" style="font-size:10.5px;font-weight:600;">${nm}</text>`;
@@ -4384,15 +4399,17 @@ function spwSketchSVG(s, r){
   }
   // water
   let wat = "";
-  if(pr.water && pr.Zb>=0){
-    const Zf = Math.min(isFinite(pr.Zf)?pr.Zf:Hd, Hd);
+  const elS = z=>{ const e=pr.elTop-z; return (e<0?"−":"+")+Math.abs(e).toFixed(1)+"'"; };
+  if(pr.water && isFinite(pr.Zb)){
+    const Zf = Math.max(0, Math.min(isFinite(pr.Zf)?pr.Zf:Hd, Hd));
+    const yB = Math.max(yOf(pr.Zb), 46);
     const mk=(x,y,lbl,anc)=>`<path d="M${x-8},${y-9} L${x+8},${y-9} L${x},${y} Z" fill="var(--cold-formed)" stroke="none"/>
       <text x="${x+(anc==="end"?-13:13)}" y="${y-5}" text-anchor="${anc}" class="dim-label" style="font-size:10.5px;fill:var(--cold-formed);font-weight:600;">${lbl}</text>`;
     if(pr.Zb<L){
-      wat += `<line x1="${xL}" y1="${yOf(pr.Zb)}" x2="${wallX-3}" y2="${yOf(pr.Zb)}" stroke="var(--cold-formed)" stroke-width="1.5" stroke-dasharray="6 3"/>` + mk(wallX-30, yOf(pr.Zb), `GW ${f1(pr.Zb)}'`, "end");
+      wat += `<line x1="${xL}" y1="${yB}" x2="${wallX-3}" y2="${yB}" stroke="var(--cold-formed)" stroke-width="1.5" stroke-dasharray="6 3"/>` + mk(wallX-30, yB, `WL ${elS(pr.Zb)}`, "end");
     }
     if(Zf<Hd) wat += `<rect x="${wallX+3}" y="${yOf(Zf)}" width="${xR-wallX-3}" height="${yD-yOf(Zf)}" fill="var(--cold-formed)" opacity="0.16"/>`;
-    wat += `<line x1="${wallX+3}" y1="${yOf(Zf)}" x2="${xR}" y2="${yOf(Zf)}" stroke="var(--cold-formed)" stroke-width="1.5" stroke-dasharray="6 3"/>` + mk(xR-34, yOf(Zf), `${f1(Zf)}'`, "end");
+    wat += `<line x1="${wallX+3}" y1="${yOf(Zf)}" x2="${xR}" y2="${yOf(Zf)}" stroke="var(--cold-formed)" stroke-width="1.5" stroke-dasharray="6 3"/>` + mk(xR-34, yOf(Zf), `WL ${elS(Zf)}`, "end");
   }
   // wall
   const wall = `<rect x="${wallX-3}" y="${y0}" width="6" height="${yD-y0}" fill="var(--steel-dark)"/>
@@ -4406,6 +4423,9 @@ function spwSketchSVG(s, r){
       <text x="${wallX+10}" y="${ay-3}" class="load-label" style="font-size:11px;">Anchor @ ${f1(pr.a)}'</text>
       ${known?`<text x="${wallX+10}" y="${ay+12}" class="load-label" style="font-size:11px;fill:var(--rivet);">T = ${r.T.toFixed(1)} k/ft</text>`:''}`;
   }
+  // elevations of wall top and dredge line
+  const elTag = `<text x="${wallX+10}" y="${y0-5}" class="dim-label" style="font-size:10.5px;">Top of wall EL ${elS(0)}</text>
+    <text x="${xR}" y="${yD+14}" text-anchor="end" class="dim-label" style="font-size:10.5px;">Dredge EL ${elS(Hd)}</text>`;
   // dimensions (right edge)
   const dimX = 418;
   const vdim = (z1,z2,label)=>{
@@ -4420,7 +4440,7 @@ function spwSketchSVG(s, r){
   dims += `<line class="dim-stroke" x1="${wallX+3}" y1="${yD}" x2="${dimX+5}" y2="${yD}" stroke-width="0.8" stroke-dasharray="2 3"/>`;
   const foot = known ? `<text x="${wallX}" y="${yT+16}" text-anchor="middle" class="load-label" style="font-size:12px;">L = ${f1(r.L)} ft</text>` : `<text x="${wallX}" y="${yT+16}" text-anchor="middle" class="dim-label">enter valid inputs for embedment</text>`;
   return `<svg viewBox="0 0 ${W} ${Hh}" xmlns="http://www.w3.org/2000/svg">
-    ${bands}${slope}${ground}${labels}${wat}${sur}${wall}${anc}${dims}${foot}
+    ${bands}${slope}${ground}${labels}${wat}${sur}${wall}${anc}${elTag}${dims}${foot}
     <text x="${xL}" y="${Hh-6}" class="dim-label" style="font-size:10px;letter-spacing:.06em;">RETAINED SIDE</text>
     <text x="${xR}" y="${Hh-6}" text-anchor="end" class="dim-label" style="font-size:10px;letter-spacing:.06em;">EXCAVATION SIDE</text>
   </svg>`;
