@@ -4067,7 +4067,7 @@ function openSpwCalc(){
     dFa:"0.5", dFp:"0.33", minActive:"0.25",
     safety:"fs", FSp:"1.5", embedFactor:"1.2",
     layers:[spwNewLayer("medium")],
-    Fy:"50", fbRatio:"0.65", family:"all", pick:""
+    Fy:"50", fbRatio:"0.65", minTf:"", minTw:"", family:"all", pick:""
   };
   render();
 }
@@ -4187,6 +4187,8 @@ function renderSpwCalc(){
           <div class="field"><label>Steel grade</label>
             <select data-k="Fy">${SPW_STEEL_GRADES.map(([v,nm])=>`<option value="${v}" ${s.Fy===v?'selected':''}>${nm}</option>`).join("")}</select></div>
           ${spwFieldHTML("Allowable bending stress, F<sub>b</sub> / F<sub>y</sub>","fbRatio",s,{min:0.1,max:1,step:"0.01"})}
+          ${spwFieldHTML("Minimum flange thickness, t<sub>f</sub> (in, optional)","minTf",s,{min:0,step:"0.001",ph:"no minimum"})}
+          ${spwFieldHTML("Minimum web thickness, t<sub>w</sub> (in, optional)","minTw",s,{min:0,step:"0.001",ph:"no minimum"})}
           <div class="field"><label>Candidate sections</label>${spwToggleHTML("family",[["all","All"],["hot","Hot rolled"],["cold","Cold formed"]],s.family)}</div>
         </div>
         <div class="calc-col">
@@ -4279,7 +4281,9 @@ function spwSectionRows(family){
       if(!(r.elasticS>0)) return;
       /* PZC rows carry weight per pile (lb/ft) instead of wall weight (psf) — convert so all families sort alike. */
       const ww = r.wallWeight>0 ? r.wallWeight : (r.weight>0 && r.width>0 ? +(r.weight/(r.width/12)).toFixed(2) : Infinity);
-      out.push({key:k, fam:v.label, rolled, ...r, wallWeight:ww});
+      const tf = r.tf>0 ? r.tf : (r.thickness>0 ? r.thickness : NaN);
+      const tw = r.tw>0 ? r.tw : (r.thickness>0 ? r.thickness : NaN);
+      out.push({key:k, fam:v.label, rolled, ...r, wallWeight:ww, tf, tw});
     });
   });
   return out;
@@ -4458,7 +4462,9 @@ function updateSpwResults(){
   tiles.push(spwStatusTile("Required S", Sreq.toFixed(1), "in³/ft"));
 
   // section check
-  const rows = spwSectionRows(s.family).filter(x=>x.elasticS>=Sreq)
+  const minTf = spwNum(s.minTf)||0, minTw = spwNum(s.minTw)||0;
+  const strong = spwSectionRows(s.family).filter(x=>x.elasticS>=Sreq);
+  const rows = strong.filter(x=>(minTf<=0 || x.tf>=minTf-1e-9) && (minTw<=0 || x.tw>=minTw-1e-9))
     .sort((a,b)=>(a.wallWeight-b.wallWeight)||(a.elasticS-b.elasticS)).slice(0,10);
   let pickBlock = "";
   if(s.pick){
@@ -4473,12 +4479,17 @@ function updateSpwResults(){
           ${capacityFosTile(dc)}
           ${spwStatusTile("S / I", row.elasticS+" / "+row.I, "in³, in⁴ per ft")}
         </div>`;
+      const tfR = row.tf>0 ? row.tf : row.thickness, twR = row.tw>0 ? row.tw : row.thickness;
+      pickBlock += `<div class="load-total">t<sub>f</sub> = ${tfR} in, t<sub>w</sub> = ${twR} in.`
+        + ((minTf>0 && tfR<minTf) ? ` <span style="color:var(--danger);">⚠ Flange is thinner than the ${minTf} in minimum.</span>` : '')
+        + ((minTw>0 && twR<minTw) ? ` <span style="color:var(--danger);">⚠ Web is thinner than the ${minTw} in minimum.</span>` : '')
+        + `</div>`;
     }
   }
   const table = rows.length ? `<table class="spw-table">
-      <thead><tr><th>Section</th><th>S (in³/ft)</th><th>I (in⁴/ft)</th><th>Wt (psf)</th><th>M<sub>cap</sub> (kip-ft/ft)</th><th>D/C</th></tr></thead>
-      <tbody>${rows.map(x=>{ const Mc=x.elasticS*Fb/12; return `<tr><td>${x.name}</td><td>${x.elasticS}</td><td>${x.I}</td><td>${isFinite(x.wallWeight)?x.wallWeight:'—'}</td><td>${Mc.toFixed(1)}</td><td>${(Mabs/Mc).toFixed(2)}</td></tr>`; }).join("")}</tbody>
-    </table>` : `<div class="load-total">No ${s.family==="all"?"":(s.family==="hot"?"hot-rolled ":"cold-formed ")}section in the database has S ≥ ${Sreq.toFixed(1)} in³/ft at this stress level — increase the steel grade, use a deeper/stiffer section, add an anchor level, or reduce the retained height.</div>`;
+      <thead><tr><th>Section</th><th>S (in³/ft)</th><th>I (in⁴/ft)</th><th>t<sub>f</sub> (in)</th><th>t<sub>w</sub> (in)</th><th>Wt (psf)</th><th>M<sub>cap</sub> (kip-ft/ft)</th><th>D/C</th></tr></thead>
+      <tbody>${rows.map(x=>{ const Mc=x.elasticS*Fb/12; return `<tr><td>${x.name}</td><td>${x.elasticS}</td><td>${x.I}</td><td>${isFinite(x.tf)?x.tf:'—'}</td><td>${isFinite(x.tw)?x.tw:'—'}</td><td>${isFinite(x.wallWeight)?x.wallWeight:'—'}</td><td>${Mc.toFixed(1)}</td><td>${(Mabs/Mc).toFixed(2)}</td></tr>`; }).join("")}</tbody>
+    </table>` : `<div class="load-total">${strong.length ? `${strong.length} ${s.family==="all"?"":(s.family==="hot"?"hot-rolled ":"cold-formed ")}section${strong.length===1?" has":"s have"} S ≥ ${Sreq.toFixed(1)} in³/ft, but none meet the minimum thickness${minTf>0?` t<sub>f</sub> ≥ ${minTf} in`:''}${minTf>0&&minTw>0?' and':''}${minTw>0?` t<sub>w</sub> ≥ ${minTw} in`:''} — relax the thickness minimums.` : `No ${s.family==="all"?"":(s.family==="hot"?"hot-rolled ":"cold-formed ")}section in the database has S ≥ ${Sreq.toFixed(1)} in³/ft at this stress level — increase the steel grade, use a deeper/stiffer section, add an anchor level, or reduce the retained height.`}</div>`;
 
   const warn = r.warnings.map(w=>`<div class="load-total" style="color:var(--danger);">⚠ ${w}</div>`).join("");
   const coefRows = r.coef.map((c,i)=>`<tr><td>Layer ${i+1}</td><td>${c.ka.toFixed(3)}</td><td>${c.kp.toFixed(3)}</td></tr>`).join("");
