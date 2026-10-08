@@ -1320,6 +1320,7 @@ const BEAM_TOOLS = [
   {key:"simple-pt",  nm:"Simple Beam", sub:"Point Load", icon:"i-beam-pt"},
   {key:"cant-udl",   nm:"Cantilever",  sub:"Uniformly Distributed Load", icon:"i-cantilever-udl"},
   {key:"cant-pt",    nm:"Cantilever",  sub:"Point Load", icon:"i-cantilever-pt"},
+  {key:"continuous", nm:"Continuous Beam", sub:"2–4 Spans · Uniform or Point Loads", icon:"i-beam-cont"},
   {key:"custom",     nm:"Custom",      sub:"Define Your Own Load Case", icon:"i-beam-custom"},
   {key:"column",     nm:"Column",      sub:"Axial Compression (AISC E)", icon:"i-column", open:"openColumnCalc"},
 ];
@@ -1348,6 +1349,7 @@ const ICONS = {
   "i-beam-pt":'<svg viewBox="0 0 48 48" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="24" y1="8" x2="24" y2="22"/><line x1="21" y1="19" x2="24" y2="22"/><line x1="27" y1="19" x2="24" y2="22"/><line x1="8" y1="24" x2="40" y2="24" stroke-width="3.5"/><path d="M8 24l-5 9h10z"/><path d="M40 24l-5 9h10z"/><line x1="1" y1="35" x2="13" y2="35"/><line x1="33" y1="35" x2="45" y2="35"/></svg>',
   "i-cantilever-udl":'<svg viewBox="0 0 48 48" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="10" y1="10" x2="10" y2="22"/><line x1="7" y1="19" x2="10" y2="22"/><line x1="13" y1="19" x2="10" y2="22"/><line x1="20" y1="10" x2="20" y2="22"/><line x1="17" y1="19" x2="20" y2="22"/><line x1="23" y1="19" x2="20" y2="22"/><line x1="30" y1="10" x2="30" y2="22"/><line x1="27" y1="19" x2="30" y2="22"/><line x1="33" y1="19" x2="30" y2="22"/><line x1="8" y1="24" x2="40" y2="24" stroke-width="3.5"/><line x1="8" y1="12" x2="8" y2="36" stroke-width="3"/><line x1="4" y1="16" x2="8" y2="20"/><line x1="4" y1="22" x2="8" y2="26"/><line x1="4" y1="28" x2="8" y2="32"/></svg>',
   "i-cantilever-pt":'<svg viewBox="0 0 48 48" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="38" y1="9" x2="38" y2="22"/><line x1="35" y1="19" x2="38" y2="22"/><line x1="41" y1="19" x2="38" y2="22"/><line x1="8" y1="24" x2="40" y2="24" stroke-width="3.5"/><line x1="8" y1="12" x2="8" y2="36" stroke-width="3"/><line x1="4" y1="16" x2="8" y2="20"/><line x1="4" y1="22" x2="8" y2="26"/><line x1="4" y1="28" x2="8" y2="32"/></svg>',
+  "i-beam-cont":'<svg viewBox="0 0 48 48" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="9" y1="8" x2="39" y2="8"/><line x1="12" y1="8" x2="12" y2="19"/><line x1="9" y1="16" x2="12" y2="19"/><line x1="15" y1="16" x2="12" y2="19"/><line x1="24" y1="8" x2="24" y2="19"/><line x1="21" y1="16" x2="24" y2="19"/><line x1="27" y1="16" x2="24" y2="19"/><line x1="36" y1="8" x2="36" y2="19"/><line x1="33" y1="16" x2="36" y2="19"/><line x1="39" y1="16" x2="36" y2="19"/><line x1="5" y1="23" x2="43" y2="23" stroke-width="3.5"/><path d="M8 23l-5 9h10z"/><path d="M24 23l-5 9h10z"/><path d="M40 23l-5 9h10z"/><line x1="2" y1="36" x2="46" y2="36" stroke-width="2"/></svg>',
   "i-beam-custom":'<svg viewBox="0 0 48 48" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="14" y1="9" x2="14" y2="22"/><line x1="11" y1="19" x2="14" y2="22"/><line x1="17" y1="19" x2="14" y2="22"/><line x1="8" y1="24" x2="40" y2="24" stroke-width="3.5"/><path d="M8 24l-5 9h10z"/><circle cx="34" cy="30" r="4"/><line x1="30" y1="34" x2="38" y2="34"/><line x1="30" y1="9" x2="30" y2="20" stroke-dasharray="2.5,2.5"/></svg>',
   "i-column":'<svg viewBox="0 0 48 48" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="24" y1="4" x2="24" y2="14"/><line x1="20" y1="10" x2="24" y2="14"/><line x1="28" y1="10" x2="24" y2="14"/><line x1="24" y1="14" x2="24" y2="38" stroke-width="5"/><line x1="12" y1="40" x2="36" y2="40"/><line x1="14" y1="40" x2="10" y2="45"/><line x1="22" y1="40" x2="18" y2="45"/><line x1="30" y1="40" x2="26" y2="45"/><line x1="38" y1="40" x2="34" y2="45"/></svg>',
   "i-weld":'<svg viewBox="0 0 48 48" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 14h16v8H8z"/><path d="M24 22h16v8H24z"/><path d="M24 14l6 8h-6z" fill="currentColor" stroke="none"/></svg>',
@@ -1743,9 +1745,11 @@ const STEEL_E_KSI = 29000;
 function openBeamCalc(key){
   state.view = "beamcalc";
   state.beamTool = key;
-  const common = {beam:null, axis:"x", dlFactor:1.0, slFactor:1.0, llFactor:1.0, fy:50, allowFactor:0.66, method:"asd", lb:"", cb:"",
+  const common = {beam:null, beamBase:null, double:false, axis:"x", dlFactor:1.0, slFactor:1.0, llFactor:1.0, fy:50, allowFactor:0.66, method:"asd", lb:"", cb:"",
     charts:{load:true, shear:true, moment:true, deflection:true}};
-  if(key==="custom"){
+  if(key==="continuous"){
+    state.beamCalc = openContinuousDefaults(common);
+  } else if(key==="custom"){
     state.beamCalc = {...common,
       length:"", leftSupport:"simple", rightSupport:"simple",
       loads:[{id:1, category:"dead", type:"point", mag:"", x:"", x1:"", x2:""}],
@@ -1761,11 +1765,14 @@ function openBeamCalc(key){
    input handler calls this rather than updateBeamResults()/updateCustomResults() directly
    so the same wiring works for both the fixed-formula tools and the custom tool. */
 function refreshResults(){
-  if(state.beamTool==="custom") updateCustomResults(); else updateBeamResults();
+  if(state.beamTool==="custom") updateCustomResults();
+  else if(state.beamTool==="continuous") updateContinuousResults();
+  else updateBeamResults();
 }
 
 function renderBeamCalc(){
   if(state.beamTool==="custom") return renderCustomBeamCalc();
+  if(state.beamTool==="continuous") return renderContinuousBeamCalc();
   const def = BEAM_TOOL_DEFS[state.beamTool];
   const isPoint = def.loadKind==="point";
   const unit = isPoint ? "lb" : "plf";
@@ -1911,14 +1918,45 @@ function beamHeight(row){
 function selectBeamForCalc(subKey, name){
   const sub = DATA[subKey];
   const row = sub.rows.find(r=>r.name===name);
-  state.beamCalc.beam = {...row, _key:subKey, _cat:sub.label};
+  const bc = state.beamCalc;
+  bc.beamBase = {...row, _key:subKey, _cat:sub.label};
+  if(!beamCanDouble(bc.beamBase)) bc.double = false;
+  bc.beam = beamSectionFor(bc);
   document.getElementById("beamSearchBox").value = name;
   document.getElementById("beamSuggest").classList.remove("open");
   renderBeamCard();
   refreshResults();
 }
 
+/* A "double" section is two identical channels acting together about the X-X axis.
+   Section properties that add (A, I, S, Z, J, Cw, weight) are doubled; the geometry used for
+   local buckling (b_f, t_f, h/t_w, r_ts) stays per-channel, and t_w is doubled so the shear area
+   doubles. With r_ts, L_p and L_r unchanged this gives exactly twice the single-channel flexural
+   strength at every unbraced length (the channels are treated as laterally independent, which is
+   conservative if they are stitched into one built-up member), and twice the shear strength. */
+function beamCanDouble(b){ return !!b && (b._key==="C" || b._key==="MC"); }
+function beamDoubled(base){
+  const d = k=> base[k]!=null ? base[k]*2 : base[k];
+  return {...base, name:"2 × "+base.name, _double:true,
+    area:d("area"), Ix:d("Ix"), Iy:d("Iy"), Sx:d("Sx"), Sy:d("Sy"), Zx:d("Zx"), Zy:d("Zy"), J:d("J"), Cw:d("Cw"),
+    weight:beamSelfWeight(base)*2, tw:d("tw")};
+}
+function beamSectionFor(bc){
+  const base = bc.beamBase;
+  if(!base) return null;
+  return (bc.double && beamCanDouble(base)) ? beamDoubled(base) : base;
+}
+function setBeamDouble(on){
+  const bc = state.beamCalc;
+  bc.double = !!on;
+  if(bc.double) bc.axis = "x";
+  bc.beam = beamSectionFor(bc);
+  renderBeamCard();
+  refreshResults();
+}
+
 function setBeamAxis(axis){
+  if(axis==="y" && state.beamCalc.double) return;
   state.beamCalc.axis = axis;
   renderBeamCard();
   refreshResults();
@@ -1932,6 +1970,10 @@ function renderBeamCard(){
   const I = axis==="x" ? b.Ix : b.Iy;
   card.innerHTML = `
     <div class="bc-name">${b.name} <span style="color:var(--mill);font-weight:400;">— ${b._cat}</span></div>
+    ${beamCanDouble(state.beamCalc.beamBase) ? `<div class="axis-toggle" style="margin-bottom:10px;">
+      <div class="pill ${state.beamCalc.double?'':'active'}" onclick="setBeamDouble(false)">Single</div>
+      <div class="pill ${state.beamCalc.double?'active':''}" onclick="setBeamDouble(true)">Double (2 channels)</div>
+    </div>` : ""}
     <div class="bc-props">
       <div><span class="k">Height</span><span class="v">${beamHeight(b)} in</span></div>
       <div><span class="k">Weight</span><span class="v">${beamSelfWeight(b)} plf</span></div>
@@ -1939,14 +1981,15 @@ function renderBeamCard(){
     </div>
     <div class="axis-toggle">
       <div class="pill ${axis==='x'?'active':''}" onclick="setBeamAxis('x')">Bending about X-X</div>
-      <div class="pill ${axis==='y'?'active':''}" onclick="setBeamAxis('y')">Bending about Y-Y</div>
-    </div>`;
+      <div class="pill ${axis==='y'?'active':''}" onclick="setBeamAxis('y')" ${state.beamCalc.double?'style="opacity:.4;cursor:not-allowed;" title="Y-Y depends on how the channels are spaced"':''}>Bending about Y-Y</div>
+    </div>
+    ${state.beamCalc.double ? `<div class="field-note" style="margin:8px 0 0;">Double section: X-X bending only — strengths and stiffness are those of two channels working together (back-to-back or boxed); Y-Y depends on the spacing between them.</div>` : ""}`;
 }
 
 function redrawDiagram(){
   const card = document.querySelector(".beam-diagram-card");
   if(!card) return;
-  card.innerHTML = state.beamTool==="custom" ? customBeamSVG() : BEAM_TOOL_DEFS[state.beamTool].diagram();
+  card.innerHTML = state.beamTool==="custom" ? customBeamSVG() : state.beamTool==="continuous" ? continuousBeamSVG() : BEAM_TOOL_DEFS[state.beamTool].diagram();
 }
 
 /* Resolves a point-load location (ft from the reference end) against the span: a typed
@@ -2812,7 +2855,7 @@ function findPeaks(xs, ys){
   return merged.filter(i=>Math.abs(ys[i]) >= 0.05*maxAbs).map(i=>({x:xs[i], y:ys[i]}));
 }
 
-function chartLineSVG(xsIn, ys){
+function chartLineSVG(xsIn, ys, marksIn){
   const w=640, h=140, padL=10, padR=10, padT=16, padB=18;
   const Lft = xsIn[xsIn.length-1]/12 || 1;
   const maxAbs = Math.max(1e-9, ...ys.map(v=>Math.abs(v)));
@@ -2829,7 +2872,9 @@ function chartLineSVG(xsIn, ys){
       <text x="${px.toFixed(1)}" y="${labelY.toFixed(1)}" text-anchor="${anchor}" class="chart-peak-label">${p.y.toFixed(2)}</text>`;
   }).join("");
 
+  const marks = (marksIn||[]).map(mx=>`<line class="dim-stroke" x1="${(padL+mx*xScale).toFixed(1)}" y1="${padT}" x2="${(padL+mx*xScale).toFixed(1)}" y2="${h-padB}" stroke-width="1" stroke-dasharray="3 3"/>`).join("");
   return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">
+    ${marks}
     <line class="dim-stroke" x1="${padL}" y1="${midY}" x2="${w-padR}" y2="${midY}" stroke-width="1"/>
     <polyline points="${pts}" fill="none" class="chart-line" stroke-width="2"/>
     ${peakMarks}
@@ -2870,6 +2915,7 @@ function chartLoadSVG(bc){
     ${beamSvgDefs()}
     ${shapes}
     <line class="beam-line" x1="${padL}" y1="${yBeam}" x2="${w-padR}" y2="${yBeam}" stroke-width="4" stroke-linecap="square"/>
+    ${(bc.supportsIn||[]).map(sx=>{ const cx=padL+(sx/12)*xScale; return `<path class="steel-stroke" d="M${cx},${yBeam} L${cx-6},${yBeam+11} L${cx+6},${yBeam+11} Z" stroke-width="1.5"/>`; }).join("")}
     <text x="${padL}" y="${h-4}" class="dim-label">0 ft</text>
     <text x="${w-padR}" y="${h-4}" text-anchor="end" class="dim-label">${Lft.toFixed(1)} ft</text>
   </svg>`;
@@ -2882,9 +2928,9 @@ function renderCustomCharts(passes){
   if(!passes || !lastChartBc){ box.innerHTML = `<div class="load-total">Diagrams appear once results calculate above.</div>`; return; }
   let html = "";
   if(bc.charts.load) html += chartCard("Load", "as entered", chartLoadSVG(lastChartBc));
-  if(bc.charts.shear) html += chartCard("Shear — factored", "kip", chartLineSVG(passes.factored.xs, passes.factored.V));
-  if(bc.charts.moment) html += chartCard("Moment — factored", "kip-in", chartLineSVG(passes.factored.xs, passes.factored.M));
-  if(bc.charts.deflection) html += chartCard("Deflection — service", "in", chartLineSVG(passes.service.xs, passes.service.y));
+  if(bc.charts.shear) html += chartCard("Shear — factored", "kip", chartLineSVG(passes.factored.xs, passes.factored.V, lastChartBc.supportsIn));
+  if(bc.charts.moment) html += chartCard("Moment — factored", "kip-in", chartLineSVG(passes.factored.xs, passes.factored.M, lastChartBc.supportsIn));
+  if(bc.charts.deflection) html += chartCard("Deflection — service", "in", chartLineSVG(passes.service.xs, passes.service.y, lastChartBc.supportsIn));
   box.innerHTML = html || `<div class="load-total">All diagrams hidden — use the buttons above to show one.</div>`;
 }
 
@@ -3815,7 +3861,7 @@ function beamShear(b, fam, axis, fy, o){
 
 /* Renders the "Strength Checks" block below the beam results. `pass` is the factored analysis
    ({xs, M, V} in inches / kip-in / kip); freeEnd marks a cantilever / free-end beam (Cb = 1.0). */
-function beamChecksHTML(bc, pass, spanFt, freeEnd){
+function beamChecksHTML(bc, pass, spanFt, freeEnd, ov){
   const b = bc.beam;
   const fy = parseFloat(bc.fy)||0;
   if(!b || !pass || !(fy>0) || !(spanFt>0)) return "";
@@ -3828,11 +3874,12 @@ function beamChecksHTML(bc, pass, spanFt, freeEnd){
   pass.M.forEach(m=>{ if(Math.abs(m)>Mmax) Mmax = Math.abs(m); });
   pass.V.forEach(v=>{ if(Math.abs(v)>Vmax) Vmax = Math.abs(v); });
 
-  const lbFt = parseFloat(bc.lb)>0 ? parseFloat(bc.lb) : spanFt;
+  const lbFt = ov ? ov.lbFt : (parseFloat(bc.lb)>0 ? parseFloat(bc.lb) : spanFt);
   const lbIn = lbFt*12;
   let cb, cbNote;
   const cbUser = parseFloat(bc.cb);
-  if(cbUser>0){ cb = cbUser; cbNote = "user-entered"; }
+  if(ov){ cb = ov.cb; cbNote = ov.cbNote; }
+  else if(cbUser>0){ cb = cbUser; cbNote = "user-entered"; }
   else if(freeEnd){ cb = 1.0; cbNote = "cantilever with unbraced free end, F1"; }
   else if(lbIn < spanIn-1e-6){ cb = 1.0; cbNote = "conservative — brace points shorter than the span; enter C<sub>b</sub> to override"; }
   else { cb = cbFromMoments(pass.xs, pass.M, spanIn); cbNote = "from the moment diagram, F1-1"; }
@@ -3870,6 +3917,7 @@ function beamChecksHTML(bc, pass, spanFt, freeEnd){
     lines += `<div class="load-total">Shear not evaluated: ${sh.unsupported}</div>`;
   }
   const dcMax = dcs.length ? Math.max(...dcs) : null;
+  if(b._double) lines = `<div class="load-total">Double channel: section properties and the flexural and shear strengths below are twice those of a single channel (LTB treats the two channels as laterally independent — conservative if they are stitched into a built-up member).</div>` + lines;
   return head + `<div class="results-grid">${flexTile}${limitTile}${shearTile}${capacityFosTile(dcMax)}</div>${lines}
     <div class="load-total line2">Strengths use the design method selected above. Unbraced length L<sub>b</sub> = ${lbFt.toFixed(1)} ft. Factor of safety = available strength / demand, governing of flexure and shear. Torsion, web crippling and yielding, and combined forces are not checked.</div>`;
 }
@@ -4704,6 +4752,407 @@ function updateSpwResults(){
       Total driving force ${r.totalDrive.toFixed(1)} kip/ft, passive ${r.totalResist.toFixed(1)} kip/ft${r.mode==="fs"?' (after FS)':''}.</div>
     </details>
     <div class="load-total" style="margin-top:14px;"><strong>Scope &amp; limits.</strong> Classical limit-equilibrium (hand-calculation) methods: no wall deflection, no soil–structure interaction, no global/rotational slope stability, anchor capacity or deadman/waler design, bearing or vertical load, seepage or liquefaction. Uniform surcharge only. Results are for preliminary sizing and for checking other software — the engineer of record must verify all inputs and results.</div>`;
+}
+
+
+/* ==========================================================================
+   Continuous Beam: 2–4 spans, pin/roller support at every support, constant EI.
+   Solved with the three-moment equation (interior support moments), then
+   shear/moment per span from the simple-span diagram plus the end moments, and
+   deflection by double-integrating M/EI span by span (y = 0 at every support).
+   Units follow the other beam tools: inches, kip, kip-in.
+   ========================================================================== */
+const CONT_POINT_FRACS = {center:[1/2], third:[1/3,2/3], quarter:[1/4,1/2,3/4]};
+
+/* Load-weighted end terms of a simple span: R = (1/L)∫M0·x dx, Lt = (1/L)∫M0·(L−x) dx. */
+function contSpanTerms(L, w, pts){
+  let R = w*L*L*L/24, Lt = R;
+  pts.forEach(p=>{ const a=p.x, b=L-a; R += p.P*a*b*(L+a)/(6*L); Lt += p.P*a*b*(L+b)/(6*L); });
+  return {R, Lt};
+}
+function contSimpleM(x, L, w, pts){
+  let m = w*x*(L-x)/2;
+  pts.forEach(p=>{ m += x<=p.x ? p.P*(L-p.x)*x/L : p.P*p.x*(L-x)/L; });
+  return m;
+}
+function contSimpleV(x, L, w, pts){
+  let v = w*(L/2-x);
+  pts.forEach(p=>{ v += p.P*(L-p.x)/L - (x>=p.x ? p.P : 0); });
+  return v;
+}
+
+/* spans: [{L (in), w (kip/in, uniform), pts:[{x (in from span left), P (kip)}]}] */
+function solveContinuous(spans, I){
+  const n = spans.length;
+  const terms = spans.map(s=>contSpanTerms(s.L, s.w, s.pts));
+  // interior support moments (sagging positive): tridiagonal system
+  const m = n-1;
+  const Msup = new Array(n+1).fill(0);
+  if(m>0){
+    const A = Array.from({length:m},()=>new Array(m+1).fill(0));
+    for(let i=1;i<=m;i++){
+      const r=i-1;
+      if(i>1) A[r][r-1] = spans[i-1].L;
+      A[r][r] = 2*(spans[i-1].L+spans[i].L);
+      if(i<m) A[r][r+1] = spans[i].L;
+      A[r][m] = -6*(terms[i-1].R + terms[i].Lt);
+    }
+    // Gaussian elimination (diagonally dominant)
+    for(let c=0;c<m;c++){
+      for(let r=c+1;r<m;r++){
+        const f = A[r][c]/A[c][c];
+        for(let k=c;k<=m;k++) A[r][k] -= f*A[c][k];
+      }
+    }
+    for(let r=m-1;r>=0;r--){
+      let s = A[r][m];
+      for(let k=r+1;k<m;k++) s -= A[r][k]*Msup[k+1];
+      Msup[r+1] = s/A[r][r];
+    }
+  }
+  const xs=[], V=[], M=[], y=[], spanInfo=[];
+  const reactions = new Array(n+1).fill(0);
+  let offset = 0;
+  const eps = 1e-4;
+  spans.forEach((s,si)=>{
+    const L=s.L, Ma=Msup[si], Mb=Msup[si+1];
+    const stations = new Set();
+    const N=160;
+    for(let i=0;i<=N;i++) stations.add(L*i/N);
+    s.pts.forEach(p=>{ stations.add(Math.max(0,p.x-eps)); stations.add(Math.min(L,p.x+eps)); });
+    const lx = [...stations].sort((a,b)=>a-b);
+    const vEnd = (Mb-Ma)/L;
+    const Mloc = lx.map(x=> contSimpleM(x,L,s.w,s.pts) + Ma + (Mb-Ma)*x/L);
+    const Vloc = lx.map(x=> contSimpleV(x,L,s.w,s.pts) + vEnd);
+    // deflection: integrate M/EI twice, then remove the chord so y = 0 at both supports
+    let y0=[0], th=[0];
+    for(let i=1;i<lx.length;i++){
+      const dx=lx[i]-lx[i-1];
+      th.push(th[i-1] + (Mloc[i-1]+Mloc[i])/2*dx/(STEEL_E_KSI*I));
+      y0.push(y0[i-1] + (th[i-1]+th[i])/2*dx);
+    }
+    const C1 = -y0[y0.length-1]/L;
+    lx.forEach((x,i)=>{
+      let gx = offset + x;
+      if(x===0 && si>0) gx += eps;
+      if(x===L && si<n-1) gx -= eps;
+      xs.push(gx); V.push(Vloc[i]); M.push(Mloc[i]); y.push(y0[i]+C1*x);
+    });
+    reactions[si]   += Vloc[0];
+    reactions[si+1] -= Vloc[Vloc.length-1];
+    spanInfo.push({start:offset, len:L});
+    offset += L;
+  });
+  return {xs, V, M, y: I>0 ? y : null, spans:spanInfo, reactions, supportM:Msup, totalLen:offset};
+}
+
+
+/* ---------- Continuous Beam: UI ---------- */
+const CONT_LOAD_TYPES = [["udl","Uniform"],["center","Center of span"],["third","Third points"],["quarter","Quarter points"]];
+
+function contNum(v){ const x=parseFloat(v); return isFinite(x) ? x : 0; }
+
+/* Span lengths in feet (null if any is missing / non-positive). */
+function contLensFt(bc){
+  const out = [];
+  for(let i=0;i<bc.nSpans;i++){
+    const v = parseFloat(bc.equal ? bc.lens[0] : bc.lens[i]);
+    if(!(v>0)) return null;
+    out.push(v);
+  }
+  return out;
+}
+
+/* Span definitions for the solver. factored=false gives unit factors (service loads). */
+function contBuildSpans(bc, factored){
+  const lens = contLensFt(bc);
+  if(!lens) return null;
+  const fD = factored ? contNum(bc.dlFactor) : 1, fS = factored ? contNum(bc.slFactor) : 1, fL = factored ? contNum(bc.llFactor) : 1;
+  const dl = contNum(bc.dl), sl = contNum(bc.sl), ll = contNum(bc.ll);
+  const wSelf = (bc.selfWt/12000)*fD;
+  const fracs = CONT_POINT_FRACS[bc.loadType];
+  return lens.map((Lft,i)=>{
+    const L = Lft*12;
+    const dead = bc.dlSpans[i] ? dl*fD : 0;
+    const live = bc.llSpans[i] ? sl*fS + ll*fL : 0;
+    let w = wSelf, pts = [];
+    if(bc.loadType==="udl") w += (dead+live)/12000;
+    else { const P = (dead+live)/1000; if(P>0) fracs.forEach(f=>pts.push({x:L*f, P})); }
+    return {L, w, pts};
+  });
+}
+
+function contPass(bc, I, factored){
+  const spans = contBuildSpans(bc, factored);
+  if(!spans) return null;
+  return solveContinuous(spans, I);
+}
+
+/* The loads as entered, in the custom-load-case row format so the shared "Load" chart can draw them. */
+function contChartBc(bc){
+  const lens = contLensFt(bc);
+  const rows = [];
+  let start = 0;
+  const supportsIn = [0];
+  lens.forEach((Lft,i)=>{
+    const cats = [["dead",contNum(bc.dl),bc.dlSpans[i]],["snow",contNum(bc.sl),bc.llSpans[i]],["live",contNum(bc.ll),bc.llSpans[i]]];
+    cats.forEach(([cat,mag,on])=>{
+      if(!on || !(mag>0)) return;
+      if(bc.loadType==="udl") rows.push({category:cat, type:"udl", mag, x1:start, x2:start+Lft});
+      else CONT_POINT_FRACS[bc.loadType].forEach(f=>rows.push({category:cat, type:"point", mag, x:start+Lft*f}));
+    });
+    start += Lft; supportsIn.push(start*12);
+  });
+  return {length:start, loads:rows, supportsIn};
+}
+
+function openContinuousDefaults(common){
+  return {...common, nSpans:2, equal:true, lens:["","","",""], loadType:"udl", dl:"", sl:"", ll:"",
+    dlSpans:[true,true,true,true], llSpans:[true,true,true,true]};
+}
+
+/* ----- diagram ----- */
+function rollerSupportSVG(x, yBeam){
+  const ticks = [-14,-7,0,7,14].map(dx=>`<line class="steel-stroke" x1="${x+dx}" y1="${yBeam+34}" x2="${x+dx-6}" y2="${yBeam+44}" stroke-width="1.5"/>`).join("");
+  return `<path class="steel-stroke" d="M${x},${yBeam} L${x-14},${yBeam+26} L${x+14},${yBeam+26} Z" stroke-width="2.5" stroke-linejoin="round"/>
+    <circle class="steel-stroke" cx="${x-8}" cy="${yBeam+30}" r="4" stroke-width="2"/>
+    <circle class="steel-stroke" cx="${x+8}" cy="${yBeam+30}" r="4" stroke-width="2"/>
+    <line class="steel-stroke" x1="${x-20}" y1="${yBeam+34}" x2="${x+20}" y2="${yBeam+34}" stroke-width="2"/>${ticks}`;
+}
+
+function continuousBeamSVG(){
+  const bc = state.beamCalc;
+  const xL=70, xR=570, yBeam=70;
+  const n = bc.nSpans;
+  const lensIn = contLensFt(bc);
+  const lens = lensIn || Array(n).fill(1);
+  const total = lens.reduce((a,b)=>a+b,0);
+  const xs = [xL]; lens.forEach(L=>xs.push(xs[xs.length-1] + L/total*(xR-xL)));
+  const point = (x,label)=>`<line class="steel-stroke" x1="${x}" y1="18" x2="${x}" y2="62" stroke-width="3" marker-end="url(#udlArrow)"/>${label?`<text x="${x}" y="10" text-anchor="middle" class="load-label">${label}</text>`:''}`;
+  let loads = "", firstPoint = true;
+  const loadedIdx = [...Array(n).keys()].filter(i=>bc.dlSpans[i] || bc.llSpans[i]);
+  loadedIdx.forEach(i=>{
+    const a=xs[i], b=xs[i+1];
+    if(bc.loadType==="udl"){
+      const k = Math.max(4, Math.round((b-a)/50));
+      let g = udlLoadSVG(a+3, b-3, 30, 62, k);
+      if(i!==loadedIdx[0]) g = g.replace(/<text[^>]*>w \(plf\)<\/text>/, "");
+      loads += g;
+    } else {
+      CONT_POINT_FRACS[bc.loadType].forEach(f=>{ loads += point(a+f*(b-a), firstPoint?"P (lb)":""); firstPoint=false; });
+    }
+  });
+  let supports = pinSupportSVG(xs[0], yBeam);
+  for(let i=1;i<=n;i++) supports += rollerSupportSVG(xs[i], yBeam);
+  let dims = "";
+  for(let i=0;i<n;i++){
+    const a=xs[i], b=xs[i+1];
+    dims += `<line class="dim-stroke" x1="${a}" y1="130" x2="${a}" y2="145" stroke-width="1"/>
+      <line class="dim-stroke" x1="${a+1}" y1="138" x2="${b-1}" y2="138" stroke-width="1" marker-start="url(#dimArrow)" marker-end="url(#dimArrow)"/>
+      <text x="${(a+b)/2}" y="156" text-anchor="middle" class="dim-label">L<tspan font-size="9" dy="3">${i+1}</tspan><tspan dy="-3"> = ${lensIn?lensIn[i]:"—"} ft</tspan></text>`;
+  }
+  dims += `<line class="dim-stroke" x1="${xs[n]}" y1="130" x2="${xs[n]}" y2="145" stroke-width="1"/>`;
+  return `<svg viewBox="0 0 640 170" xmlns="http://www.w3.org/2000/svg">
+    ${beamSvgDefs()}
+    ${loads}
+    <line class="beam-line" x1="${xL}" y1="${yBeam}" x2="${xR}" y2="${yBeam}" stroke-width="6" stroke-linecap="square"/>
+    ${supports}${dims}
+  </svg>`;
+}
+
+/* ----- page ----- */
+function contPillsHTML(opts, current, onclickFn){
+  return `<div class="axis-toggle">${opts.map(([val,label])=>`<div class="pill ${String(current)===String(val)?'active':''}" onclick="${onclickFn}('${val}')">${label}</div>`).join("")}</div>`;
+}
+function contSpanPillsHTML(arr, n, which){
+  return `<div class="axis-toggle">${Array.from({length:n},(_,i)=>`<div class="pill ${arr[i]?'active':''}" onclick="toggleContSpan('${which}',${i})">Span ${i+1}</div>`).join("")}</div>`;
+}
+
+function renderContinuousBeamCalc(){
+  const bc = state.beamCalc;
+  const isUdl = bc.loadType==="udl";
+  const unit = isUdl ? "plf" : "lb";
+  const ptWord = isUdl ? "" : "per point ";
+  const lenField = (i,label)=>`<div class="field"><label>${label}</label><input data-cl="${i}" type="number" step="any" min="0" placeholder="0" value="${bc.lens[i]}"></div>`;
+  const lensHTML = bc.equal
+    ? lenField(0, "Span length, L (ft) — all spans")
+    : Array.from({length:bc.nSpans},(_,i)=>lenField(i, `Span ${i+1} length, L<sub>${i+1}</sub> (ft)`)).join("");
+  app.innerHTML = header() + `
+    <div class="eyebrow">Beam Diagrams</div>
+    <div class="page-title-row">
+      <h1 class="page-title">Continuous Beam</h1>
+      <button class="btn no-print" onclick="window.print()">Print results</button>
+    </div>
+
+    <div class="beam-diagram-card">${continuousBeamSVG()}</div>
+
+    <div class="calc-grid">
+      <div class="calc-col">
+        <div class="subhead">Spans &amp; Load Pattern</div>
+        <div class="field"><label>Number of spans</label>${contPillsHTML([[2,"2 spans"],[3,"3 spans"],[4,"4 spans"]], bc.nSpans, "setContSpans")}</div>
+        <div class="field"><label>Span lengths</label>${contPillsHTML([["true","Equal"],["false","Individual"]], bc.equal, "setContEqual")}</div>
+        <div id="contLens">${lensHTML}</div>
+        <div class="field"><label>Load type</label>${contPillsHTML(CONT_LOAD_TYPES, bc.loadType, "setContLoadType")}</div>
+        <div class="field"><label>Dead load applied to</label>${contSpanPillsHTML(bc.dlSpans, bc.nSpans, "dl")}</div>
+        <div class="field"><label>Snow / live load applied to</label>${contSpanPillsHTML(bc.llSpans, bc.nSpans, "ll")}</div>
+        <div class="field-note">Beam self-weight acts on every span. Turn spans off to model pattern loading (e.g. live load on alternate spans).</div>
+      </div>
+      <div class="calc-col">
+        <div class="subhead">Loads</div>
+        <div class="field"><div class="load-row">
+          <div class="load-val"><label>Dead ${ptWord}load, D (${unit})${isUdl?" — excl. beam weight":""}</label><input id="bcDL" type="number" step="any" min="0" placeholder="0"></div>
+          <div class="load-factor"><label>Factor</label><input id="bcDLf" type="number" step="any" min="0" value="${bc.dlFactor}"></div></div></div>
+        <div class="field"><div class="load-row">
+          <div class="load-val"><label>Snow ${ptWord}load, S (${unit})</label><input id="bcSL" type="number" step="any" min="0" placeholder="0"></div>
+          <div class="load-factor"><label>Factor</label><input id="bcSLf" type="number" step="any" min="0" value="${bc.slFactor}"></div></div></div>
+        <div class="field"><div class="load-row">
+          <div class="load-val"><label>Live ${ptWord}load, L (${unit})</label><input id="bcLL" type="number" step="any" min="0" placeholder="0"></div>
+          <div class="load-factor"><label>Factor</label><input id="bcLLf" type="number" step="any" min="0" value="${bc.llFactor}"></div></div></div>
+        ${isUdl ? "" : `<div class="field-note">Each point load is the same magnitude: ${bc.loadType==="center"?"one load at the center of each loaded span":bc.loadType==="third"?"two loads at the third points of each loaded span":"three loads at the quarter points of each loaded span"}.</div>`}
+        <div class="subhead" style="margin-top:18px;">Beam</div>
+        <div class="beam-pick-wrap search-wrap">
+          <input id="beamSearchBox" class="search-input mono" placeholder="Type a designation, e.g. W12X26" autocomplete="off">
+          <div id="beamSuggest" class="suggest"></div>
+        </div>
+        <div class="beam-card" id="beamCard"><div class="beam-empty">No beam selected yet.</div></div>
+      </div>
+      <div class="calc-col">
+        <div class="subhead">Design Criteria</div>
+        <div class="field"><label>Yield strength, Fy (ksi)</label><input id="bcFy" type="number" step="any" min="0" value="${bc.fy}"></div>
+        <div class="field"><label>Allowable stress factor (× Fy)</label><input id="bcAllowFactor" type="number" step="any" min="0" max="1" value="${bc.allowFactor}"></div>
+        <div class="field"><label>Design method (AISC strength checks)</label>${methodToggleHTML(bc.method)}</div>
+        <div class="field"><label>Unbraced length, L<sub>b</sub> (ft)</label><input id="bcLb" type="number" step="any" min="0" placeholder="governing span"></div>
+        <div class="field"><label>Moment gradient factor, C<sub>b</sub></label><input id="bcCb" type="number" step="any" min="0" placeholder="auto"></div>
+      </div>
+    </div>
+
+    <div class="eyebrow">Results</div>
+    <div id="beamResults"></div>
+
+    <div class="eyebrow">Diagrams</div>
+    <div class="axis-toggle chart-toggles">
+      <div class="pill ${bc.charts.load?'active':''}" data-chart="load" onclick="toggleChart('load')">Load</div>
+      <div class="pill ${bc.charts.shear?'active':''}" data-chart="shear" onclick="toggleChart('shear')">Shear</div>
+      <div class="pill ${bc.charts.moment?'active':''}" data-chart="moment" onclick="toggleChart('moment')">Moment</div>
+      <div class="pill ${bc.charts.deflection?'active':''}" data-chart="deflection" onclick="toggleChart('deflection')">Deflection</div>
+    </div>
+    <div id="beamCharts"></div>
+
+    <button class="backlink" onclick="goHome()">&larr; Home</button>
+  ` + footer();
+  wireHeader();
+  wireContinuousBeam();
+  if(bc.beam){ renderBeamCard(); document.getElementById("beamSearchBox").value = (bc.beamBase||bc.beam).name; }
+  updateContinuousResults();
+}
+
+function wireContinuousBeam(){
+  const bc = state.beamCalc;
+  const dl=document.getElementById("bcDL"), sl=document.getElementById("bcSL"), ll=document.getElementById("bcLL");
+  dl.value = bc.dl; sl.value = bc.sl; ll.value = bc.ll;
+  dl.oninput = ()=>{ bc.dl = dl.value; updateContinuousResults(); };
+  sl.oninput = ()=>{ bc.sl = sl.value; updateContinuousResults(); };
+  ll.oninput = ()=>{ bc.ll = ll.value; updateContinuousResults(); };
+  document.querySelectorAll("#contLens input[data-cl]").forEach(inp=>{
+    inp.oninput = ()=>{ bc.lens[+inp.dataset.cl] = inp.value; redrawDiagram(); updateContinuousResults(); };
+  });
+  wireCommonCalcFields(refreshResults);
+}
+
+function setContSpans(n){ state.beamCalc.nSpans = +n; renderContinuousBeamCalc(); }
+function setContEqual(v){ state.beamCalc.equal = (v==="true"); if(!state.beamCalc.equal){ const L0=state.beamCalc.lens[0]; state.beamCalc.lens=[L0,L0,L0,L0]; } renderContinuousBeamCalc(); }
+function setContLoadType(t){ state.beamCalc.loadType = t; renderContinuousBeamCalc(); }
+function toggleContSpan(which, i){
+  const arr = which==="dl" ? state.beamCalc.dlSpans : state.beamCalc.llSpans;
+  arr[i] = !arr[i];
+  renderContinuousBeamCalc();
+}
+
+function updateContinuousResults(){
+  const box = document.getElementById("beamResults");
+  const bc = state.beamCalc;
+  const b = bc.beam;
+  const lens = contLensFt(bc);
+  const placeholder = msg => {
+    box.innerHTML = `<div class="results-grid">
+      <div class="result-tile"><div class="lbl">Max moment</div><div class="val">—<span class="unit">kip-in</span></div></div>
+      <div class="result-tile"><div class="lbl">Max deflection</div><div class="val">—<span class="unit">in</span></div></div>
+      <div class="result-tile"><div class="lbl">Max stress</div><div class="val">—<span class="unit">ksi</span></div></div>
+      <div class="result-tile"><div class="lbl">Factor of safety</div><div class="val">—</div></div>
+    </div>
+    <div class="load-total">${msg}</div>`;
+    lastCustomPasses = null; lastChartBc = null;
+    renderCustomCharts(null);
+  };
+  if(!b || !lens) return placeholder("Pick a beam and enter the span length(s) to calculate.");
+  const I = bc.axis==="x" ? b.Ix : b.Iy;
+  const S = bc.axis==="x" ? b.Sx : b.Sy;
+  bc.selfWt = beamSelfWeight(b);
+  const pf = contPass(bc, I, true), ps = contPass(bc, I, false);
+  if(!pf || !ps) return placeholder("Pick a beam and enter the span length(s) to calculate.");
+
+  const spanOf = x=>{ for(let i=0;i<pf.spans.length;i++){ if(x<=pf.spans[i].start+pf.spans[i].len+1e-3) return i; } return pf.spans.length-1; };
+  let Mmax=0, iM=0, Mpos=0, iPos=0, Mneg=0, iNeg=0;
+  pf.M.forEach((m,i)=>{
+    if(Math.abs(m)>Math.abs(Mmax)){ Mmax=m; iM=i; }
+    if(m>Mpos){ Mpos=m; iPos=i; }
+    if(m<Mneg){ Mneg=m; iNeg=i; }
+  });
+  let defl=0, iD=0;
+  ps.y.forEach((d,i)=>{ if(Math.abs(d)>Math.abs(defl)){ defl=d; iD=i; } });
+  const stress = S!=null ? Math.abs(Mmax)/S : null;
+  const fy=parseFloat(bc.fy)||0, allowFactor=parseFloat(bc.allowFactor)||0;
+  const allowStress = fy*allowFactor;
+  const stressClass = stress==null || allowStress<=0 ? "" : (stress>allowStress ? "over" : "ok");
+  const dSpan = spanOf(ps.xs[iD]);
+  const deflLimit = lens[dSpan]*12/240;
+  const deflClass = Math.abs(defl)>deflLimit ? "over" : "ok";
+  const axisLabel = bc.axis==='x' ? 'X-X' : 'Y-Y';
+  const ft = v=>(v/12).toFixed(2);
+  const supLabel = x=>{ // name the support if x is at one, else the span
+    for(let j=0;j<pf.spans.length+1;j++){
+      const sx = j<pf.spans.length ? pf.spans[j].start : pf.totalLen;
+      if(Math.abs(x-sx)<1) return `support ${j+1}`;
+    }
+    return `span ${spanOf(x)+1}`;
+  };
+  const rxn = (arr)=>arr.map((r,j)=>`R<sub>${j+1}</sub> = ${r.toFixed(2)}`).join(", ");
+
+  // Unbraced length / C_b for the governing span (the span containing the peak moment; the longer neighbor if it sits at a support)
+  let gi = spanOf(pf.xs[iM]);
+  const xm = pf.xs[iM];
+  for(let j=1;j<pf.spans.length;j++){
+    if(Math.abs(xm-pf.spans[j].start)<1 && pf.spans[j].len>pf.spans[j-1].len) gi = j;
+    else if(Math.abs(xm-pf.spans[j].start)<1) gi = j-1;
+  }
+  const gs = pf.spans[gi], gFt = gs.len/12;
+  const lbUser = parseFloat(bc.lb), cbUser = parseFloat(bc.cb);
+  const lbFt = lbUser>0 ? lbUser : gFt;
+  let cb, cbNote;
+  if(cbUser>0){ cb=cbUser; cbNote="user-entered"; }
+  else if(lbFt < gFt-1e-6){ cb=1.0; cbNote="conservative — brace points shorter than the governing span; enter C<sub>b</sub> to override"; }
+  else {
+    const idx = pf.xs.map((x,i)=>i).filter(i=>pf.xs[i]>=gs.start-1e-3 && pf.xs[i]<=gs.start+gs.len+1e-3);
+    cb = cbFromMoments(idx.map(i=>pf.xs[i]-gs.start), idx.map(i=>pf.M[i]), gs.len);
+    cbNote = `from the moment diagram of span ${gi+1}, F1-1`;
+  }
+
+  box.innerHTML = `<div class="results-grid">
+      <div class="result-tile"><div class="lbl">Max moment</div><div class="val">${Math.abs(Mmax).toFixed(2)}<span class="unit">kip-in</span></div></div>
+      <div class="result-tile ${deflClass}"><div class="lbl">Max deflection${statusMark(deflClass)}</div><div class="val">${Math.abs(defl).toFixed(3)}<span class="unit">in</span></div></div>
+      <div class="result-tile ${stressClass}"><div class="lbl">Max stress${statusMark(stressClass)}</div><div class="val">${stress!=null?stress.toFixed(2):'—'}<span class="unit">ksi</span></div></div>
+      ${fosTile(fy,stress)}
+    </div>
+    <div class="load-total">Max positive moment ${Mpos.toFixed(2)} kip-in at ${ft(pf.xs[iPos])} ft (${supLabel(pf.xs[iPos])}); max negative moment ${Math.abs(Mneg).toFixed(2)} kip-in at ${ft(pf.xs[iNeg])} ft (${supLabel(pf.xs[iNeg])}). Max deflection ${Math.abs(defl).toFixed(3)} in at ${ft(ps.xs[iD])} ft (span ${dSpan+1}). Bending about ${axisLabel}.</div>
+    <div class="load-total">Support reactions, factored (kip): ${rxn(pf.reactions)}. Service (kip): ${rxn(ps.reactions)}.</div>
+    <div class="load-total">Deflection limit = L/240 of the governing span = ${deflLimit.toFixed(3)} in. Allowable stress = ${allowFactor}×Fy = ${allowStress.toFixed(1)} ksi. Factor of safety = F<sub>y</sub> / max stress.</div>
+    <div class="load-total line2">Continuous beam solved with the three-moment equation (constant EI, simple support at every support, no settlement); shear and moment per span from the simple-span diagram plus the support moments; deflection by double-integrating M/EI span by span (including self-weight). Max stress f = M/S (S = ${bc.axis==='x'?'Sx':'Sy'}).</div>
+    ${beamChecksHTML(bc, pf, gFt, false, {lbFt, cb, cbNote})}
+    ${b ? `<div class="load-total">L<sub>b</sub> defaults to the governing span (span ${gi+1}, ${gFt.toFixed(1)} ft), assuming bracing at the supports. At interior supports the bottom flange is in compression (negative moment) — enter L<sub>b</sub> for the actual brace spacing.</div>` : ''}`;
+
+  lastCustomPasses = {factored:pf, service:ps};
+  lastChartBc = contChartBc(bc);
+  renderCustomCharts(lastCustomPasses);
 }
 
 </script>
